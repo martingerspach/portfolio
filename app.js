@@ -445,6 +445,50 @@
     }
     const goTo = (j) => stepTo(W.rest + shortestP(j - wrapP(W.rest)));
 
+    /* Touch screens: the page itself does not scroll (scrolling it made the browser's address bar slide away, the
+       window grow and the reel jump in the middle of the gesture). The finger turns the reel directly, one project
+       per STEP of travel as the scroll did, and a flick carries on with its speed before the reel settles on a
+       project. Pinch-zoom stays (CSS: touch-action: pinch-zoom on the page, none on the reel and its stage). */
+    const TOUCH = matchMedia('(pointer: coarse)').matches && !FINE.matches;
+    let swipe = null;
+    function onTDown(e) {
+      if (e.pointerType !== 'touch' || frozen || busy || swipe) return;
+      swipe = { id: e.pointerId, x0: e.clientX, y0: e.clientY, e0: W.target, moved: false, samples: [[performance.now(), W.target]] };
+    }
+    function onTMove(e) {
+      if (!swipe || e.pointerId !== swipe.id || frozen) return;
+      const dx = e.clientX - swipe.x0, dy = e.clientY - swipe.y0;
+      if (!swipe.moved && Math.hypot(dx, dy) < 10) return;
+      swipe.moved = true;
+      const d = Math.abs(dx) > Math.abs(dy) ? dx : dy;
+      W.target = swipe.e0 - d / STEP;
+      aim = null; notches = 0; clearTimeout(snapT);
+      if (W.first) { W.first = false; hint.classList.add('is-gone'); }
+      const now = performance.now();
+      swipe.samples.push([now, W.target]);
+      while (swipe.samples.length > 2 && now - swipe.samples[0][0] > 90) swipe.samples.shift();
+    }
+    function onTUp(e) {
+      if (!swipe || e.pointerId !== swipe.id) return;
+      const s = swipe;
+      swipe = null;
+      if (!s.moved || frozen) return;                 // a tap: the reel's own handler opens or winds to the frame
+      const [t0, a] = s.samples[0], [t1, b] = s.samples[s.samples.length - 1];
+      const v = t1 > t0 && performance.now() - t1 < 120 ? (b - a) / ((t1 - t0) / 1000) : 0;   // projects per second
+      const glide = clamp(v * 0.22, -3, 3);
+      let rest = Math.round(W.target + glide) || 0;
+      if (rest === W.rest && Math.abs(W.target - W.rest) > 0.12) rest = W.rest + Math.sign(W.target - W.rest);
+      W.rest = rest;
+      if (Math.abs(W.rest) >= NP * 2) { const n = Math.round(W.rest / NP) * NP; W.rest -= n; W.eased -= n; W.target -= n; lastE -= n; }
+      W.target = W.rest;
+      jump(MID + W.rest * STEP);
+      clearTimeout(liveT);
+      liveT = setTimeout(() => {
+        const p = P[wrapP(W.rest)];
+        $('#live').textContent = `${p.name}, ${p.kind}. Project ${wrapP(W.rest) + 1} of ${NP}.`;
+      }, 500);
+    }
+
     function onKey(e) {
       if (busy || frozen || e.altKey || e.ctrlKey || e.metaKey) return;
       if (e.target.closest && e.target.closest('input, textarea, select')) return;
@@ -712,6 +756,13 @@
     canvas.addEventListener('pointerup', onUp);
     canvas.addEventListener('pointerleave', onLeave);
     canvas.addEventListener('pointercancel', onCancel);
+    if (TOUCH) {
+      html.classList.add('work-touch');
+      addEventListener('pointerdown', onTDown, true);
+      addEventListener('pointermove', onTMove, true);
+      addEventListener('pointerup', onTUp, true);
+      addEventListener('pointercancel', onTUp, true);
+    }
     raf = requestAnimationFrame(frame);
 
     return () => {
@@ -727,6 +778,14 @@
       canvas.removeEventListener('pointerup', onUp);
       canvas.removeEventListener('pointerleave', onLeave);
       canvas.removeEventListener('pointercancel', onCancel);
+      if (TOUCH) {
+        html.classList.remove('work-touch');
+        removeEventListener('pointerdown', onTDown, true);
+        removeEventListener('pointermove', onTMove, true);
+        removeEventListener('pointerup', onTUp, true);
+        removeEventListener('pointercancel', onTUp, true);
+        swipe = null;
+      }
       tag.classList.remove('is-on');
       canvas.classList.remove('is-hover');
       W.eased = W.target = W.rest; W.vel = 0;
@@ -775,15 +834,24 @@
     W.rest += shortestP(i - wrapP(W.rest));
     W.eased = W.target = W.rest;
 
-    let loaded = false, waiting = arriving, go = () => {};
+    let loaded = false, waiting = arriving, go = () => {}, watchT = 0;
     const ready = new Promise((res) => {
       go = res;
       frame.addEventListener('load', () => { loaded = true; root.classList.add('is-loaded'); res(); }, { once: true });
     });
+    // the landing shows as soon as its document is parsed (it paints once its styles are in), not once its last film
+    // or image has arrived: on a phone network that took seconds, and the page stood white after the curtain left
+    const watch = () => {
+      let d = null;
+      try { d = frame.contentDocument; } catch (e) { root.classList.add('is-loaded'); return; }
+      if (d && d.URL !== 'about:blank' && d.body && d.body.firstElementChild) { root.classList.add('is-loaded'); return; }
+      if (!loaded) watchT = setTimeout(watch, 80);
+    };
     // when the reel's frame is flying in, the page waits for it to land (start), then loads behind it
     const loadSite = () => {
       if (waiting || frame.getAttribute('src')) return;
       frame.setAttribute('src', p.site);
+      watchT = setTimeout(watch, 80);
       setTimeout(go, 4500);                      // a slow page never holds the transition longer than this
     };
 
@@ -832,6 +900,7 @@
     if (!arriving) root.classList.remove('is-arriving');
     return () => {
       removeEventListener('keydown', onKey);
+      clearTimeout(watchT);
       if (film) film.pause();
       if (!loaded) frame.removeAttribute('src');
     };

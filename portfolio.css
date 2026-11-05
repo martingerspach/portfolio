@@ -168,6 +168,10 @@ html.on-work #reel { opacity: 1; visibility: visible; transition: opacity .5s va
 html.on-work { scrollbar-width: none; }
 html.on-work::-webkit-scrollbar { display: none; }
 .stage { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+/* Touch screens: the finger turns the reel (app.js, onTMove); the page never pans, so the address bar stays put.
+   Pinch-zoom is kept. */
+html.work-touch.on-work, html.work-touch.on-work body { touch-action: pinch-zoom; overscroll-behavior: none; }
+html.work-touch.on-work #reel, html.work-touch.on-work .stage { touch-action: none; }
 .stage > * { pointer-events: auto; }
 
 .w-meta {

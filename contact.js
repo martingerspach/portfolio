@@ -767,7 +767,7 @@ void main() {
           <p class="pe-cap" data-caption></p>
           <div class="pe-foot">
             <div class="pe-ask">
-              <p class="pe-lead">Tell me what you need, by when, and what you already have. I reply with questions, then a plan.</p>
+              <p class="pe-lead">Tell me what you need, by when, and what you already have. I&nbsp;reply with questions, then a plan.</p>
               <a class="btn btn--accent pe-write" href="${esc(CK.mailto())}">Write to me ${ico('arrow')}</a>
             </div>
             <div class="pe-facts">
@@ -920,6 +920,9 @@ void main() {
       const a0 = pre ? measure(mctx, pre, size).adv : 0;
       const a1 = measure(mctx, pre + '@', size).adv;
       const at = { x0: ln.x + a0 - (pre ? 0.03 * size : 0.2 * size), x1: ln.x + a1 + 0.03 * size, y0: ln.top - 0.2 * size, y1: ln.bottom + 0.2 * size };
+      // on two lines the box must stop short of the line above, or the foil gilds the feet of « mar » (phone, 2026-11-05):
+      // its top goes halfway between that line's baseline and the top of the @
+      if (!one) at.y0 = Math.max(at.y0, (lines[0].base + ln.base - measure(mctx, '@', size).a) / 2);
       const box = { x0: area.x0, y0: lines[0].top, x1: area.x0 + inkW * k2, y1: lines[lines.length - 1].bottom };
       const sig = null;   // the dated proof line was dropped (user, 2026-11-05)
       const vh = window.innerHeight || b.height;
@@ -998,7 +1001,8 @@ void main() {
       f1('uDpr', d);
       f1('uFade', G.fadeTop);
       f4('uPlate', plate ? plate.rect : [-10, -10, 1, 1]);
-      f4('uAt', [G.at.x0, G.at.y0, G.at.x1, G.at.y1]);
+      const at = (plate && plate.at) || G.at;   // while a resized plate bakes, the old one keeps its own box
+      f4('uAt', [at.x0, at.y0, at.x1, at.y1]);
       f4('uSig', G.sig ? [G.sig.x0 - 3, G.sig.y0 - 3, G.sig.x1 + 3, G.sig.y1 + 3] : [-9, -9, -8, -8]);
       f1('uDepth', G.depth); f1('uBev', G.bev); f1('uPress', press);
       f1('uFoil', sstep(0.0, 0.5, press)); f1('uInk', m.dark * sstep(0.02, 0.45, press));
@@ -1243,6 +1247,7 @@ void main() {
 
     /* ----- The plate's distance field is computed in a worker: the page never blocks on it ----- */
     let worker = null, workerUrl = '', jobId = 0, pendingKey = '', jobT0 = 0;
+    const atOf = new Map();
     try {
       workerUrl = URL.createObjectURL(new Blob([`const computePlate = ${computePlate.toString()};\nself.onmessage = (e) => { const r = computePlate(e.data); self.postMessage(r, [r.data.buffer]); };`], { type: 'text/javascript' }));
       worker = new Worker(workerUrl);
@@ -1252,6 +1257,7 @@ void main() {
     function applyPlate(r) {
       pendingKey = '';
       plate = r; plateKey = r.key;
+      plate.at = atOf.get(r.id) || (G && G.at); atOf.clear();
       if (MESURE) { canvas._bakeMs = performance.now() - r.t0; canvas._worker = !!worker; }
       uploadPlate(plate);
       kick(true);
@@ -1263,6 +1269,7 @@ void main() {
       if (key === plateKey || key === pendingKey) return;
       const job = rasterPlate(G);
       job.key = key; job.id = ++jobId;
+      atOf.set(job.id, G.at);   // the foil's box goes with the plate it gilds, not with a newer layout
       const t0 = performance.now();
       if (worker) { pendingKey = key; worker.postMessage(job, [job.a.buffer]); jobT0 = t0; }
       else { const r = computePlate(job); r.t0 = t0; applyPlate(r); }

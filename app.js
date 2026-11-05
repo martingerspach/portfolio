@@ -145,12 +145,18 @@
     });
     placeLine();
   }
+  let lineLost = false;
   function placeLine() {
     const a = $('#nav a[aria-current="page"]');
     if (!a) { navLine.style.opacity = 0; return; }
+    // a hidden nav (phone width, a resize across 760 px) has no size: keep the line, and when the nav comes back put
+    // it in place at once rather than sweeping it in from the left edge
+    if (!a.offsetWidth) { lineLost = true; return; }
     const x = a.offsetLeft + 14, w = a.offsetWidth - 28;
     navLine.style.opacity = 1;
+    if (lineLost) { lineLost = false; navLine.style.transition = 'none'; }
     navLine.style.transform = `translateX(${x}px) scaleX(${w})`;
+    if (navLine.style.transition) { navLine.getBoundingClientRect(); navLine.style.transition = ''; }
   }
   addEventListener('resize', placeLine);
   document.fonts && document.fonts.ready.then(placeLine);

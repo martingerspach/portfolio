@@ -106,8 +106,8 @@
 .p-empreinte .pe-foot {
   display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 3fr) minmax(0, 3fr); gap: 24px 32px; align-items: start;
 }
-.p-empreinte .pe-lead { margin: 0 0 24px; max-width: 32ch; font-size: var(--t-lead); line-height: 1.38; letter-spacing: -0.012em; }
-.p-empreinte .pe-facts p { margin: 0; max-width: 34ch; color: var(--ink-2); }
+.p-empreinte .pe-lead { margin: 0 0 24px; max-width: 32ch; text-wrap: balance; font-size: var(--t-lead); line-height: 1.38; letter-spacing: -0.012em; }
+.p-empreinte .pe-facts p { margin: 0; max-width: 34ch; color: var(--ink-2); text-wrap: pretty; }
 .p-empreinte .pe-facts p + p { margin-top: 10px; }
 .p-empreinte .pe-links { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; justify-items: start; }
 /* Under 1180 px three columns get tight: the ask keeps the left half, the facts and the links stack on the right. */

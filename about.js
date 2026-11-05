@@ -14,8 +14,9 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  // escaped text whose hyphenated words never break at the hyphen (post-production, Metz-Strasbourg)
-  const nw = (s) => esc(s).replace(/([^\s,.()]+-[^\s,.()]+)/g, '<span class="nw">$1</span>');
+  // escaped text whose hyphenated words never break at the hyphen (post-production, Metz-Strasbourg), and whose « I »
+  // never ends a line on its own (no-break space after it)
+  const nw = (s) => esc(s).replace(/(^|\s)I (?=\S)/g, '$1I\u00a0').replace(/([^\s,.()]+-[^\s,.()]+)/g, '<span class="nw">$1</span>');
   const GROUPS = [
     { label: 'Generation', groups: ['Generation'] },
     { label: 'Web', groups: ['Web'] },
@@ -216,10 +217,12 @@
     return best;
   }
   const low = (s) => (/^[A-Z]{2}/.test(s) ? s : s.charAt(0).toLowerCase() + s.slice(1));
-  // "a, b and c"; with a serial comma when an item already holds "and" ("web and apps, and AI agents")
-  const list = (a) => {
+  // "a, b and c"; with a serial comma when an item already holds "and" ("web and apps, and AI agents");
+  // two items of which one holds "and" repeat the preposition ("for visual identity and for web and apps")
+  const list = (a, pre = '') => {
     if (a.length < 2) return a.join('');
     const inner = a.some((x) => / and /.test(x));
+    if (a.length === 2 && inner) return `${a[0]} and ${pre ? pre + ' ' : ''}${a[1]}`;
     return a.slice(0, -1).join(', ') + (inner ? ', and ' : ' and ') + a[a.length - 1];
   };
 
@@ -235,7 +238,7 @@
         <h1 class="sr" id="aboutTitle">About Martin Gerspach</h1>
         <div class="cb__head">
           <div class="cb__intro">
-            <p class="cb__say rise" style="--k:1">${esc(SITE.intro)}</p>
+            <p class="cb__say rise" style="--k:1">${nw(SITE.intro)}</p>
             <a class="btn btn--accent rise" style="--k:2" href="#contact">Get in touch ${h.ico('arrow')}</a>
           </div>
           <p class="cb__read rise" style="--k:3" aria-live="polite"><span class="is-hint">${hint()}</span></p>
@@ -301,6 +304,9 @@
         b.cx = (b.l + b.r) / 2; b.cy = (b.t + b.b) / 2;
         box[k] = b;
       });
+      // the lower sockets of a row share one rail, under its deepest node (descriptions wrap to different depths)
+      const rail = {};
+      Object.entries(box).forEach(([k, b]) => { const t = k.slice(0, k.indexOf(':')); rail[t] = Math.max(rail[t] || 0, b.b); });
       const sides = {};
       const push = (key, it) => { (sides[key] = sides[key] || []).push(it); };
       edges.forEach((e) => {
@@ -319,7 +325,7 @@
         const span = Math.min((flat ? b.w : b.h) * (b.tool ? .5 : .56), (n - 1) * (b.tool ? 6 : 9));
         const c = flat ? b.cx : b.cy;
         const off = b.tool ? 9 : 10;
-        const fix = side === 'b' ? b.b + off : side === 't' ? b.t - off : side === 'r' ? b.r + off : b.l - off;
+        const fix = side === 'b' ? rail[k.slice(0, k.indexOf(':'))] + off : side === 't' ? b.t - off : side === 'r' ? b.r + off : b.l - off;
         its.forEach((it, i) => {
           const pos = c + (n > 1 ? -span / 2 + (span * i) / (n - 1) : 0);
           it.e[it.end] = flat ? [pos, fix] : [fix, pos];
@@ -344,6 +350,7 @@
           : `M${x1.toFixed(1)} ${y1.toFixed(1)}C${x1.toFixed(1)} ${(y1 + (y2 - y1) * .55).toFixed(1)} ${x2.toFixed(1)} ${(y2 - (y2 - y1) * .55).toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`);
       });
       paint();
+      reserve();
     }
 
     /* ---------- what goes with a key, and how it is said ---------- */
@@ -366,13 +373,25 @@
     }
     function sentence(r) {
       if (r.type === 'job') { const j = jobs.find((x) => x.at === r.name); return `At ${j.at}, ${j.when}: ${list(r.S.map(low))}.`; }
-      if (r.type === 'skill') return `${r.name} with ${list(r.T)}${r.J.length ? `, at ${list(r.J)}` : ''}.`;
+      if (r.type === 'skill') return `${r.name} with ${list(r.T)}${r.J.length ? `, at ${list(r.J, 'at')}` : ''}.`;
       // a tool is tied to skills only: which job it served is not in the CV, so it is not said
-      return `${r.name}, for ${list(r.S.map(low))}.`;
+      return `${r.name}, for ${list(r.S.map(low), 'for')}.`;
     }
 
     const read = $('.cb__read', main);
     let said = hint();
+    // the reading keeps the height of its longest sentence at this width, so hovering never moves the graph
+    function reserve() {
+      const keys = Object.keys(node).filter((k, i, a) => a.indexOf(k) === i);
+      const probe = document.createElement('span');
+      probe.setAttribute('aria-hidden', 'true');
+      probe.style.cssText = 'visibility:hidden;pointer-events:none';
+      read.append(probe);
+      let h = 0;
+      [hint(), ...keys.map((k) => sentence(reach(k)))].forEach((t) => { probe.textContent = t; h = Math.max(h, probe.getBoundingClientRect().height); });
+      probe.remove();
+      read.style.minHeight = Math.ceil(h) + 'px';
+    }
     function say(t, isHint) {
       if (t === said) return;
       said = t;

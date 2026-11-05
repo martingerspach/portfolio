@@ -2,15 +2,16 @@
    Desktop and tablet: three rows on one centre line, the row names in a left gutter, the wires underneath in one
    SVG at the loom's own pixel size. Phone (.is-v): jobs on top as a 2 x 2 index, skills and tools face each other
    in two columns, the wires run between them from side sockets. Colours: the portfolio's tokens only. */
-.about.cb { max-width: 1680px; margin: 0 auto; padding-bottom: clamp(64px, 12vh, 140px); }
+.about.cb { --gut: 150px; max-width: 1680px; margin: 0 auto; padding-bottom: clamp(64px, 12vh, 140px); }
 .cb .nw { white-space: nowrap; }
 
-.cb__head { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 24px 72px; align-items: end; margin-top: clamp(24px, 6vh, 72px); }
+.cb__head { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 24px 72px; align-items: last baseline; margin-top: clamp(24px, 6vh, 72px); }
 .cb__intro { display: grid; gap: 32px; justify-items: start; }
 .cb__say { margin: 0; max-width: 27ch; font-size: clamp(28px, 2.1vw + 7px, 50px); line-height: 1.13; letter-spacing: -0.03em; font-weight: 500; text-wrap: balance; }
 
-/* the path, said in words; two lines reserved so nothing below moves */
-.cb__read { margin: 0; justify-self: end; width: min(100%, 38ch); min-height: calc(2 * 1.42em); display: grid; align-items: end; font-size: 19px; line-height: 1.42; letter-spacing: -0.01em; }
+/* the path, said in words, flush with the right margin; about.js reserves the height of the longest sentence so
+   nothing below moves */
+.cb__read { margin: 0; justify-self: end; width: min(100%, 38ch); min-height: calc(2 * 1.42em); display: grid; align-items: end; text-align: right; font-size: 19px; line-height: 1.42; letter-spacing: -0.01em; }
 .cb__read span { grid-area: 1 / 1; text-wrap: pretty; transition: opacity .28s var(--ease-soft), transform .42s var(--ease); }
 .cb__read .is-hint { color: var(--ink-2); }
 .cb__read span.is-out { opacity: 0; transform: translateY(-8px); }
@@ -18,7 +19,7 @@
 
 /* ---------- the loom ---------- */
 /* sized so the whole graph, group names included, holds in the first screen at 1440 x 900 */
-.cb__loom { --gut: 150px; position: relative; display: grid; row-gap: clamp(80px, 11vh, 140px); margin-top: clamp(40px, 6vh, 96px); padding-left: var(--gut); }
+.cb__loom { position: relative; display: grid; row-gap: clamp(80px, 11vh, 140px); margin-top: clamp(40px, 6vh, 96px); padding-left: var(--gut); }
 .cb__wires { position: absolute; left: 0; top: 0; z-index: 0; overflow: visible; pointer-events: none; }
 .cb__loom.is-pre .cb__wires { opacity: 0; }
 .cb__wires path {
@@ -34,16 +35,17 @@
 .cb__loom.is-focus .cb__wires line.is-near { stroke: var(--accent); }
 
 .cb__row { position: relative; z-index: 1; }
-.cb__row h2 { position: absolute; left: calc(-1 * var(--gut)); top: 50%; transform: translateY(-50%); width: calc(var(--gut) - 24px); margin: 0; font-size: var(--t-small); font-weight: 400; color: var(--ink-2); }
+.cb__row h2 { position: absolute; left: calc(-1 * var(--gut)); top: calc(6px + var(--nb) * 1.3 / 2); transform: translateY(-50%); width: calc(var(--gut) - 24px); margin: 0; font-size: var(--t-small); font-weight: 400; color: var(--ink-2); }
 .cb__row--tools h2 { top: calc(var(--ts) / 2); }
 .cb__row ul { list-style: none; margin: 0; padding: 0; }
+.cb__row--jobs { --nb: 19px; }
+.cb__row--skills { --nb: 18px; }
 .cb__row--jobs ul, .cb__row--skills ul { display: grid; align-items: start; }
 .cb__row--jobs ul { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .cb__row--skills ul { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .cb__row--jobs li, .cb__row--skills li { display: grid; justify-items: center; text-align: center; }
 .cb__node { display: grid; gap: 4px; justify-items: center; padding: 6px 8px; border-radius: 6px; text-align: center; line-height: 1.3; }
-.cb__node b { font-weight: 500; font-size: 19px; letter-spacing: -0.012em; transition: color .4s var(--ease-soft); }
-.cb__row--skills .cb__node b { font-size: 18px; }
+.cb__node b { font-weight: 500; font-size: var(--nb); letter-spacing: -0.012em; transition: color .4s var(--ease-soft); }
 .cb__node > span { max-width: 22ch; font-size: 16px; color: var(--ink-2); text-wrap: balance; transition: color .4s var(--ease-soft); }
 .cb__loom.is-focus .cb__node.is-off b { color: var(--ink-2); }
 .cb__loom.is-focus .cb__node.is-lit > span { color: var(--ink); }
@@ -104,10 +106,11 @@
 /* tablet: a narrower gutter; skill descriptions give way (the sentence above says what each one holds) */
 @media (max-width: 1100px) {
   .cb__head { grid-template-columns: minmax(0, 1fr); }
-  .cb__read { justify-self: start; }
-  .cb__loom { --gut: 104px; row-gap: 100px; }
+  .cb__read { justify-self: start; text-align: left; align-items: start; }   /* the reserved room falls under it, before the graph */
+  .about.cb { --gut: 104px; }
+  .cb__loom { row-gap: 100px; }
   .cb__row--skills .cb__node > span { display: none; }
-  .cb__node b { font-size: 17px; }
+  .cb__row--jobs, .cb__row--skills { --nb: 17px; }
   .cb__row--jobs .cb__node > span { font-size: 15px; }
   .cb__glabel { white-space: normal; }
   .cb__foot { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
@@ -122,10 +125,11 @@
 .is-v .cb__row--jobs li { justify-items: start; text-align: left; }
 .is-v .cb__row--jobs .cb__node { justify-items: start; text-align: left; padding: 8px 0; }
 .is-v .cb__row--skills { grid-column: 1; display: flex; flex-direction: column; }
-.is-v .cb__row--skills ul { flex: 1; display: flex; flex-direction: column; justify-content: space-around; }
+.is-v .cb__row--skills ul { flex: 1; display: flex; flex-direction: column; justify-content: space-around; align-items: stretch; }
 .is-v .cb__row--skills li { justify-items: end; text-align: right; }
 .is-v .cb__row--skills .cb__node { justify-items: end; text-align: right; padding: 8px 0; }
-.is-v .cb__row--skills .cb__node b { font-size: 17px; }
+.is-v .cb__node:focus-visible { outline-offset: 6px; }   /* no side padding here: the ring keeps off the words */
+.is-v .cb__row--skills { --nb: 17px; }
 .is-v .cb__row--tools { grid-column: 2; --ts: 34px; }
 .is-v .cb__tools { flex-direction: column; justify-content: flex-start; gap: 22px; }
 .is-v .cb__grp { gap: 8px; }

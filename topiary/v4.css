@@ -430,6 +430,10 @@ a { color: inherit; }
 }
 .menu nav a:last-child { color: var(--ink); }
 .menu__mail { margin-top: auto; color: var(--ink-2); }
+/* Menu ouvert : la page dessous ne défile plus au doigt (elle défilait sous le menu, et le toucher suivant arrêtait
+   seulement l'élan au lieu de fermer) */
+html:has(.menu[open]) { overflow: hidden; }
+.menu { overscroll-behavior: contain; }
 
 /* ---------- Panneau de revue : le design system (couleurs neutres fixes, indépendantes du thème essayé) ---------- */
 .ds {

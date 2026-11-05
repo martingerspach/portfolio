@@ -176,7 +176,12 @@ export default {
         // parallaxe : un pixel de défilement fait glisser le motif de 0,28 px au milieu de la vue
         const e = 0.02, a = cam.ray(0, -e), b = cam.ray(0, e);
         dz = (b[1] - a[1]) / (e * h) * 0.28 * look.flip;
-        const n0 = tall ? [260, 420] : [400, 360];
+        // 2026-11-05, téléphone (vue de moins de 900 px) : la maille garde la densité du bureau en px CSS (colonnes de
+        // 2,6 px, rangées de 2,5 px en moyenne) au lieu de la doubler : 51 000 sommets au lieu de 109 000 à 390 × 844,
+        // rendu identique à 1:1 (écart moyen 1,3 niveau sur les filets). Bureau et cover inchangés.
+        const n0 = w < 900
+          ? [Math.min(tall ? 260 : 400, Math.round(w / 2.6)), Math.min(tall ? 420 : 360, Math.round(h / 2.5))]
+          : tall ? [260, 420] : [400, 360];
         if (n0[0] !== N[0] || n0[1] !== N[1]) {
           N = n0;
           const I = new Uint32Array(N[0] * N[1] * 6), r = N[0] + 1;

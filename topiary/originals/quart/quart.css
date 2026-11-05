@@ -727,7 +727,17 @@ body::before { bottom: var(--s-8); }
   .tete__nav { display: none; }
   .tete__menu { display: flex; }
   .tarif::before { left: var(--gutter); right: var(--gutter); }
+  /* Menu ouvert : la page derrière ne défile plus ; la feuille défile seule quand elle dépasse l'écran (paysage, petits écrans). */
+  html:has(.menu[open]) { overflow: hidden; }
+  .menu { overflow-y: auto; overscroll-behavior: contain; }
+  /* Liens du pied : cibles de 44 px au doigt (27 px avant) ; le titre et le bas de la case gardent leur écart au texte. */
+  .cartouche__liens h3 { margin-bottom: 8px; }
+  .cartouche__liens ul { gap: 0; }
+  .cartouche__liens a { display: flex; align-items: center; min-height: 44px; min-width: 44px; width: fit-content; padding: 0; }
+  .cartouche__liens { padding-bottom: calc(var(--s-5) - 8px); }
 }
+/* Focus déplacé après un toucher (menu du téléphone) : pas d'anneau ; au clavier, l'anneau reste. */
+.is-quiet:focus, .is-quiet:focus-visible { outline: none; }
 
 /* Vue éclatée en liste numérotée sous le dessin (le schéma garde ses repères 1 à 4, qui flottent avec leur couche). */
 @media (max-width: 900px) {
@@ -779,6 +789,7 @@ body::before { bottom: var(--s-8); }
   .cartouche { --inset: var(--s-4); }
   .cartouche__outils { padding-left: var(--s-4); }
   .cartouche__reseaux ul { display: grid; }
+  .cartouche__liens { padding-bottom: calc(var(--s-4) - 8px); }
   .cartouche__outils, .cartouche__mention { grid-column: 1 / -1; }
 }
 @media (max-width: 479px) {

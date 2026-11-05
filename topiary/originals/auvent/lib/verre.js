@@ -30,7 +30,11 @@
     ? brands.some((b) => /Chromium|Google Chrome|Microsoft Edge/.test(b.brand))
     : /(Chrome|Chromium)\/\d/.test(ua) && !/CriOS|EdgiOS|FxiOS|OPiOS/.test(ua);
   const reduit = matchMedia('(prefers-reduced-transparency: reduce)');
-  const lentille = () => chromium && !reduit.matches;
+  // Téléphone et petite tablette tactiles (passe mobile du 2026-11-05) : pas de lentille, le flou de repli comme sur
+  // iPhone. Le filtre de réfraction (trois déplacements sur un flou) se recalcule à chaque image de défilement sous
+  // l'en-tête fixe ; un processeur graphique de téléphone le paie, pour un effet de bord à peine visible à cette taille.
+  const tactile = matchMedia('(max-width: 899px) and (pointer: coarse)');
+  const lentille = () => chromium && !reduit.matches && !tactile.matches;
   document.documentElement.classList.toggle('verre-lentille', lentille());
 
   let defs = null;
@@ -198,9 +202,9 @@
       if (survol.matches && !el.classList.contains('tete-curseur')) lueur(el);
     }
   }
-  reduit.addEventListener('change', () => {
+  [reduit, tactile].forEach((m) => m.addEventListener('change', () => {
     document.documentElement.classList.toggle('verre-lentille', lentille());
     document.querySelectorAll('[data-verre]').forEach(peindre);
-  });
+  }));
   A.verre = { monter, peindre, chromium };
 })();

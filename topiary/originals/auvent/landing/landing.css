@@ -185,8 +185,9 @@ a { color: inherit; }
   max-height: calc(100svh - var(--tete-h) - 16px); overflow-y: auto; overscroll-behavior: contain;
 }
 .tete-feuille-fond { position: absolute; inset: 0; z-index: -1; border-radius: inherit; }
-.av-nuit .tete-feuille-fond, .av-nuit.tete .tete-feuille-fond { background: rgb(6 21 40 / 0.97); }
-.av-jour .tete-feuille-fond, .av-jour.tete .tete-feuille-fond { background: rgb(247 249 252 / 0.98); }
+/* opaque (passe mobile du 2026-11-05) : à 97 %, le titre du héros se lisait en fantôme sous les liens du menu */
+.av-nuit .tete-feuille-fond, .av-nuit.tete .tete-feuille-fond { background: rgb(6 21 40); }
+.av-jour .tete-feuille-fond, .av-jour.tete .tete-feuille-fond { background: rgb(247 249 252); }
 .tete-feuille-nav { display: flex; flex-direction: column; }
 .tete-feuille-nav a {
   display: flex; align-items: center; min-height: 58px; padding: 0 14px;
@@ -957,4 +958,23 @@ html.menu-ouvert { overflow: hidden; }
   .planning { --aube: 220px; }
   .planning { --plan-fondu: 200px; }
   .tarif { padding-bottom: 48px; }
+}
+
+/* ---------- Téléphone, passe du 2026-11-05 (audit mobile du portfolio) ----------
+   Héros : le verdict de la ville par défaut (Nantes, 14 mm) tombait sous le pli, la cote « 14 mm » posée juste sur le
+   bord de l'écran (iPhone 13, 664 px de haut). L'instrument prend la hauteur qui reste sous la ville : il garde 460 px
+   au plus et 54 % de l’écran, et descend jusqu'à 300 px sur les écrans bas pour que la mesure et la phrase entrent dans
+   le premier écran (vérifié de 664 à 839 px de haut ; sous 600 px de haut, rien n'y tient). Les marges autour de la
+   scène se resserrent d'autant. « À 6 h » commence plus près du bouton (137 px de vide). */
+@media (max-width: 599px) {
+  .heros { --G: min(460px, 54svh, max(300px, 200svh - 1030px)); }
+  .heros-entree { margin-top: 22px; }
+  .heros-objet, .heros-sortie { margin-top: 12px; }
+  .traduction { padding-top: 64px; }
+}
+/* Cibles tactiles de 44 px : les onglets du planning (40 px) et les liens du pied (32 px) */
+@media (max-width: 899px) {
+  .onglet { height: 44px; }
+  .pied-col ul { gap: 0; }
+  .pied-col a { min-height: 44px; min-width: 44px; }
 }

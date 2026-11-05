@@ -1691,17 +1691,26 @@
     // Menu du téléphone : dialogue modal (focus gardé dedans, Échap ferme), aria-expanded tenu à jour.
     const btn = q('#menu-btn'), menu = q('#menu'), close = q('#menu-close');
     let closing = 0;
+    // Au doigt (click.detail > 0), le focus suit sans anneau et ne va jamais dans un champ : Safari dessinait l'anneau
+    // après un toucher, et « Tarif » focalisait le champ e-mail (clavier du téléphone). Au clavier, rien ne change.
+    let byKey = true;
+    const quiet = (el) => {
+      if (!el.matches('a[href], button, input, [tabindex]')) el.tabIndex = -1;
+      el.classList.add('is-quiet');
+      el.addEventListener('blur', () => el.classList.remove('is-quiet'), { once: true });
+      el.focus({ preventScroll: true });
+    };
     const finish = (thenGo) => {
       clearTimeout(closing); closing = 0;
       menu.classList.remove('is-closing');
       if (menu.open) menu.close();
       btn.setAttribute('aria-expanded', 'false');
-      if (!thenGo) { btn.focus(); return; }
+      if (!thenGo) { if (byKey) btn.focus(); else quiet(btn); return; }
       const target = q(thenGo);
       if (!target) return;
       target.scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth' });
-      const f = target.matches('input, a, button') ? target : q('input, a, button, [tabindex]', target);
-      if (f) setTimeout(() => f.focus({ preventScroll: true }), RM.matches ? 0 : 600);
+      const f = !byKey ? target : target.matches('input, a, button') ? target : q('input, a, button, [tabindex]', target);
+      if (f) setTimeout(() => (byKey ? f.focus({ preventScroll: true }) : quiet(f)), RM.matches ? 0 : 600);
     };
     const shut = (thenGo) => {
       if (!menu.open || closing) return;
@@ -1709,15 +1718,16 @@
       menu.classList.add('is-closing');
       closing = setTimeout(() => finish(thenGo), 340);
     };
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
       if (menu.open) return;
+      byKey = e.detail === 0;
       menu.showModal();
       drawMenuPlan(q('#plan-menu'));
       btn.setAttribute('aria-expanded', 'true');
-      q('.menu__nav a', menu).focus();
+      if (byKey) q('.menu__nav a', menu).focus(); else quiet(menu);
     });
-    close.addEventListener('click', () => shut());
-    menu.addEventListener('cancel', (e) => { e.preventDefault(); shut(); });
+    close.addEventListener('click', (e) => { byKey = e.detail === 0; shut(); });
+    menu.addEventListener('cancel', (e) => { e.preventDefault(); byKey = true; shut(); });
     // Le focus boucle dans le menu (sans sortir vers le navigateur).
     menu.addEventListener('keydown', (e) => {
       if (e.key !== 'Tab') return;
@@ -1726,7 +1736,7 @@
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     });
-    menu.querySelectorAll('a').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); shut(a.getAttribute('href')); }));
+    menu.querySelectorAll('a').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); byKey = e.detail === 0; shut(a.getAttribute('href')); }));
     // Au-delà du seuil du téléphone, le menu n'a plus de bouton : on le referme sans animation.
     matchMedia('(min-width: 761px)').addEventListener('change', (e) => {
       if (e.matches && menu.open) { clearTimeout(closing); closing = 0; menu.classList.remove('is-closing'); menu.close(); btn.setAttribute('aria-expanded', 'false'); }
@@ -1803,7 +1813,8 @@
       removeEventListener('keydown', onMove);
       later(initNight, 0, 'nuit');
       later(() => { const ex = q('#plan-eclate'); new ResizeObserver(() => drawExploded(ex)).observe(ex); }, 60, 'eclate');
-      later(() => { const ct = q('#plan-cote'); new ResizeObserver(() => drawCote(ct)).observe(q('.tarif__prix')); }, 100, 'cote');
+      // Empilé (sous 1 024 px), la cote décale sa propre colonne : on redessine à l'image suivante (sinon « ResizeObserver loop »).
+      later(() => { const ct = q('#plan-cote'), side = matchMedia('(min-width: 1024px)'); new ResizeObserver(() => (side.matches ? drawCote(ct) : requestAnimationFrame(() => drawCote(ct)))).observe(q('.tarif__prix')); }, 100, 'cote');
     };
     const onMove = () => mountRest();
     if (intro && scrollY < 40 && !location.hash) {

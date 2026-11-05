@@ -174,16 +174,21 @@ document.addEventListener('click', (e) => {
 
 // téléphone : la barre d'onglets se montre quand elle ne couvre pas la console
 const consoleBox = $('.console');
+// Safari (WebKit) peut exécuter ce module avant que banc.css s'applique : la page n'a pas encore sa mise en
+// page, rien ne se mesure (la console semblait hors écran, les onglets entraient par-dessus les exemples)
+const cssOn = () => document.readyState === 'complete' || getComputedStyle($('.hero')).position === 'relative';
 let tabRaf = 0;
 function tabBar() {
   tabRaf = 0;
   if (!phone.matches) { top.classList.add('is-in'); return; }
+  if (!cssOn()) return;
   const barTop = innerHeight - 84;
   const r = consoleBox.getBoundingClientRect();
   top.classList.toggle('is-in', r.bottom < barTop - 12 || r.top > innerHeight);
 }
 addEventListener('scroll', () => { if (!tabRaf) tabRaf = requestAnimationFrame(tabBar); }, { passive: true });
 addEventListener('resize', tabBar);
+addEventListener('load', tabBar);
 phone.addEventListener('change', () => { tabBar(); if (phone.matches) pauseBtn.classList.remove('is-tucked'); });
 tabBar();
 
@@ -252,7 +257,7 @@ function heroRects() {
 
 let gathered = false;
 function layout() {
-  if (!school) return;
+  if (!school || !cssOn()) return;
   const { hb, rects, avoid } = heroRects();
   school.resize(Math.round(hb.width), Math.round(hb.height));
   school.st.rects = rects.slice(0, 8);
@@ -312,6 +317,7 @@ function wake() { if (school && running && !paused && visible && !document.hidde
 
 if (school) {
   new ResizeObserver(() => {
+    if (!cssOn()) return;
     layout();
     if (!running || paused) school.render();
   }).observe(hero);
@@ -324,6 +330,8 @@ if (school) {
   new IntersectionObserver((es) => { visible = es[0].isIntersecting; wake(); }, { threshold: 0 }).observe(hero);
   document.addEventListener('visibilitychange', wake);
   const go = () => {
+    // sans mise en page, le banc naîtrait et s'installerait au mauvais endroit : on attend la feuille de style
+    if (!cssOn()) { addEventListener('load', go, { once: true }); return; }
     layout();
     school.warm(params.has('fige') ? P('fige', 8) : isReduced() ? 16 : 8);
     school.render();
@@ -641,6 +649,13 @@ function openSource(i, animate) {
   }
 }
 plateRefs.forEach((r, k) => r.addEventListener('click', () => openSource(k, true)));
+// au téléphone, le passage s'ouvre sous la réponse, souvent sous les onglets ou hors de l'écran :
+// un défilement court l'amène au-dessus des onglets, sans faire sortir le renvoi touché par le haut
+plateRefs.forEach((r) => r.addEventListener('click', () => {
+  if (!phone.matches) return;
+  const need = Math.min(extract.getBoundingClientRect().bottom - (innerHeight - 96), r.getBoundingClientRect().top - 16);
+  if (need > 4) scrollBy({ top: need, behavior: isReduced() ? 'auto' : 'smooth' });
+}));
 srcBtns.forEach((r) => r.addEventListener('click', () => openSource(Number(r.dataset.src), true)));
 
 // à l'arrivée de la section, la réponse s'écrit, puis la première source se tire

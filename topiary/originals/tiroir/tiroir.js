@@ -1130,7 +1130,15 @@
     if (typing) await typing;
     if (alive()) stage.removeAttribute('aria-busy');
   }
-  qs.forEach((b, i) => b.addEventListener('click', () => askDemo(i)));
+  qs.forEach((b, i) => b.addEventListener('click', () => {
+    /* Au téléphone, la scène est sous les questions : la réponse s'écrirait hors de l'écran. On amène la scène
+       (la réponse en haut de l'écran) quand sa réponse est sous la moitié de l'écran (passe mobile du 2026-11-05). */
+    if (innerWidth < 880 && stage.clientWidth < 600) {
+      const top = replyEl.getBoundingClientRect().top;
+      if (top > innerHeight * 0.5) scrollTo({ top: scrollY + stage.getBoundingClientRect().top - 16, behavior: RM ? 'auto' : 'smooth' });
+    }
+    askDemo(i);
+  }));
   Promise.all([fontsReady, lumReady]).then(() => {
     /* Au repos, la scène montre déjà une réponse : la fiche est posée et lisible. La sortie du tiroir se joue à chaque question choisie. */
     fillFiche(0); replyEl.textContent = QA[0].a; layoutStage();
@@ -1333,7 +1341,16 @@
     clearTimeout(noteT);
     note.classList.remove('is-on');
     note.textContent = `${a.textContent.trim()}${NB}: cette page n’existe pas. Tiroir est une marque de démonstration du studio Topiary.`;
-    requestAnimationFrame(() => requestAnimationFrame(() => note.classList.add('is-on')));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      note.classList.add('is-on');
+      /* au téléphone, la note sort sous la dernière colonne, souvent sous le bord de l'écran : on la montre entière
+         (passe mobile du 2026-11-05) */
+      if (innerWidth < 880) {
+        const ty = new DOMMatrix(getComputedStyle(note).transform).m42;   // la note part décalée : sa place finale
+        const over = note.getBoundingClientRect().bottom - ty + 16 - innerHeight;
+        if (over > 0) scrollBy({ top: over, behavior: RM ? 'auto' : 'smooth' });
+      }
+    }));
   }));
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && note.classList.contains('is-on')) note.classList.remove('is-on'); });
   /* =========================================================

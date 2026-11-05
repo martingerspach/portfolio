@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta name="robots" content="noindex">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Confidentialité · Topiary</title>
@@ -22,6 +23,7 @@
         <a href="methode.html">Méthode</a>
         <a class="btn btn--accent" href="index.html#contact">Nous écrire</a>
       </nav>
+      <button class="btn btn--quiet menu-btn" type="button" aria-haspopup="dialog" aria-controls="menu" aria-expanded="false">Menu</button>
     </header>
     <div class="sub-page__body">
       <h1 class="h2">Confidentialité</h1>
@@ -31,6 +33,22 @@
   </main>
   <footer class="foot"><p>© 2026 Topiary</p></footer>
 </div>
+<dialog class="menu" id="menu" aria-label="Menu">
+  <div class="menu__in">
+    <div class="menu__top">
+      <span class="logo">topiary</span>
+      <button class="btn btn--quiet" type="button" id="menu-close">Fermer</button>
+    </div>
+    <nav aria-label="Menu">
+      <a href="index.html#projets">Projets</a>
+      <a href="index.html#offre">Ce que nous faisons</a>
+      <a href="studio.html">Studio</a>
+      <a href="methode.html">Méthode</a>
+      <a href="index.html#contact">Nous écrire</a>
+    </nav>
+    <p class="menu__mail">contact@topiary.studio</p>
+  </div>
+</dialog>
 <script src="v4.js"></script>
 <script src="header.js"></script>
 </body>

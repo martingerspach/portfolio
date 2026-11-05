@@ -183,8 +183,11 @@ function placeChat(A, S, x, y, lw, lh, want, s) {
     .map(r => [r.left - L.left, r.top - L.top, r.right - L.left, r.bottom - L.top, r.width * r.height, 1]);
   for (const v of s.avoid || []) { if (v.panel && A.ph) continue; const p0 = S.toPx([v[0], v[1]]), p1 = S.toPx([v[0] + v[2], v[1] + v[3]]); keep.push([p0[0], p0[1], p1[0], p1[1], (p1[0] - p0[0]) * (p1[1] - p0[1]), 3]); }
   const head = S.svg.closest('.hero') ? (document.querySelector('[data-top]')?.getBoundingClientRect().bottom ?? 0) - L.top + 6 : -1e9;
-  const pts = [[x, y]];
-  for (const k of s.ev.hush0 == null ? ['say1', 'shut'] : A.ph ? ['shut'] : ['hush0']) if (s.ev[k] != null) { const T = s.ev[k] - .02, q = S.toPx(s.tr.pos(T)), cx = S.xAtT?.(s, T); if (q) pts.push([cx ?? q[0], q[1]]); }
+  /* on a phone the hand is placed where the camera will be (xAtT), the drawing where it is now: each point carries
+     that gap, so what the bubble must keep clear of is read where it will stand when the bubble opens */
+  const T0 = A.ph ? s.ev.say1 : (s.ev.say0 ?? s.tr.tIn), q0 = S.xAtT && S.toPx(s.tr.pos(T0));
+  const pts = [[x, y, q0 ? x - q0[0] : 0]];
+  for (const k of s.ev.hush0 == null ? ['say1', 'shut'] : A.ph ? ['shut'] : ['hush0']) if (s.ev[k] != null) { const T = s.ev[k] - .02, q = S.toPx(s.tr.pos(T)), cx = S.xAtT?.(s, T); if (q) pts.push([cx ?? q[0], q[1], cx != null ? cx - q[0] : 0]); }
   const opts = [], other = want !== 'l';
   const cands = [[want === 'l', false, false], [other, false, false], [want === 'l', true, false], [other, true, false], [want === 'l', false, true], [other, false, true]];
   A.el.style.setProperty('--mt', `${Math.round(-A.Hh / 2 + 2)}px`);
@@ -192,9 +195,9 @@ function placeChat(A, S, x, y, lw, lh, want, s) {
     A.el.classList.toggle('is-left', left); A.el.classList.toggle('is-up', up); A.el.classList.toggle('is-mid', mid);
     const E = A.el.getBoundingClientRect(), b = A.lab.getBoundingClientRect(), dx = b.left - E.left, dy = b.top - E.top;
     let cover = 0, out = 0;
-    for (const [px, py] of pts) {
+    for (const [px, py, pd] of pts) {
       const x0 = px + dx, y0 = py + dy, x1 = x0 + b.width, y1 = y0 + b.height;
-      for (const k of keep) { const ix = Math.min(x1, k[2]) - Math.max(x0, k[0]), iy = Math.min(y1, k[3]) - Math.max(y0, k[1]); if (ix > 0 && iy > 0) cover += k[5] * ix * iy / Math.min(k[4], b.width * b.height); }
+      for (const k of keep) { const ix = Math.min(x1 - pd, k[2]) - Math.max(x0 - pd, k[0]), iy = Math.min(y1, k[3]) - Math.max(y0, k[1]); if (ix > 0 && iy > 0) cover += k[5] * ix * iy / Math.min(k[4], b.width * b.height); }
       out += (Math.max(0, 4 - x0) + Math.max(0, x1 - lw + 4)) * b.height + (Math.max(0, Math.max(4, head) - y0) + Math.max(0, y1 - lh + 4)) * b.width;
     }
     opts.push({ left, up, mid, score: (cover + 20 * out / (b.width * b.height)) / pts.length + opts.length * .02 });
@@ -493,8 +496,9 @@ function heroSteps(board, S) {
     const L0 = [1032, 9, 152, 33], dest = [1001, 44];
     const tr = new Track([1240, -60], 0);
     /* the hand steps aside to talk, so the bubble never sits on the measures: into the sky left of the logo, or on a
-       phone onto the lit wall under the box; it closes while the hand works and opens again to report */
-    const aside = narrow ? [1046, 352] : [985, 98];
+       phone onto the lit wall under the box, left of the timetable so the bubble beside the hand leaves 'Sat 10:25'
+       readable; it closes while the hand works and opens again to report */
+    const aside = narrow ? [975, 340] : [985, 98];
     tr.go([1192, 3], 20).drag([1016, 60], .34, 'mq').mark('sel').wait(.05);
     if (aside) tr.go(aside, 40, { T: .36 }); tr.mark('say0').wait(.05); if (aside) tr.wait(.1).mark('hush0'); tr
       .go([1104, 26], 34, { T: .34 }).wait(.5);

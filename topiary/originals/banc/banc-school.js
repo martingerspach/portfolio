@@ -413,12 +413,15 @@ export function createSchool(canvas) {
   }
 
   /* ---------- maillage ---------- */
+  const bb = [0, 0, 0, 0];                    // boîte des poissons (px CSS), pour le ciseau sous 900 px
   function build() {
     let n = 0;
     const kx = fw / (W || 1), ky = fh / (H || 1);
     let cx2 = 1, sx2 = 0;
+    bb[0] = bb[1] = Infinity; bb[2] = bb[3] = -Infinity;
     const push = (x, y, v, s, ink, kind) => {
       if (n + STRIDE > verts.length) { const nv = new Float32Array(verts.length * 2); nv.set(verts); verts = nv; }
+      if (x < bb[0]) bb[0] = x; if (x > bb[2]) bb[2] = x; if (y < bb[1]) bb[1] = y; if (y > bb[3]) bb[3] = y;
       verts[n++] = x * kx; verts[n++] = y * ky; verts[n++] = v; verts[n++] = s; verts[n++] = ink; verts[n++] = kind; verts[n++] = cx2; verts[n++] = sx2;
     };
     for (const f of fish) {
@@ -526,9 +529,20 @@ export function createSchool(canvas) {
     });
     gl.uniform4fv(uG.uR, R); gl.uniform2fv(uG.uRL, RL); gl.uniform1f(uG.uRn, rs.length);
     gl.uniform3fv(uG.uC0, C0); gl.uniform3fv(uG.uC1, C1); gl.uniform3fv(uG.uC2, C2);
+    // au téléphone (et couché, sous 900 px), la passe des caractères ne couvre que la boîte des poissons (3 cases de marge) :
+    // hors de la boîte, le champ est vide et la passe ne posait que des pixels transparents (image identique)
+    const cut = W < 900 && count > 0;
+    if (cut) {
+      const k = cellDev / 4, pad = 3 * cellDev;
+      const x0 = Math.max(0, Math.floor(bb[0] * fw / W * k) - pad), x1 = Math.min(canvas.width, Math.ceil(bb[2] * fw / W * k) + pad);
+      const y0 = Math.max(0, Math.floor(bb[1] * fh / H * k) - pad), y1 = Math.min(canvas.height, Math.ceil(bb[3] * fh / H * k) + pad);
+      gl.enable(gl.SCISSOR_TEST);
+      gl.scissor(x0, canvas.height - y1, Math.max(0, x1 - x0), Math.max(0, y1 - y0));
+    }
     gl.bindVertexArray(vaoQ);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindVertexArray(null);
+    if (cut) gl.disable(gl.SCISSOR_TEST);
   }
 
   /* ---------- ce que la démo commande ---------- */

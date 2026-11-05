@@ -568,6 +568,7 @@ ol, ul { padding: 0; list-style: none; }
   .hero-copy { padding-top: 22px; }
   .hero-stage { width: 190%; }
   .hero-view::after { content: ""; position: absolute; inset: auto 0 0; height: 44px; z-index: 5; pointer-events: none; background: linear-gradient(rgba(6, 16, 25, 0), var(--night)); }
+  .hero .agents { z-index: 6; }   /* the agents' cursors and bubbles are interface: the photo fades under them, not they */
   .canvas { grid-template-columns: 1fr; }
   .frame--b { margin-top: 0; }
   .files { gap: 6px; padding: 14px 12px; }
@@ -586,6 +587,29 @@ ol, ul { padding: 0; list-style: none; }
   .lg i::before, .lg i::after { display: none; } .lg i:nth-child(3n+2)::before, .lg i:nth-child(13)::after { display: block; }
 }
 @media (max-width: 380px) { .top-nav a { padding: 7px 4px; } }
+/* phone: the header links keep their drawn size, their touch area reaches 44 px in height (unseen) */
+@media (max-width: 699px) {
+  .top-nav a::after, .top-logo::after { content: ""; position: absolute; inset: -5px -2px; }
+  .top-logo::after { inset: -11px -6px; }
+}
+/* touch screens: a tap leaves :hover stuck on what was tapped; the hover selection is kept for pointers, a press
+   still pulls the frame in, focus from a keyboard still shows */
+@media (hover: none) {
+  .sel:hover:not(:focus-visible):not(:has(:focus-visible)):not(.is-current) { outline-color: transparent; }
+  .sel:hover:not(:focus-visible):not(:has(:focus-visible)) > i { opacity: 0; --hs: .4; }
+  .sel:hover::before { animation: none; opacity: 0; }
+  .btn.sel:hover:not(:focus-visible)::after { opacity: 0; }
+  .btn--ink:hover { background: var(--ink); } .btn--paper:hover, .top:not(.is-solid) .top-cta:hover { background: var(--paper); }
+  .file:hover:not(:has(input:checked)) { background: none; }
+}
+/* narrow phone: the export window stacks its preview over the format and size, and the file name keeps one line */
+@media (max-width: 420px) {
+  .export-bar { flex-wrap: wrap; gap: 4px 12px; padding: 14px 16px; }
+  .export-file { white-space: nowrap; }
+  .export-body { grid-template-columns: 1fr; gap: 10px; padding: 16px; }
+  .export-check { margin: 16px 16px 0; }
+  .export-actions { padding: 16px 16px 0; }
+}
 /* under 360 px the billboard is 140 px tall: no bubble fits without covering what the agent fixed; names only */
 @media (max-width: 359px) { .hero .msg { display: none; } }
 @media (max-width: 699px) and (max-height: 700px) { .hero-view { height: calc(70vw + var(--top)); } .hero-copy { padding-top: 18px; } .lede { margin-top: 12px; } .actions { margin-top: 18px; } }

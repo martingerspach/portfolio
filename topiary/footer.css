@@ -91,14 +91,31 @@
      l'orbite des réseaux dessous. */
   .pied { padding-top: 56px; }
   .pied__grid, .pied__left, .pied__foot { display: contents; }
-  .pied { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; }
+  /* Les renvois gardent leur largeur (« Ce que nous faisons » passait à la ligne sous 390 px) ; les aplats prennent
+     le reste, 132 px au plus */
+  .pied { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 16px; }
   .pied__call, .pied__mail { grid-column: 1 / -1; }
   .pied__call { margin-bottom: 32px; }
   .pied__mail { margin-bottom: 36px; }
   .pied__nav { grid-column: 1; grid-row: 3; align-self: start; }
-  .pied__art { grid-column: 2; grid-row: 3; width: 132px; justify-self: end; align-self: start; margin-top: 6px; }
+  .pied__art { grid-column: 2; grid-row: 3; width: min(100%, 132px); justify-self: end; align-self: start; margin-top: 6px; }
   .pied__orbite { grid-column: 1 / -1; grid-row: 4; margin-top: 8px; }
   .pied__base { grid-column: 1 / -1; margin-top: 28px; }
+}
+/* Écrans tactiles étroits : cibles au doigt de 44 px de haut (30 px avant) ; renvois et mentions s'espacent,
+   l'adresse garde sa place */
+@media (max-width: 599px), (max-width: 959px) and (pointer: coarse) {
+  .pied__nav, .pied__list { gap: 0; }
+  .pied__nav { margin-top: -7.5px; }
+  .pied__list .pied__link { padding-block: 9.5px; }
+  .pied__base { padding-block: 12px 20px; }
+  .pied__base .pied__link { padding-block: 10px; }
+  .pied__addr { padding-block: 10px; margin-block: -10px; }
+}
+/* Téléphone à l'horizontale : seuls sous l'appel, les aplats tenaient plus d'un écran ; ils reviennent à sa droite */
+@media (max-width: 959px) and (max-height: 500px) and (orientation: landscape) {
+  .pied__grid { grid-template-columns: minmax(0, 1fr) auto; }
+  .pied__art { justify-self: end; width: 220px; }
 }
 
 @media (forced-colors: active) {

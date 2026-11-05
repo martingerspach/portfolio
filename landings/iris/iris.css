@@ -505,6 +505,28 @@ code, pre { font-family: var(--f-mono); }
   .field input { padding: 0 12px; }
   .field .btn { justify-content: center; }
   .ft-bar { flex-direction: column; align-items: center; }
+  /* 2026-11-05, téléphone : la mention du pied se centre sous le logo quand elle passe sur deux lignes (360 px) */
+  .ft-bar p { text-align: center; text-wrap: balance; }
+}
+/* 2026-11-05, cibles tactiles (téléphone, debout ou couché) : les logos (22 à 25 px de haut) et les boutons de 40 px
+   gagnent une zone de 44 px invisible, sans rien déplacer */
+@media (max-width: 700px), (orientation: landscape) and (max-height: 500px) and (max-width: 1000px) {
+  .top .brand, .ft-bar .brand { padding-block: 11px; margin-block: -11px; }
+  .top .btn--sm::before, .copy::before { content: ""; position: absolute; left: 0; right: 0; top: -2px; bottom: -2px; }
+}
+@media (max-width: 480px) { .copy { position: relative; } }
+/* sous 370 px, le compte du rejeu passait sur trois lignes (« refunds / in run / 8f2c ») : les deux comptes s'empilent */
+@media (max-width: 369px) {
+  .tally { flex-direction: column; gap: 6px; }
+}
+/* téléphone en paysage : le héros (560 px au moins) coupait le titre au bas du premier écran. Il tient dans la vue :
+   titre plus petit, phrase et bouton côte à côte comme le bloc justifié du bureau */
+@media (orientation: landscape) and (max-height: 500px) and (max-width: 1000px) {
+  .hero { min-height: 0; }
+  .hero-in { padding: calc(var(--hdr) + 4px) var(--m) clamp(18px, 6svh, 32px); }
+  .hero .h1 { --th: clamp(36px, 11svh, 56px); }
+  .hero-foot { width: min(100%, 680px); grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 28px; margin-top: 18px; text-align: left; }
+  .hero-foot p { max-width: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

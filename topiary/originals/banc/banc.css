@@ -546,7 +546,7 @@ h2 { margin: 0; font: 250 var(--t-section)/1.02 var(--sans-thin); letter-spacing
     top: max(12px, env(safe-area-inset-top, 0px)); left: var(--gutter);
   }
   .logo--page .logo-word { font-size: 22px; }
-  .pause { top: max(14px, env(safe-area-inset-top, 0px)); bottom: auto; padding: 0 12px; }
+  .pause { top: max(12px, env(safe-area-inset-top, 0px)); bottom: auto; padding: 0 12px; }
   .pause-long { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .pause-short { display: inline; }
   /* au téléphone, le banc a son étang au-dessus de la question */
@@ -575,6 +575,18 @@ h2 { margin: 0; font: 250 var(--t-section)/1.02 var(--sans-thin); letter-spacing
   .foot-line { grid-template-columns: minmax(0, 1fr); gap: var(--s-2); }
   .foot-note { text-align: left; }
   .foot-note:empty { display: none; }
+  .examples button { min-height: 44px; }
+}
+/* au doigt (téléphone, et téléphone couché ou petite tablette) : 44 px pour chaque commande ;
+   les renvois gardent leur dessin, leur zone de toucher déborde */
+@media (max-width: 600px), (pointer: coarse) and (max-width: 899px) {
+  .pause, .foot-col a { min-height: 44px; }
+  .ref--btn, .ref--link { position: relative; }
+  .ref--btn::after, .ref--link::after { content: ""; position: absolute; inset: -6px; z-index: 1; }
+  .ref--link::after { inset: -11px; }
+}
+@media (pointer: coarse) and (min-width: 601px) and (max-width: 899px) {
+  .nav a, .top-cta { min-height: 44px; }
 }
 @media (max-width: 360px) {
   .nav a { gap: 6px; padding: 0 3px; font-size: 15px; }

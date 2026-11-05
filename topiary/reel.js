@@ -77,6 +77,14 @@
   video.addEventListener('play', setBtn);
   video.addEventListener('pause', setBtn);
   setBtn();
+  // Un navigateur peut annoncer l'AV1 sans savoir le décoder (erreur de décodage, film noir) : on repasse au H.264.
+  video.addEventListener('error', () => {
+    const d = reel.dataset;
+    if (!packed || !d.packAv1 || !d.pack || !video.currentSrc.endsWith(d.packAv1)) return;
+    video.src = d.pack;
+    video.load();
+    if (want()) play();
+  });
   // Le film est caché sous le hero tant que celui-ci n'a pas bougé : on le lance quand il se découvre.
   if (hero) {
     // Au téléphone, le hero ne couvre que le haut de l'écran (v4.css) : le film se voit dessous dès l'arrivée.
@@ -807,7 +815,9 @@
   if (reel.dataset.posterPack) {
     const img = new Image();
     img.decoding = 'async';
-    img.onload = () => { if (img.naturalWidth !== W || img.naturalHeight !== 2 * H) return; poster = img; if (!hasFrame) frame(0, true); };
+    // Le canevas se montre dès l'image d'attente : sans lecture automatique (iPhone en mode économie d'énergie,
+    // lecture refusée), le film garde son affiche au lieu d'une capsule noire.
+    img.onload = () => { if (img.naturalWidth !== W || img.naturalHeight !== 2 * H) return; poster = img; if (!hasFrame) { frame(0, true); reel.classList.add('is-gl'); } };
     img.src = reel.dataset.posterPack;
   }
   // Chaque nouvelle image du film (requestVideoFrameCallback donne l'instant exact de l'image présentée).

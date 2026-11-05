@@ -124,6 +124,11 @@ img, canvas, svg { display: block; }
   .mast-prog { display: block; justify-self: end; min-height: 44px; padding: 0 4px; border: 0; background: none; color: inherit; cursor: pointer;
     font: 400 17px/44px var(--f-text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .26em; }
   .mast::after, .mast::before { left: var(--frame); right: var(--frame); }
+  /* touch targets: the wordmark's link as tall as the masthead's other controls (44 px), the programme's close key too */
+  .mast-logo { display: grid; place-items: center; min-height: 44px; }
+  .prog-x { height: 44px; }
+  /* the page stays still behind the open programme (a drag on the dimmed page used to scroll it) */
+  html:has(.prog[open]) { overflow: hidden; }
 }
 
 /* The programme's contents page, the menu on phones */
@@ -357,7 +362,9 @@ main { display: block; padding-top: var(--mast); }
 /* phones: the stub becomes a narrow strip on the right, so the ticket keeps its height */
 @media (max-width: 640px) {
   /* the picture is as tall as its box here (no room to move it): a shallower lap keeps the whole screen above the ticket */
-  .morning { --lap: clamp(26px, 4.5svh, 40px); --still-min: 0px; }
+  /* the photo keeps a readable height (the screen and Marie's note) even when the ticket and the credits fill the
+     screen: the box office then runs a little past one screen, the ticket still whole under its link */
+  .morning { --lap: clamp(26px, 4.5svh, 40px); --still-min: clamp(150px, 46vw, 200px); }
   .ticket-body { padding: 26px 22px 18px; }
   .ticket-body h2 { font-size: clamp(26px, 7.4vw, 32px); }
   .price { font-size: 16px; }
@@ -374,6 +381,11 @@ main { display: block; padding-top: var(--mast); }
   .credits dl { grid-template-columns: max-content minmax(0, 1fr); column-gap: 14px; width: auto; max-width: 100%; }
   .credits dt, .credits dd { font-size: 16px; line-height: 1.35; }
   .credits-end .link { margin-left: .6em; }
+}
+/* phones and tablets: « Back to top » takes a 44 px tall touch area, without moving the line it sits in */
+@media (max-width: 900px) {
+  .credits-end .link { position: relative; }
+  .credits-end .link::after { content: ""; position: absolute; inset: -13px -8px; }
 }
 @media (max-width: 359px) {
   .mast-logo svg { height: 15px; }
@@ -413,14 +425,15 @@ main { display: block; padding-top: var(--mast); }
   .morning { grid-template-rows: 1fr auto auto; }
   .ticket { align-self: end; }
 }
-/* the smallest phones: the ticket and the credits take the whole screen, the photo steps aside */
-@media (max-width: 640px) and (max-height: 700px) {
-  .still { display: none; }
-  .morning { grid-template-rows: 1fr auto auto; }
-  .ticket { align-self: end; }
-  .ticket-body { padding-top: 16px; padding-bottom: 14px; gap: 8px; }
-  .credits { padding-top: 10px; gap: 4px; }
-  .credits h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* (2026-11-05: short phones no longer hide the photo. That rule, up to 700 px of height, caught every iPhone 13 to 16
+   in Safari (664 px): the photo vanished and left a band of black above the ticket. The phone rule above gives the
+   photo its own height instead.) */
+/* phones held sideways (750 x 342 to 932 x 430): the low-window rule above sets the credits in two rows of two pairs,
+   wider than the screen; back to one column of pairs, the ticket inside the frame again */
+@media (min-width: 641px) and (max-width: 940px) and (max-height: 500px) {
+  .credits dl { grid-template-columns: max-content minmax(0, 1fr); width: auto; max-width: 100%; }
+  .credits dl > div:nth-child(n) dt { grid-column: 1; }
+  .credits dl > div:nth-child(n) dd { grid-column: 2; }
 }
 
 /* ---------- Scroll-linked motion, on the compositor (no class toggles, no transitions to chase) ---------- */

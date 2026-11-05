@@ -45,6 +45,13 @@
   });
   son.addEventListener('click', () => { video.muted = !video.muted; sync(); }); // volumechange arrive une tâche plus tard
   video.addEventListener('ended', () => { wanted = false; });
+  // Un navigateur peut annoncer l'AV1 sans savoir le décoder (film blanc ou noir) : on repasse au H.264, au même instant.
+  video.addEventListener('error', () => {
+    if (!/methode-av1\.mp4$/.test(video.currentSrc)) return;
+    const t = video.currentTime;
+    video.src = 'film/methode.mp4';
+    video.addEventListener('loadedmetadata', () => { if (t) video.currentTime = t; run(); }, { once: true });
+  });
   for (const ev of ['play', 'pause', 'ended', 'volumechange']) video.addEventListener(ev, sync);
 
   // L'en-tête flotte sur le haut du film, où passent la barre du site de Banc et d'autres plans. Comme un lecteur en plein

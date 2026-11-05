@@ -58,10 +58,20 @@
 .mf__frame:fullscreen .mf__video { object-fit: contain; }
 .mf__frame::backdrop { background: var(--night); }
 
-/* Téléphone : le film fait 200 px de haut, les boutons passent à 36 px (la cible minimale est de 24 px) */
+/* Téléphone : le film fait 200 px de haut ; posés dessus, les boutons couvraient ses sous-titres, ses étapes et la fin
+   du logo. Ils passent dessous, à droite, sur le fond blanc, à leur taille pleine (44 px). En plein écran (Android),
+   ils reviennent sur le film. */
 @media (max-width: 599px) {
-  .mf__ctrl { right: 8px; bottom: 8px; gap: 4px; }
-  .mf__btn { width: 36px; min-height: 36px; }
+  .mf__frame { overflow: visible; margin-bottom: 56px; }
+  .mf__video { border-radius: inherit; }
+  .mf__ctrl { top: calc(100% + 12px); right: 0; bottom: auto; }
+  .mf__btn { background: var(--ground); color: var(--ink); border-color: var(--line); }
+  .mf__btn:hover { background: var(--chip); }
+  .mf__btn:focus-visible { outline-color: var(--ink); box-shadow: none; }
+  .mf__frame:fullscreen { margin-bottom: 0; overflow: hidden; }
+  .mf__frame:fullscreen .mf__ctrl { top: auto; right: 20px; bottom: 20px; }
+  .mf__frame:fullscreen .mf__btn { background: var(--night); color: var(--on-night); border-color: color-mix(in oklab, var(--on-night) 35%, var(--night)); }
+  .mf__frame:fullscreen .mf__btn:focus-visible { outline-color: var(--on-night); box-shadow: 0 0 0 6px var(--night); }
 }
 
 /* Écran plus haut que large : le film ne peut pas remplir l'écran sans être coupé ; l'en-tête passe au-dessus de lui */

@@ -1,0 +1,83 @@
+/* Topiary v4.1 : la page Méthode s'ouvre sur son film (methode-film.js).
+   Écran plus large que haut : le film prend toute la hauteur de l'écran, dans une capsule au format exact du film (16:9),
+   donc rien n'est recadré (ses titres d'étape et ses sous-titres sont près des bords) ; l'en-tête flotte dessus en capsule
+   blanche, comme celui de l'accueil après le défilement. Écran plus haut que large : l'en-tête, puis le film sur toute la
+   largeur. */
+.mf-page { position: relative; }
+
+.mf-head {
+  position: absolute; z-index: 3; left: 50%; top: calc(var(--seam) + 12px);
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 28px;
+  padding: 7px 7px 7px 20px;
+  background: var(--ground); border: 1px solid var(--line); border-radius: 12px;
+  transition: opacity .35s var(--ease);
+}
+/* Pendant la lecture, l'en-tête s'efface lentement (methode-film.js) ; le focus clavier le rend visible */
+@media not all and (max-aspect-ratio: 1/1) {
+  .mf-page.is-calme .mf-head:not(:focus-within) { opacity: 0; pointer-events: none; transition-duration: .9s; }
+}
+.mf-head .logo { font-size: 22px; padding-block: 8px; } /* 38 px de haut, comme les liens et le bouton */
+
+.mf {
+  margin: 0;
+  height: calc(100svh - var(--seam)); padding-bottom: var(--seam); box-sizing: border-box;
+  display: grid; place-items: center;
+}
+.mf__frame {
+  position: relative; overflow: hidden; isolation: isolate;
+  width: min(100%, calc((100svh - 2 * var(--seam)) * 16 / 9)); aspect-ratio: 16 / 9;
+  border-radius: var(--r-capsule);
+  background: var(--night); color: var(--on-night);
+}
+.mf__video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
+
+/* Son, lecture et plein écran : boutons de nuit, comme la pause du film de l'accueil */
+.mf__ctrl { position: absolute; z-index: 2; right: 20px; bottom: 20px; display: flex; gap: 8px; }
+.mf__ctrl[hidden] { display: none; }
+.mf__btn {
+  width: 44px; padding: 0;
+  background: var(--night); color: var(--on-night); border-color: color-mix(in oklab, var(--on-night) 35%, var(--night));
+}
+.mf__btn:hover { background: color-mix(in oklab, var(--night) 85%, var(--on-night)); }
+.mf__btn[hidden] { display: none; }
+.mf__btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.mf__btn .i-hp, .mf__btn .i-play { fill: currentColor; stroke-width: 1; }
+.mf__son .i-on, .mf__son.is-on .i-off { display: none; }
+.mf__son.is-on .i-on { display: inline; }
+.mf__lecture .i-play, .mf__lecture .i-revoir { display: none; }
+.mf__lecture.is-paused .i-pause, .mf__lecture.is-ended .i-pause { display: none; }
+.mf__lecture.is-paused .i-play, .mf__lecture.is-ended .i-revoir { display: inline; }
+.mf__plein .i-sortir, .mf__plein.is-on .i-entrer { display: none; }
+.mf__plein.is-on .i-sortir { display: inline; }
+/* Le film passe du noir au papier : un double anneau reste visible sur les deux */
+.mf__btn:focus-visible { outline: 2px solid var(--on-night); outline-offset: 2px; box-shadow: 0 0 0 6px var(--night); }
+
+/* Plein écran : la capsule entière (film et boutons), sans arrondi ; le film entier sur un écran qui n'est pas en 16:9 */
+.mf__frame:fullscreen { width: 100%; height: 100%; aspect-ratio: auto; border-radius: 0; }
+.mf__frame:fullscreen .mf__video { object-fit: contain; }
+.mf__frame::backdrop { background: var(--night); }
+
+/* Téléphone : le film fait 200 px de haut, les boutons passent à 36 px (la cible minimale est de 24 px) */
+@media (max-width: 599px) {
+  .mf__ctrl { right: 8px; bottom: 8px; gap: 4px; }
+  .mf__btn { width: 36px; min-height: 36px; }
+}
+
+/* Écran plus haut que large : le film ne peut pas remplir l'écran sans être coupé ; l'en-tête passe au-dessus de lui */
+@media (max-aspect-ratio: 1/1) {
+  .mf-head {
+    position: static; transform: none;
+    justify-content: space-between;
+    padding: 12px var(--pad) 16px; /* l'en-tête des autres pages, à 16 px de la capsule du film */
+    background: none; border: 0; border-radius: 0;
+  }
+  .mf-head .logo { font-size: 25px; padding-block: 6.5px; } /* le logo des autres pages */
+  .mf { height: auto; }
+  .mf__frame { width: 100%; }
+}
+
+@media (forced-colors: active) {
+  .mf-head { border-color: CanvasText; }
+  .mf__btn { border-color: ButtonText; }
+}

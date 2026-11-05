@@ -1,0 +1,74 @@
+/* Auvent · verre liquide : la matière (lib/verre.js calcule la lentille de chaque pièce).
+   La teinte vient du contexte (.av-jour / .av-nuit) ; le liseré est vectoriel, posé sous le contenu.
+   Grille d'Apple (HIG Materials, WWDC25 « Meet Liquid Glass ») : le verre est réservé à la couche de commandes, jamais
+   au contenu ni posé sur du verre ; une seule lumière ; plus la pièce est grande, plus elle est épaisse. */
+[data-verre] {
+  position: relative;
+  isolation: isolate;
+  background: var(--av-verre-teinte);
+  /* Repli (Safari, Firefox) : flou proportionnel à la pièce (verre.js), saturation et léger éclaircissement, comme le
+     matériau « regular » d'Apple. Chromium remplace par le filtre de réfraction (style en ligne). */
+  -webkit-backdrop-filter: blur(var(--verre-flou-repli, 10px)) saturate(1.8) brightness(1.04);
+  backdrop-filter: blur(var(--verre-flou-repli, 10px)) saturate(1.8) brightness(1.04);
+  box-shadow: 0 18px 48px -22px var(--av-verre-ombre), 0 1px 2px -1px var(--av-verre-ombre);
+}
+/* Le liseré : des ombres intérieures blanches, tracées en vecteur au pixel de l'écran. Elles restent nettes à toutes les
+   densités et calées sur le bord arrondi, même à une position fractionnaire ou pendant un changement de taille. La v11
+   posait une image calculée : Chromium la dessine à la position fractionnaire de la pièce, donc la rééchantillonne
+   (filet flou, plus épais à gauche qu'en haut), et son bord n'était pas lissé (escalier sur les arrondis à 1×).
+   Décalées à l'opposé de la lumière (--av-verre-lumiere : −52°, en haut à gauche), elles font un croissant plus épais face
+   à la lumière ; leur flou fait la traîne. Profil ajusté sur celui de la v11 : filet net et sa traîne, contre-jour, puis
+   la lumière qui entre dans le biseau (--verre-bord, posé par verre.js). */
+[data-verre]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  --verre-lx: cos(calc(var(--av-verre-lumiere, -52) * 1deg));
+  --verre-ly: calc(-1 * sin(calc(var(--av-verre-lumiere, -52) * 1deg)));
+  --verre-b: calc(var(--verre-bord, 12) * 1px);
+  box-shadow:
+    inset calc(var(--verre-lx) * 1.12px) calc(var(--verre-ly) * 1.12px) 0.5px -0.78px rgb(255 255 255 / var(--verre-k, 1)),
+    inset calc(var(--verre-lx) * 1.9px) calc(var(--verre-ly) * 1.9px) 2.42px -1.26px rgb(255 255 255 / var(--verre-k, 1)),
+    inset calc(var(--verre-lx) * -0.97px) calc(var(--verre-ly) * -0.97px) 0.5px -0.8px rgb(255 255 255 / calc(var(--verre-k, 1) * 0.47)),
+    inset calc(var(--verre-lx) * -2.02px) calc(var(--verre-ly) * -2.02px) 2.76px -1.93px rgb(255 255 255 / var(--verre-k, 1)),
+    inset calc(var(--verre-lx) * var(--verre-b) * 0.66) calc(var(--verre-ly) * var(--verre-b) * 0.66) calc(var(--verre-b) * 0.58) calc(var(--verre-b) * -0.24) rgb(255 255 255 / calc(var(--verre-k, 1) * 0.11)),
+    inset calc(var(--verre-lx) * var(--verre-b) * -0.66) calc(var(--verre-ly) * var(--verre-b) * -0.66) calc(var(--verre-b) * 0.19) calc(var(--verre-b) * -0.04) rgb(255 255 255 / calc(var(--verre-k, 1) * 0.03));
+}
+.av-nuit [data-verre], [data-verre].av-nuit { --verre-k: 0.9; }
+/* La lumière suit le pointeur : un halo doux sous le contenu, au-dessus du liseré */
+[data-verre]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  /* rendu final (2026-10-24, demande de l'utilisateur) : intensité divisée par 2,5 à 3, chute douce en plusieurs paliers,
+     420 ms pour venir et 700 ms pour partir : on sent la lumière, on ne voit pas une tache */
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 0%), var(--verre-lueur, rgb(255 255 255 / 0.045)), color-mix(in srgb, var(--verre-lueur, rgb(255 255 255 / 0.045)), transparent 55%) 24%, transparent 58%);
+  opacity: 0;
+  transition: opacity 700ms cubic-bezier(.2, 0, 0, 1);
+  pointer-events: none;
+}
+[data-verre].verre-survol::after { opacity: 1; transition-duration: 420ms; }
+.av-jour [data-verre], [data-verre].av-jour { --verre-lueur: rgb(255 255 255 / 0.26); }
+/* Transparence réduite : du givre opaque, un liseré (Apple : « frostier », plus de contenu masqué). Prioritaire sur
+   toutes les teintes de pièce, sinon le flou disparaît et la teinte translucide reste (défaut P1-5 de la v10). */
+@media (prefers-reduced-transparency: reduce) {
+  [data-verre], .av-nuit [data-verre], .av-jour [data-verre], [data-verre].av-nuit, [data-verre].av-jour {
+    background: var(--av-surface) !important;
+    -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+    box-shadow: inset 0 0 0 1px var(--av-line-strong), 0 10px 30px -18px var(--av-verre-ombre) !important;
+  }
+  [data-verre]::after { display: none; }
+}
+/* Contraste augmenté : noir ou blanc, et un liseré franc */
+@media (prefers-contrast: more) {
+  [data-verre] { background: var(--av-surface) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; box-shadow: inset 0 0 0 1.5px var(--av-text) !important; }
+}
+@media (forced-colors: active) {
+  [data-verre] { border: 1px solid CanvasText; background: Canvas !important; backdrop-filter: none !important; }
+  [data-verre]::before, [data-verre]::after { display: none; }
+}

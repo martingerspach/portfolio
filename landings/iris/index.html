@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iris</title>
+<meta name="description" content="Iris traces every agent run step by step, and tells you in one sentence why a run failed.">
+<meta name="theme-color" content="#0a0a0b">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%230a0a0b'/%3E%3Cpath fill='%23f2f2ee' d='M9 0.566V15.434C8.673 15.478 8.339 15.5 8 15.5C3.858 15.5 0.5 12.142 0.5 8C0.5 3.858 3.858 0.5 8 0.5C8.339 0.5 8.673 0.522 9 0.566ZM15.5 8C15.5 10.672 14.103 13.017 12 14.345V1.655C14.103 2.983 15.5 5.328 15.5 8ZM11 1.124V14.876C10.678 15.017 10.344 15.135 10 15.23V0.77C10.344 0.865 10.678 0.983 11 1.124Z'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/atkinson-mono.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="iris.css">
+<script>
+(function () {
+  var d = document.documentElement;
+  d.classList.add('js', 'fonts-wait');
+  var done = function () { d.classList.remove('fonts-wait'); };
+  setTimeout(done, 1200);
+  if (document.fonts && document.fonts.load) {
+    Promise.all([document.fonts.load('300 80px "Archivo Iris"'), document.fonts.load('400 18px "Archivo Iris"')]).then(done, done);
+  } else { done(); }
+})();
+</script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+<symbol id="logo" viewBox="0 0 110.4 40"><path d="M0.000 20.000A20 20 0 0 1 22.350 0.139L22.350 39.861A20 20 0 0 1 0.000 20.000ZM24.450 0.501A20 20 0 0 1 27.150 1.322L27.150 38.678A20 20 0 0 1 24.450 39.499ZM29.250 2.268A20 20 0 0 1 40.000 20.000A20 20 0 0 1 29.250 37.732Z"/><path transform="translate(52.00 -1.348) scale(0.0498)" d="M58.0 760.0L58.0 233.6L161.7 233.6L161.7 760.0Z M77.7 36.6h64.3v165.2h-64.3Z M270.0 760.0L270.0 233.6L355.9 233.6L364.1 312.3L369.8 312.3Q379.2 285.9 392.8 265.7Q406.5 245.5 426.5 233.6Q446.5 221.6 473.5 221.6Q485.5 221.6 495.7 223.7Q505.8 225.7 512.5 228.5L512.5 331.6L477.8 331.6Q452.8 331.6 433.4 340.3Q414.0 349.1 400.5 366.9Q387.0 384.7 380.3 411.6Q373.7 438.6 373.7 474.6L373.7 760.0Z M568.0 760.0L568.0 233.6L671.7 233.6L671.7 760.0Z M587.7 36.6h64.3v165.2h-64.3Z M944.7 772.0Q893.9 772.0 857.5 760.4Q821.1 748.8 797.8 727.6Q774.5 706.5 763.3 677.7Q752.2 648.9 752.2 614.3Q752.2 609.3 752.6 604.1Q753.1 598.8 753.6 594.7L852.7 594.7Q852.2 599.1 852.2 602.7Q852.2 606.4 852.2 610.3Q852.7 637.1 864.7 654.9Q876.7 672.8 898.3 681.4Q919.8 690.1 946.7 690.1Q972.7 690.1 992.7 682.4Q1012.7 674.8 1024.4 659.1Q1036.1 643.4 1036.1 619.8Q1036.1 591.9 1019.3 576.3Q1002.5 560.7 975.5 550.7Q948.5 540.7 917.9 530.5Q890.4 521.4 863.0 510.2Q835.5 499.0 813.2 481.7Q790.8 464.4 777.2 437.9Q763.5 411.3 763.5 371.5Q763.5 334.5 777.4 306.7Q791.3 278.9 816.4 260.0Q841.5 241.1 875.8 231.6Q910.1 222.1 950.6 222.1Q992.2 222.1 1025.0 231.7Q1057.8 241.3 1080.9 259.4Q1104.1 277.4 1116.3 302.7Q1128.5 327.9 1128.5 358.9Q1128.5 366.0 1128.0 373.8Q1127.6 381.6 1127.1 385.9L1028.9 385.9L1028.9 370.0Q1028.9 348.9 1019.5 334.4Q1010.1 319.9 992.1 311.7Q974.0 303.5 946.7 303.5Q926.3 303.5 911.0 308.1Q895.6 312.7 885.6 321.0Q875.7 329.3 870.7 340.1Q865.8 351.0 865.8 364.5Q865.8 387.1 879.7 400.6Q893.6 414.1 916.7 423.1Q939.8 432.0 966.5 441.4Q995.9 451.1 1026.6 462.0Q1057.2 473.0 1083.3 489.6Q1109.3 506.3 1125.2 534.0Q1141.2 561.6 1141.2 606.1Q1141.2 650.1 1126.5 681.7Q1111.9 713.3 1085.5 733.1Q1059.1 753.0 1023.3 762.5Q987.5 772.0 944.7 772.0Z"/></symbol>
+<symbol id="i-arrow-r" viewBox="0 0 16 16"><path d="M1.5 8h12M9.2 3.7 13.5 8l-4.3 4.3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-arrow-d" viewBox="0 0 16 16"><path d="M8 1.5v12M3.7 9.2 8 13.5l4.3-4.3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-pause" viewBox="0 0 16 16"><path d="M5.2 3.2v9.6M10.8 3.2v9.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+<symbol id="i-play" viewBox="0 0 16 16"><path d="M5 3.1v9.8a.5.5 0 0 0 .76.43l7.7-4.9a.5.5 0 0 0 0-.86l-7.7-4.9A.5.5 0 0 0 5 3.1Z" fill="currentColor"/></symbol>
+<symbol id="i-copy" viewBox="0 0 16 16"><path d="M5.5 5.5V3.6c0-.9.7-1.6 1.6-1.6h5.3c.9 0 1.6.7 1.6 1.6v5.3c0 .9-.7 1.6-1.6 1.6h-1.9M3.6 5.5h5.3c.9 0 1.6.7 1.6 1.6v5.3c0 .9-.7 1.6-1.6 1.6H3.6c-.9 0-1.6-.7-1.6-1.6V7.1c0-.9.7-1.6 1.6-1.6Z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+<symbol id="i-replay" viewBox="0 0 16 16"><path d="M3.2 8a4.8 4.8 0 1 0 1.5-3.5M2.6 2.4v2.9h2.9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+<div class="lumiere" aria-hidden="true"></div>
+<a class="skip" href="#read">Skip to the demo</a>
+
+<header class="top">
+  <div class="bar" data-glass="edge:28 p:2 amp:0.4 spread:0.1 frost:2.4 sat:1.25">
+    <a class="brand" href="#top" aria-label="Iris, back to top"><svg viewBox="0 0 110.4 40" aria-hidden="true"><use href="#logo"/></svg></a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#read">Read a run</a>
+      <a href="#replay">Replay</a>
+      <a href="#setup">Setup</a>
+      <span class="nav-mark" aria-hidden="true"></span>
+    </nav>
+    <a class="btn btn--light btn--sm" href="#start" data-focus="#email">Start tracing<svg aria-hidden="true"><use href="#i-arrow-r"/></svg></a>
+  </div>
+</header>
+
+<main>
+  <section class="hero" id="top" aria-labelledby="h1">
+    <div class="hero-in">
+      <h1 class="display h1" id="h1">Every agent run, split into its steps.</h1>
+      <div class="hero-foot">
+        <p>Iris records each model call and tool call with its time and cost. When a run fails, it tells you why in one sentence.</p>
+        <div class="cta">
+          <a class="btn btn--glass" href="#read" data-glass="edge:14 force:1 frost:1.6 sat:1.3">Watch a run<svg aria-hidden="true"><use href="#i-arrow-d"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec read" id="read" aria-labelledby="h-read">
+    <div class="sec-head">
+      <h2 class="display h2" id="h-read">Read a run, step by step.</h2>
+      <p class="lead">Each row is a step, drawn as long as it took. <span class="k-model">Blue</span> calls a model, <span class="k-read">green</span> reads, <span class="k-write">amber</span> writes.</p>
+    </div>
+    <figure class="film" data-film="read">
+      <div class="film-stage" aria-hidden="true"></div>
+      <p class="answer" aria-live="polite"><span class="as">Run 8f2c failed.</span> <span class="as"><code>refund_order</code> timed out after the refund had gone through, so the retry refunded it a&nbsp;second time.</span> <span class="as">Make the tool idempotent.</span></p>
+      <div class="film-bar">
+        <fieldset class="seg" data-glass="edge:12 force:1 frost:1.2 sat:1.3">
+          <legend class="vh">Choose a run</legend>
+          <span class="seg-thumb" aria-hidden="true"></span>
+          <label><input type="radio" name="run" value="8f2c" checked><span>Refund</span><small>8f2c</small></label>
+          <label><input type="radio" name="run" value="c05e"><span><span class="sl">Stock check</span><span class="ss" aria-hidden="true">Stock</span></span><small>c05e</small></label>
+          <label><input type="radio" name="run" value="31a7"><span><span class="sl">Address change</span><span class="ss" aria-hidden="true">Address</span></span><small>31a7</small></label>
+        </fieldset>
+        <button class="ctl" type="button" data-glass="edge:12 force:1 frost:1.2 sat:1.3" aria-label="Pause the demo"><svg aria-hidden="true"><use href="#i-pause"/></svg></button>
+      </div>
+    </figure>
+  </section>
+
+  <section class="sec replay" id="replay" aria-labelledby="h-replay">
+    <div class="sec-head">
+      <h2 class="display h2" id="h-replay">Replay it with the fix.</h2>
+      <p class="lead">Iris reruns 8f2c from the same input, with the tool made idempotent. The timeout still happens, and the retry refunds nothing.</p>
+    </div>
+    <figure class="film" data-film="replay">
+      <div class="film-stage" aria-hidden="true"></div>
+      <div class="film-bar">
+        <div class="tally">
+          <p><span class="n">2</span><span class="t">refunds in run <b>8f2c</b></span></p>
+          <p><span class="n">1</span><span class="t">refund in the replay</span></p>
+        </div>
+        <button class="ctl" type="button" data-glass="edge:12 force:1 frost:1.2 sat:1.3" aria-label="Pause the replay"><svg aria-hidden="true"><use href="#i-pause"/></svg></button>
+      </div>
+    </figure>
+  </section>
+
+  <section class="sec paper" id="setup" aria-labelledby="h-setup">
+    <div class="cx cx-t" aria-hidden="true"></div>
+    <div class="cx cx-l cx-t" aria-hidden="true"><svg viewBox="0 0 1000 100" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="lz-t" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1000" y2="0"><stop offset="0" stop-color="rgb(124 150 255)"/><stop offset="0.16" stop-color="rgb(124 150 255)"/><stop offset="0.5" stop-color="#f6f6f2"/><stop offset="0.84" stop-color="rgb(255 166 84)"/><stop offset="1" stop-color="rgb(255 166 84)"/></linearGradient></defs><path d="M0 100Q500 -100 1000 100" fill="none" stroke="url(#lz-t)" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg></div>
+    <div class="paper-in">
+      <div class="paper-head">
+        <h2 class="display h2" id="h-setup">Two lines in your agent.</h2>
+        <p class="lead">Iris reads OpenTelemetry, so any agent framework that emits spans works with it.</p>
+      </div>
+      <div class="code-plate">
+<pre class="code"><code><span class="k">import</span> iris
+iris.trace(agent)</code></pre>
+        <button class="copy" type="button" data-copy="import iris&#10;iris.trace(agent)"><svg aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-l">Copy</span></button>
+        <p class="vh" role="status" aria-live="polite"></p>
+      </div>
+      <figure class="flow" aria-hidden="true"><svg></svg></figure>
+    </div>
+    <div class="cx cx-b" aria-hidden="true"></div>
+    <div class="cx cx-l cx-b" aria-hidden="true"><svg viewBox="0 0 1000 100" preserveAspectRatio="none" focusable="false"><defs><linearGradient id="lz-b" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1000" y2="0"><stop offset="0" stop-color="rgb(124 150 255)"/><stop offset="0.16" stop-color="rgb(124 150 255)"/><stop offset="0.5" stop-color="#f6f6f2"/><stop offset="0.84" stop-color="rgb(255 166 84)"/><stop offset="1" stop-color="rgb(255 166 84)"/></linearGradient></defs><path d="M0 0Q500 200 1000 0" fill="none" stroke="url(#lz-b)" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg></div>
+  </section>
+
+</main>
+
+<footer class="ft" id="start" aria-labelledby="h-start">
+  <div class="ft-bg" aria-hidden="true"></div>
+  <div class="ft-in">
+    <div class="ft-cta">
+      <h2 class="display h2" id="h-start">Free for 50,000 steps a month.</h2>
+      <p class="lead">Then $8 for every 100,000 steps. Traces are kept for 30 days.</p>
+      <form class="signup" novalidate>
+        <div class="signup-row"><label for="email">Work email</label><span>No card needed.</span></div>
+        <div class="field" data-glass="edge:16 force:1.1 frost:0.5 sat:1.4">
+          <input id="email" name="email" type="email" autocomplete="email" placeholder="you@company.com" required>
+          <button class="btn btn--light" type="submit">Start tracing<svg aria-hidden="true"><use href="#i-arrow-r"/></svg></button>
+        </div>
+        <p class="form-msg" role="status"></p>
+      </form>
+    </div>
+    <div class="ft-bar">
+      <a class="brand" href="#top" aria-label="Iris, back to top"><svg viewBox="0 0 110.4 40" aria-hidden="true"><use href="#logo"/></svg></a>
+      <p>A fictional product, designed by Martin&nbsp;Gerspach.</p>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="iris.js"></script>
+</body>
+</html>

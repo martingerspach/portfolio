@@ -1,0 +1,97 @@
+/* Topiary v4.1, « Projets choisis » : quatre capsules côte à côte (croquis de l'utilisateur, 2026-10-29). Dans chacune,
+   le premier écran du site du projet ; dessous, le logo de la marque, dans sa police et ses couleurs. Le tout est un
+   seul lien vers la landing. Pas de texte de description pour le moment.
+   Les capsules et les logos apparaissent avec la landing (reveal.js). Au survol, l'image avance à peine, lentement ;
+   rien ne dépend du survol. Le carrousel qui précédait est dans archive/2026-10-29-carrousel/. */
+.pj { padding-block: clamp(56px, 6.5vw, 112px); }
+
+.pj__grid {
+  list-style: none; margin: 0 auto; padding: 0;
+  max-width: 1240px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 40px 16px;
+}
+@media (min-width: 900px) {
+  .pj__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: clamp(16px, 2.2vw, 32px); }
+}
+.pj__item { min-width: 0; }
+
+.pj__link {
+  display: grid; gap: 18px;
+  color: inherit; text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.pj__link:focus-visible { outline: none; }
+
+/* ---------- La capsule : une image 3:4, le hero de la landing en fenêtre 900 x 1200 ---------- */
+.pj__cap {
+  position: relative; display: block;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--r-capsule);
+  overflow: hidden;
+  background: var(--chip);
+  isolation: isolate;
+}
+/* Un filet à peine marqué : Banc et Quart ont le papier presque exact de la section */
+.pj__cap::after {
+  content: ""; position: absolute; inset: 0; z-index: 1;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ink) 9%, transparent);
+  pointer-events: none;
+}
+.pj__cap img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; max-width: none;
+  object-fit: cover; object-position: 50% 0;
+  display: block;
+  transform-origin: 50% 30%;
+  transition: transform 1.4s var(--ease);
+}
+.pj__link:focus-visible .pj__cap { outline: 2px solid var(--ink); outline-offset: 4px; }
+
+/* ---------- Le nom : le logo de la marque, et une flèche qui dit que l'on part sur son site ---------- */
+.pj__name {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 40px;
+  padding-inline: 4px 2px;
+}
+.pj__logo {
+  --logo-k: 1;
+  display: block; flex: none;
+  height: calc(var(--logo-h) * var(--logo-k) * 1px);
+  width: calc(var(--logo-h) * var(--logo-k) * var(--ar) * 1px);
+  max-width: calc(100% - 28px);
+  overflow: visible;
+}
+.pj__go {
+  flex: none; width: 16px; height: 16px;
+  fill: none; stroke: var(--ink-2); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+  transition: transform .7s var(--ease), stroke .7s var(--ease);
+}
+@media (max-width: 899px) {
+  .pj__logo { --logo-k: .84; }
+  .pj__link { gap: 14px; }
+}
+@media (max-width: 380px) {
+  .pj__logo { --logo-k: .74; }
+}
+
+/* ---------- Survol : l'image avance de 3 %, la flèche se lève ; mouvements réduits : la flèche fonce seulement ---------- */
+@media (hover: hover) {
+  .pj__link:hover .pj__go { stroke: var(--ink); }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .pj__link:hover .pj__cap img { transform: scale(1.03); }
+  .pj__link:hover .pj__go { transform: translate(2px, -2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pj__cap img, .pj__go { transition: none; }
+}
+@media (forced-colors: active) {
+  .pj__cap::after { box-shadow: none; border: 1px solid CanvasText; }
+  .pj__go { stroke: CanvasText; }
+  /* Les couleurs des marques sont écrites dans les tracés : en contraste forcé, elles prennent la couleur du texte */
+  .pj__logo [fill]:not([fill="none"]) { fill: CanvasText; }
+  .pj__logo [stroke]:not([stroke="none"]) { stroke: CanvasText; }
+}

@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="fr" class="q-load">
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quart</title>
+<meta name="description" content="Quart donne à chaque agent de code (Claude Code, Codex, Aider) sa propre machine, isolée. Vous confiez des tâches le soir, les PR vous attendent au matin.">
+<meta name="theme-color" content="#F4F3EE">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fragment+Mono&family=Hanken+Grotesk:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="quart.css">
+<script src="quart.js" defer></script>
+</head>
+<body>
+<svg class="sr-defs" aria-hidden="true" focusable="false"><defs><pattern id="hatch-p" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#ECEAE3"/><path d="M0 0V5" stroke="#8E9088" stroke-width=".6"/></pattern><pattern id="hatch-q" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#E2E0D8"/><path d="M0 0V5" stroke="#8E9088" stroke-width=".6"/></pattern><pattern id="hatch-s" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#FBFAF7"/><path d="M0 0V4" stroke="#55574F" stroke-width=".7"/></pattern><pattern id="hatch-n" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#1A1B18"/><path d="M0 0V5" stroke="#9A9C94" stroke-width=".75"/></pattern></defs><symbol id="q-mark" viewBox="-10.53 -12.00 21.05 24.00"><path d="M0.00 -11.00L9.53 -5.50L9.53 0.00L0.00 0.00Z" fill="var(--c-accent)"/><path d="M0.00 -11.00L9.53 -5.50L9.53 5.50L0.00 11.00L-9.53 5.50L-9.53 -5.50Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol><symbol id="q-logo" viewBox="0.00 -12.00 73.85 24.00"><g transform="translate(10.53 0)"><path d="M0.00 -11.00L9.53 -5.50L9.53 0.00L0.00 0.00Z" fill="var(--c-accent)"/><path d="M0.00 -11.00L9.53 -5.50L9.53 5.50L0.00 11.00L-9.53 5.50L-9.53 -5.50Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></g><path transform="translate(27.25 5.00)" d="M7.32 4.14H8.38L9.57 3.45V-10H7.32V-8.66Q7.23 -8.81 7.12 -8.95Q6.59 -9.59 5.88 -9.89Q5.17 -10.18 4.36 -10.18Q3.02 -10.18 2.04 -9.5Q1.05 -8.82 0.53 -7.65Q0 -6.47 0 -4.99Q0 -3.39 0.58 -2.22Q1.16 -1.05 2.15 -0.44Q3.14 0.18 4.36 0.18Q5.21 0.18 5.93 -0.14Q6.65 -0.47 7.15 -1.12Q7.24 -1.23 7.32 -1.36ZM32.6 0H34.85V-4.42Q34.85 -5.23 34.9 -5.69Q34.95 -6.15 35.05 -6.43Q35.21 -6.96 35.54 -7.29Q35.86 -7.63 36.28 -7.79Q36.69 -7.95 37.12 -7.95Q37.44 -7.95 37.8 -7.86Q38.15 -7.77 38.38 -7.63L39.19 -9.13V-8.26H41.1V-2.8Q41.1 -1.72 41.48 -1.06Q41.87 -0.41 42.53 -0.11Q43.18 0.18 43.94 0.18Q44.36 0.18 44.78 0.11Q45.19 0.04 45.6 -0.1V-1.85Q45.29 -1.76 45.02 -1.71Q44.75 -1.66 44.54 -1.66Q43.87 -1.66 43.62 -2.12Q43.37 -2.58 43.37 -3.43V-8.26H45.6V-10H43.37V-13.69L41.1 -12.43V-10H39.19V-9.81Q38.85 -9.98 38.54 -10.06Q38.09 -10.18 37.61 -10.18Q36.92 -10.18 36.22 -9.81Q35.52 -9.43 35.03 -8.77Q34.94 -8.65 34.87 -8.53V-10H32.6ZM28.66 0H30.73V-6.31Q30.73 -8.13 29.6 -9.16Q28.48 -10.18 26.45 -10.18Q25.15 -10.18 24.06 -9.79Q22.96 -9.39 21.99 -8.48L23.25 -7Q23.89 -7.65 24.68 -7.96Q25.46 -8.28 26.27 -8.28Q27.32 -8.28 27.91 -7.78Q28.5 -7.28 28.5 -6.31V-6.02H25.54Q24.83 -6.02 24.18 -5.89Q23.53 -5.76 23.04 -5.46Q22.47 -5.11 22.12 -4.5Q21.76 -3.89 21.76 -3.06Q21.76 -2.09 22.24 -1.36Q22.72 -0.63 23.58 -0.22Q24.44 0.18 25.56 0.18Q26.43 0.18 27.16 -0.17Q27.89 -0.53 28.42 -1.25Q28.47 -1.32 28.53 -1.4ZM15.07 0.18Q16.19 0.18 17.07 -0.34Q17.64 -0.68 18.03 -1.28V0H20.28V-10H18.03V-5.7Q18.03 -4.46 17.82 -3.58Q17.61 -2.7 17.11 -2.24Q16.61 -1.78 15.74 -1.78Q14.99 -1.78 14.55 -2.09Q14.12 -2.39 13.92 -2.97Q13.73 -3.55 13.73 -4.34V-10H11.48V-3.73Q11.48 -2.49 11.89 -1.62Q12.29 -0.75 13.09 -0.28Q13.89 0.18 15.07 0.18ZM4.91 -1.87Q4.12 -1.87 3.52 -2.25Q2.92 -2.64 2.59 -3.35Q2.25 -4.06 2.25 -4.99Q2.25 -5.92 2.59 -6.63Q2.92 -7.34 3.52 -7.73Q4.12 -8.11 4.91 -8.11Q5.7 -8.11 6.29 -7.73Q6.88 -7.34 7.2 -6.63Q7.53 -5.92 7.53 -4.99Q7.53 -4.06 7.2 -3.36Q6.88 -2.66 6.29 -2.26Q5.7 -1.87 4.91 -1.87ZM28.5 -4.34V-4.14Q28.5 -3.43 28.13 -2.86Q27.77 -2.29 27.17 -1.97Q26.57 -1.64 25.84 -1.64Q25.01 -1.64 24.51 -2.02Q24.02 -2.39 24.02 -3.04Q24.02 -3.37 24.15 -3.61Q24.28 -3.85 24.48 -4.02Q24.77 -4.2 25.13 -4.27Q25.5 -4.34 25.86 -4.34Z" fill="currentColor"/></symbol></svg>
+<a class="skip" href="#contenu">Aller au contenu</a>
+
+<header class="tete" id="tete">
+  <div class="tete__in">
+    <a class="tete__marque" href="#top" aria-label="Quart, haut de page">
+      <svg class="logo" viewBox="0 0 73.85 24" aria-hidden="true" focusable="false"><use href="#q-logo"/></svg>
+    </a>
+    <nav class="tete__nav" aria-label="Sections de la page">
+      <a class="lien-nav" href="#nuit">Démo</a>
+      <a class="lien-nav" href="#machine">Fonctionnement</a>
+      <a class="lien-nav" href="#tarif">Tarif</a>
+    </nav>
+    <a class="btn btn--small tete__cta" href="#acces">Recevoir l’accès</a>
+    <button class="tete__menu" id="menu-btn" type="button" aria-expanded="false" aria-controls="menu">
+      <span>Menu</span>
+      <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M3 7.5h14M3 12.5h14"/></svg>
+    </button>
+  </div>
+</header>
+
+<dialog class="menu" id="menu" aria-label="Menu">
+  <div class="menu__top">
+    <svg class="logo" viewBox="0 0 73.85 24" aria-hidden="true" focusable="false"><use href="#q-logo"/></svg>
+    <button class="menu__close" id="menu-close" type="button">
+      <span>Fermer</span>
+      <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M5 5l10 10M15 5 5 15"/></svg>
+    </button>
+  </div>
+  <nav class="menu__nav" aria-label="Sections de la page">
+    <a href="#nuit"><span class="menu__n" aria-hidden="true">1</span>Démo</a>
+    <a href="#machine"><span class="menu__n" aria-hidden="true">2</span>Fonctionnement</a>
+    <a href="#tarif"><span class="menu__n" aria-hidden="true">3</span>Tarif</a>
+  </nav>
+  <a class="btn menu__cta" href="#acces">Recevoir l’accès</a>
+  <div class="menu__plan plan" id="plan-menu" aria-hidden="true"></div>
+  <p class="menu__note">Marque fictive, conçue par Topiary.</p>
+</dialog>
+
+<main id="contenu">
+
+<section class="hero" id="top" aria-labelledby="hero-titre">
+  <h1 id="hero-titre"><span>Vos agents codent la&nbsp;nuit.</span> <span class="tone">Vous relisez au&nbsp;matin.</span></h1>
+  <div class="hero__copy">
+    <p class="lead">Quart donne à chaque agent sa propre machine, isolée, allumée tant qu’il travaille. Vos clés restent dans votre coffre : chaque machine les emprunte le temps de sa tâche.</p>
+    <div class="hero__actions">
+      <a class="btn btn--line" href="#nuit">Voir une nuit de travail</a>
+    </div>
+  </div>
+  <figure class="hero__plan">
+    <div class="plan" id="plan-hero" aria-hidden="true"></div>
+    <figcaption class="sr">Plan isométrique d’un compte Quart&nbsp;: trois machines sur un socle, dont une en verre où l’agent travaille, en violet. Deux machines ont déjà été effacées et leurs PR attendent devant. Les clés restent dans un coffre.</figcaption>
+  </figure>
+</section>
+
+<section class="nuit" id="nuit" aria-labelledby="nuit-titre">
+  <div class="wrap">
+    <h2 id="nuit-titre" class="sr">Démonstration&nbsp;: une nuit de travail</h2>
+    <p class="nuit__say" id="say" aria-live="polite">Vous confiez quatre tâches. Quatre machines s’allument.</p>
+    <p class="nuit__intro">Avancez l’heure, de 22&nbsp;h à 7&nbsp;h, pour voir vos agents travailler.</p>
+  </div>
+
+  <div class="app-wrap">
+    <div class="app is-compact">
+      <div class="app__bar" aria-hidden="true">
+        <svg class="app__mark" viewBox="0 0 21.05 24" focusable="false"><use href="#q-mark"/></svg>
+        <span class="app__path"><span class="app__repo">acme/boutique</span><span class="app__sep">/</span><span>nuit du 21 octobre</span></span>
+        <span class="app__count" id="app-count">4 machines au travail</span>
+        <span class="app__avatar">CM</span>
+      </div>
+      <div class="app__body">
+        <div class="app__plan plan" id="plan-nuit" aria-hidden="true"></div>
+        <ol class="app__legend" id="legend" aria-hidden="true"></ol>
+        <div class="app__log" aria-hidden="true"><ol class="log__list" id="log-list"></ol></div>
+      </div>
+      <div class="app__foot">
+        <button class="btn-icon" id="play" type="button" aria-label="Mettre la nuit en pause">
+          <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path class="i-pause" d="M6.5 4.5v11M13.5 4.5v11"/><path class="i-play" d="M6.5 4.2 15.5 10l-9 5.8Z"/><path class="i-replay" d="M4.6 10a5.4 5.4 0 1 0 1.6-3.8M4.4 3.6v3.2h3.2"/></svg>
+        </button>
+        <p class="app__clock" id="clock" aria-hidden="true">22 h 00</p>
+        <div class="rule__track" id="rule">
+          <div class="rule__rail" aria-hidden="true"><span class="rule__line"></span><span class="rule__fill"></span></div>
+          <span class="rule__thumb" aria-hidden="true"><span class="rule__knob"></span></span>
+          <span class="rule__tip" aria-hidden="true"><span class="rule__tip-in">22&nbsp;h&nbsp;00</span></span>
+          <div class="rule__hours" id="hours" aria-hidden="true"></div>
+          <input class="rule__input" id="heure" type="range" min="0" max="540" step="1" value="0" aria-label="Heure de la nuit" aria-valuetext="22 h 00">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="machine" id="machine" aria-labelledby="machine-titre">
+  <div class="wrap">
+    <h2 id="machine-titre">Chaque tâche a sa&nbsp;machine.</h2>
+    <div class="eclate" id="eclate">
+      <div class="eclate__plan plan" id="plan-eclate" aria-hidden="true"></div>
+      <ol class="eclate__notes" id="eclate-notes">
+        <li data-k="agent"><span class="eclate__n" aria-hidden="true">1</span><span class="eclate__txt"><strong>L’agent</strong> Claude Code, Codex ou Aider, avec vos réglages. S’il lui manque quelque chose, il s’arrête et vous écrit.</span></li>
+        <li data-k="repo"><span class="eclate__n" aria-hidden="true">2</span><span class="eclate__txt"><strong>Votre dépôt, cloné</strong> Sur une branche à part. L’agent ouvre une PR et ne fusionne jamais.</span></li>
+        <li data-k="keys"><span class="eclate__n" aria-hidden="true">3</span><span class="eclate__txt"><strong>Vos clés, empruntées</strong> Elles restent dans votre coffre. La machine s’en sert le temps de sa&nbsp;tâche.</span></li>
+        <li data-k="box"><span class="eclate__n" aria-hidden="true">4</span><span class="eclate__txt"><strong>La machine, isolée</strong> Elle s’allume pour cette seule tâche et s’efface après la PR.</span></li>
+      </ol>
+      <div class="eclate__leads" id="eclate-leads" aria-hidden="true"></div>
+    </div>
+  </div>
+</section>
+
+<section class="tarif" id="tarif" aria-labelledby="tarif-titre">
+  <div class="wrap tarif__grid">
+    <div class="tarif__prix">
+      <div class="tarif__cote plan" id="plan-cote" aria-hidden="true"></div>
+      <p class="tarif__chiffre">0,10&nbsp;€</p>
+    </div>
+    <div class="tarif__text">
+      <h2 id="tarif-titre">Vous payez les heures où une machine tourne.</h2>
+      <p>Elles sont comptées à la minute. Une machine qui attend votre réponse se met en veille et ne coûte rien.</p>
+      <form class="acces" id="acces" novalidate>
+        <label class="champ__label" for="email">Votre e-mail</label>
+        <div class="acces__row">
+          <div class="champ">
+            <input class="champ__input" id="email" name="email" type="email" autocomplete="email" inputmode="email" spellcheck="false" placeholder="vous@entreprise.fr" required aria-describedby="acces-msg">
+            <svg class="champ__ok" viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M4.5 10.5 8.3 14l7.2-8"/></svg>
+          </div>
+          <button class="btn btn--submit" type="submit">
+            <span class="btn__label">Demander une invitation</span>
+            <svg class="btn__work" viewBox="-10 -11 20 22" aria-hidden="true" focusable="false"><path class="w-bg" d="M0-9.5 8.2-4.75v9.5L0 9.5-8.2 4.75v-9.5ZM-8.2-4.75 0 0 8.2-4.75M0 0v9.5"/><path pathLength="1" d="M0-9.5 8.2-4.75v9.5L0 9.5-8.2 4.75v-9.5Z"/></svg>
+          </button>
+        </div>
+        <p class="acces__msg" id="acces-msg" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="cartouche" aria-labelledby="cartouche-titre">
+  <h2 class="sr" id="cartouche-titre">Pied de page</h2>
+  <div class="wrap">
+    <div class="cartouche__grid">
+      <div class="cartouche__cell cartouche__projet">
+        <a class="cartouche__logo" href="#top" aria-label="Quart, haut de page">
+          <svg class="logo" viewBox="0 0 73.85 24" aria-hidden="true" focusable="false"><use href="#q-logo"/></svg>
+        </a>
+        <p class="cartouche__devise">Une machine isolée par tâche, effacée dès que la PR est ouverte.</p>
+      </div>
+      <nav class="cartouche__cell cartouche__liens" aria-labelledby="pied-produit">
+        <h3 id="pied-produit">Produit</h3>
+        <ul>
+          <li><a class="link" href="#nuit">Démo</a></li>
+          <li><a class="link" href="#machine">Fonctionnement</a></li>
+          <li><a class="link" href="#tarif">Tarif</a></li>
+          <li><a class="link" href="#acces">Recevoir l’accès</a></li>
+        </ul>
+      </nav>
+      <nav class="cartouche__cell cartouche__liens" aria-labelledby="pied-aide">
+        <h3 id="pied-aide">Aide</h3>
+        <ul>
+          <li><a class="link" href="#documentation" data-nulle-part>Documentation</a></li>
+          <li><a class="link" href="#statut" data-nulle-part>État des machines</a></li>
+          <li><a class="link" href="#versions" data-nulle-part>Journal des versions</a></li>
+          <li><a class="link" href="#contact" data-nulle-part>Nous écrire</a></li>
+        </ul>
+      </nav>
+      <nav class="cartouche__cell cartouche__liens" aria-labelledby="pied-legal">
+        <h3 id="pied-legal">Légal</h3>
+        <ul>
+          <li><a class="link" href="#confidentialite" data-nulle-part>Confidentialité</a></li>
+          <li><a class="link" href="#securite" data-nulle-part>Sécurité</a></li>
+          <li><a class="link" href="#conditions" data-nulle-part>Conditions d’utilisation</a></li>
+          <li><a class="link" href="#mentions" data-nulle-part>Mentions légales</a></li>
+        </ul>
+      </nav>
+      <div class="cartouche__cell cartouche__outils">
+        <p>Fonctionne avec Claude Code, Codex et Aider.</p>
+      </div>
+      <nav class="cartouche__cell cartouche__liens cartouche__reseaux" aria-labelledby="pied-reseaux">
+        <h3 id="pied-reseaux">Réseaux</h3>
+        <ul>
+          <li><a class="link" href="#github" data-nulle-part>GitHub</a></li>
+          <li><a class="link" href="#x" data-nulle-part>X</a></li>
+          <li><a class="link" href="#linkedin" data-nulle-part>LinkedIn</a></li>
+        </ul>
+      </nav>
+      <div class="cartouche__cell cartouche__mention">
+        <p>Marque fictive, conçue par Topiary.</p>
+      </div>
+    </div>
+    <p class="cartouche__note" id="cartouche-note" aria-live="polite"></p>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,108 @@
+/* Topiary v4 : le pied de page « La surimpression » (série 4, n° 6, retenu par l'utilisateur le 2026-10-21).
+   Une capsule de papier : l'appel, l'adresse, les renvois et l'orbite des réseaux à gauche ; trois aplats en surimpression
+   à droite (corail, champ, gris, en multiplication) ; les mentions sous un filet. L'orbite des réseaux est dessinée par
+   footer.js (une ellipse vue en perspective, tracée en deux moitiés symétriques, et un léger parallaxe 3D). */
+.pied {
+  --pied-gap: clamp(24px, 5vw, 96px);
+  margin-block: var(--seam);
+  padding: clamp(72px, 9vw, 152px) var(--pad) 0;
+  border-radius: var(--r-capsule);
+  background: var(--paper); color: var(--ink);
+  scroll-margin-top: 84px;
+  container-type: inline-size;
+}
+.pied :where(p, h2, ul) { margin: 0; }
+.pied :where(ul) { list-style: none; padding: 0; }
+.pied :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+
+.pied__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--pied-gap); row-gap: 56px; align-items: start; }
+.pied__left { display: grid; gap: clamp(36px, 4vw, 56px); min-width: 0; }
+.pied__call { display: grid; gap: 18px; }
+.pied__title {
+  font-size: clamp(32px, 1rem + 2vw, 48px);
+  font-weight: 500; line-height: 1; letter-spacing: calc(-0.048em * var(--tight, 1));
+  text-wrap: balance;
+}
+.pied__text { max-width: 26em; color: var(--ink-2); font-size: clamp(18px, 1rem + .2vw, 20px); line-height: 1.5; text-wrap: pretty; }
+.pied__addr {
+  display: inline-block; max-width: 100%;
+  color: var(--ink); text-decoration: none;
+  font-size: clamp(22px, 1rem + 1.1vw, 32px); font-weight: 500; letter-spacing: -0.03em; line-height: 1.1;
+  overflow-wrap: break-word;
+  text-decoration-thickness: 1px; text-underline-offset: .18em;
+}
+.pied__addr:hover { text-decoration-line: underline; }
+
+/* Les renvois, puis l'orbite des réseaux sur la même rangée */
+.pied__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 24px 40px; }
+.pied__nav { display: grid; gap: 2px; } /* une seule colonne : les sections, puis les pages */
+.pied__list { display: grid; gap: 2px; font-size: 17px; }
+.pied__link { display: inline-block; padding-block: 2px; color: inherit; text-decoration: none; text-underline-offset: 4px; }
+.pied__link:hover { text-decoration: underline; }
+
+/* ---------- L'orbite des réseaux ----------
+   Trois couches dans une boîte fixe : un canevas pour le fond (ombres portées et arrière de l'anneau), les deux icônes,
+   un canevas pour l'avant de l'anneau. footer.js dessine l'anneau en dégradé de profondeur et place les icônes à chaque
+   image du mouvement, en perspective. Sans script : les icônes côte à côte, sans anneau. */
+.pied__orbite {
+  --ow: 204px; --oh: 140px;
+  position: relative; width: var(--ow); height: var(--oh);
+  margin-block: -14px; /* l'orbite déborde un peu la rangée des renvois sans l'agrandir */
+  margin-left: -15px;  /* le bord gauche de l'anneau tombe sur la colonne de texte quand l'orbite passe à la ligne */
+  flex: none;
+}
+.pied__ring { position: absolute; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; }
+.pied__ring--back { z-index: 0; }
+.pied__ring--front { z-index: 2; }
+.pied__net {
+  position: absolute; left: 50%; top: 50%; z-index: 1;
+  display: grid; place-items: center; width: 44px; height: 44px; margin: -22px 0 0 -22px;
+  border-radius: 50%; color: var(--ink);
+  will-change: transform;
+}
+.pied__net .f3-ico, .pied__net svg { display: block; width: 20px; height: 20px; fill: currentColor; }
+.pied__orbite:not(.is-live) .pied__net:first-of-type { transform: translateX(-30px); }
+.pied__orbite:not(.is-live) .pied__net:last-of-type { transform: translateX(30px); }
+
+/* ---------- La surimpression : trois plaques en multiplication ---------- */
+.pied__art { position: relative; width: min(100%, 460px); aspect-ratio: 1; justify-self: end; isolation: isolate; forced-color-adjust: none; }
+.pied__art span { position: absolute; width: 56%; aspect-ratio: 1; mix-blend-mode: multiply; }
+.pied__a { left: 0; top: 0; background: var(--accent); }
+.pied__b { left: 22%; top: 22%; background: var(--field); }
+.pied__c { left: 44%; top: 44%; background: color-mix(in oklab, var(--ink-2) 70%, var(--ground)); }
+
+/* ---------- Les mentions ---------- */
+.pied__base {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 28px;
+  margin-top: clamp(48px, 6vw, 88px); padding-block: 20px 28px;
+  border-top: 1px solid var(--line);
+  font-size: 16px; color: var(--ink-2);
+}
+.pied__laws { display: flex; flex-wrap: wrap; gap: 4px 24px; }
+.pied__base .pied__link { color: var(--ink); }
+
+@container (max-width: 760px) {
+  .pied__grid { grid-template-columns: minmax(0, 1fr); }
+  .pied__art { justify-self: start; width: min(100%, 320px); }
+}
+@media (max-width: 599px) {
+  .pied__orbite { --ow: 196px; --oh: 134px; margin-block: -20px; margin-left: -14px; }
+  /* Téléphone : les trois aplats ne prennent plus un écran à eux seuls ; ils se posent à droite des renvois,
+     l'orbite des réseaux dessous. */
+  .pied { padding-top: 56px; }
+  .pied__grid, .pied__left, .pied__foot { display: contents; }
+  .pied { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; }
+  .pied__call, .pied__mail { grid-column: 1 / -1; }
+  .pied__call { margin-bottom: 32px; }
+  .pied__mail { margin-bottom: 36px; }
+  .pied__nav { grid-column: 1; grid-row: 3; align-self: start; }
+  .pied__art { grid-column: 2; grid-row: 3; width: 132px; justify-self: end; align-self: start; margin-top: 6px; }
+  .pied__orbite { grid-column: 1 / -1; grid-row: 4; margin-top: 8px; }
+  .pied__base { grid-column: 1 / -1; margin-top: 28px; }
+}
+
+@media (forced-colors: active) {
+  .pied { border: 1px solid CanvasText; }
+  .pied__ring { display: none; } /* un dessin en canevas ne suit pas les couleurs forcées : on le retire */
+  .pied__art span { mix-blend-mode: normal; outline: 1px solid CanvasText; background: Canvas; }
+}

@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Understudy</title>
+<meta name="description" content="Understudy watches a task once, then runs it every morning in software with no API. A fictional product designed by Martin Gerspach.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/caslon-display-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/caslon-text-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/courier-prime-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/courier-prime-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" as="image" href="img/cover-2400.webp" imagesrcset="img/cover-1200.webp 1200w, img/cover-2400.webp 2400w" imagesizes="(max-width: 760px) 250vw, 100vw">
+<script>(function (d) { d.classList.add('js', 'preload'); var w = innerWidth, s = Math.min(1040, (innerHeight - 372) * 1.52); if (w >= 900 && s < Math.min(.55 * w, 1000)) d.classList.add('split'); })(document.documentElement)</script>
+<link rel="stylesheet" href="understudy.css">
+<script>(function (d) { var h = d.documentElement; if (!d.fonts || !d.fonts.load) return; h.classList.add('fonts-wait'); var done = function () { h.classList.remove('fonts-wait'); }; Promise.all(['400 16px "Caslon Display"', '400 16px "Caslon Text"', '400 16px "Courier Prime"', '700 16px "Courier Prime"'].map(function (f) { return d.fonts.load(f); })).then(done, done); setTimeout(done, 3000); })(document)</script>
+<script src="understudy.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<!--sprite-->
+<svg class="sprite" aria-hidden="true" focusable="false" width="0" height="0">
+  <symbol id="us-mark" viewBox="0 0 48 48"><path fill="currentColor" d="M0 0H48V8H0ZM0 9H7.4V41H40.6V9H48V48H0ZM8.4 9H17C17 17.6 14.4 25.2 9.4 29.4L10.2 41H8.4ZM39.6 9H31C31 17.6 33.6 25.2 38.6 29.4L37.8 41H39.6Z"/><g fill="currentColor"><path transform="translate(20.2 21.4) scale(0.78)" d="M0 0V15.5L3.8 11.9L6.4 17.6L8.9 16.5L6.4 10.9H11.4Z"/></g></symbol>
+  <symbol id="us-mark-sm" viewBox="0 0 48 48"><path fill="currentColor" fill-rule="evenodd" d="M0 0H48V48H0ZM17 9H31C31 17.6 33.6 25.2 38.6 29.4L37.8 41H10.2L9.4 29.4C14.4 25.2 17 17.6 17 9Z"/><g fill="currentColor"><path transform="translate(18.6 18.4) scale(1.02)" d="M0 0V15.5L3.8 11.9L6.4 17.6L8.9 16.5L6.4 10.9H11.4Z"/></g></symbol>
+  <symbol id="us-word" viewBox="30 -721 4473 967"><g fill="currentColor"><path d="M506 -674 435 -682V-690H654V-682L582 -674Q564 -671 558 -662Q552 -653 552 -629V-245Q552 -182 542.5 -140Q533 -98 513 -68Q486 -29 439 -6.5Q392 16 335 16Q289 16 244 1Q199 -14 169 -40Q138 -67 125 -109Q112 -151 112 -225V-674L30 -682V-690H276V-682L189 -674V-192Q189 -119 202.5 -80Q216 -41 248 -22Q265 -12 290 -6Q315 0 342 0Q392 0 434 -20Q476 -40 501 -77Q520 -105 528 -142.5Q536 -180 536 -240V-629Q536 -653 530 -662Q524 -671 506 -674Z M1087 -8V0H901V-8L962 -16V-271Q962 -310 960 -329Q958 -348 952 -361Q944 -378 925.5 -387.5Q907 -397 883 -397Q832 -397 792 -354V-16L853 -8V0H666V-8L727 -16V-361L668 -383V-390L781 -429H789V-366Q853 -434 923 -434Q954 -434 979.5 -420.5Q1005 -407 1016 -385Q1023 -372 1025 -349.5Q1027 -327 1027 -271V-16Z M1429 -64 1432 -63V5H1438L1547 -45V-50L1492 -62V-721H1484L1368 -682V-675L1427 -653V-422Q1388 -434 1349 -434Q1287 -434 1238.5 -405Q1190 -376 1163.5 -323.5Q1137 -271 1137 -204Q1137 -143 1158.5 -94.5Q1180 -46 1218 -18Q1256 10 1303 10Q1341 10 1373.5 -9Q1406 -28 1429 -64ZM1208 -218Q1208 -311 1246.5 -367.5Q1285 -424 1348 -424Q1386 -424 1406.5 -400.5Q1427 -377 1427 -333V-77Q1414 -55 1390.5 -42.5Q1367 -30 1338 -30Q1277 -30 1242.5 -80.5Q1208 -131 1208 -218Z M1938 -114 1942 -112 1938 -101Q1918 -48 1878.5 -19Q1839 10 1784 10Q1730 10 1688 -18Q1646 -46 1622.5 -96Q1599 -146 1599 -211Q1599 -276 1624 -327Q1649 -378 1695 -406Q1741 -434 1800 -434Q1870 -434 1907.5 -392.5Q1945 -351 1946 -272L1940 -267H1670Q1668 -241 1668 -226Q1668 -135 1705 -87.5Q1742 -40 1808 -40Q1842 -40 1873.5 -55.5Q1905 -71 1929 -102ZM1671 -278 1865 -285Q1868 -297 1868 -325Q1868 -379 1847.5 -401Q1827 -423 1789 -423Q1742 -423 1711 -384Q1680 -345 1671 -278Z M2275 -388Q2275 -372 2264 -361Q2253 -350 2237 -350Q2227 -350 2220.5 -354.5Q2214 -359 2207 -368Q2200 -376 2194.5 -380Q2189 -384 2181 -384Q2165 -384 2148.5 -365Q2132 -346 2125 -321V-16L2205 -8V0H1999V-8L2060 -16V-366L2001 -388V-395L2114 -434H2122V-346Q2178 -434 2227 -434Q2247 -434 2261 -420.5Q2275 -407 2275 -388Z M2315 -316Q2315 -281 2329 -258Q2343 -235 2363.5 -221.5Q2384 -208 2418 -191Q2464 -169 2487 -148Q2510 -127 2510 -86Q2510 -48 2488 -24.5Q2466 -1 2429 -1Q2388 -1 2362.5 -34.5Q2337 -68 2327 -138H2315L2320 -8Q2341 0 2371 5Q2401 10 2425 10Q2491 10 2530 -25.5Q2569 -61 2569 -122Q2569 -159 2554.5 -183Q2540 -207 2519.5 -220.5Q2499 -234 2464 -250Q2419 -271 2397 -290.5Q2375 -310 2375 -348Q2375 -382 2395 -402.5Q2415 -423 2448 -423Q2484 -423 2505.5 -396Q2527 -369 2541 -309H2552V-420Q2536 -426 2511 -430Q2486 -434 2462 -434Q2392 -434 2353.5 -403Q2315 -372 2315 -316Z M2619 -414 2621 -409H2668V-89Q2668 -58 2675 -39Q2682 -20 2699 -8Q2724 10 2756 10Q2787 10 2814.5 -8Q2842 -26 2857 -57L2853 -60Q2835 -42 2820 -34Q2805 -26 2789 -26Q2756 -26 2744 -50Q2733 -67 2733 -102V-408H2841L2847 -424H2733V-519L2729 -520Z M3272 -50V-45L3163 5H3157V-63L3154 -64Q3095 10 3027 10Q2996 10 2972 -3Q2948 -16 2937 -39Q2930 -52 2928 -74.5Q2926 -97 2926 -153V-408L2866 -416V-424H2991V-153Q2991 -113 2993 -94.5Q2995 -76 3001 -63Q3008 -47 3024.5 -37.5Q3041 -28 3062 -28Q3087 -28 3110 -40.5Q3133 -53 3152 -77V-408L3092 -416V-424H3217V-62Z M3620 -64 3623 -63V5H3629L3738 -45V-50L3683 -62V-721H3675L3559 -682V-675L3618 -653V-422Q3579 -434 3540 -434Q3478 -434 3429.5 -405Q3381 -376 3354.5 -323.5Q3328 -271 3328 -204Q3328 -143 3349.5 -94.5Q3371 -46 3409 -18Q3447 10 3494 10Q3532 10 3564.5 -9Q3597 -28 3620 -64ZM3399 -218Q3399 -311 3437.5 -367.5Q3476 -424 3539 -424Q3577 -424 3597.5 -400.5Q3618 -377 3618 -333V-77Q3605 -55 3581.5 -42.5Q3558 -30 3529 -30Q3468 -30 3433.5 -80.5Q3399 -131 3399 -218Z M3881 -373Q3874 -393 3874 -399Q3874 -407 3884.5 -410.5Q3895 -414 3931 -416V-424H3738V-416Q3772 -414 3784.5 -407.5Q3797 -401 3805 -382L3959 18L3920 137Q3907 176 3896 192.5Q3885 209 3872 209Q3863 209 3858.5 202.5Q3854 196 3850 182Q3845 164 3837 154Q3829 144 3810 144Q3790 144 3778.5 156Q3767 168 3767 188Q3767 213 3786 229.5Q3805 246 3833 246Q3867 246 3893 217Q3914 197 3931 144L4098 -347Q4109 -381 4129 -395Q4149 -409 4197 -416V-424H4018V-416Q4058 -410 4073 -402.5Q4088 -395 4088 -379Q4088 -368 4082 -348L3991 -73H3987Z"/><rect x="4267" y="-472" width="236" height="472"/></g></symbol>
+  <symbol id="us-word-sm" viewBox="33 -830 5884 1090"><g fill="currentColor"><path d="M414 -35Q468 -35 509 -51Q550 -67 572 -97Q592 -124 601 -172Q610 -220 610 -300V-728L521 -747V-770H740V-747L650 -728V-258Q650 -195 641 -152Q632 -109 612 -80Q583 -37 526 -13.5Q469 10 393 10Q316 10 255.5 -14Q195 -38 162 -82Q142 -109 132.5 -145.5Q123 -182 123 -242V-728L33 -747V-770H317V-747L228 -728V-227Q228 -134 277.5 -84.5Q327 -35 414 -35Z M1358 -20V0H1113V-20L1188 -34V-328Q1188 -372 1185.5 -397.5Q1183 -423 1176 -439Q1157 -485 1098 -485Q1062 -485 1028.5 -469Q995 -453 970 -423V-35L1045 -20V0H799V-20L875 -35V-450L801 -478V-491L956 -540H966V-455Q1009 -496 1057.5 -518Q1106 -540 1154 -540Q1194 -540 1225 -524Q1256 -508 1270 -480Q1278 -464 1280.5 -437.5Q1283 -411 1283 -338V-34Z M1430 -256Q1430 -339 1463 -403.5Q1496 -468 1556 -504Q1616 -540 1693 -540Q1749 -540 1801 -525V-740L1728 -768V-781L1885 -830H1895V-78L1963 -63V-52L1815 10H1808V-76L1804 -78Q1773 -34 1730 -12Q1687 10 1637 10Q1579 10 1531.5 -24.5Q1484 -59 1457 -120Q1430 -181 1430 -256ZM1801 -114V-400Q1801 -454 1773 -482Q1745 -510 1691 -510Q1645 -510 1609.5 -480.5Q1574 -451 1554.5 -397Q1535 -343 1535 -272Q1535 -171 1573.5 -113Q1612 -55 1679 -55Q1718 -55 1751 -71Q1784 -87 1801 -114Z M2140 -308Q2139 -301 2139 -285Q2139 -175 2183 -119Q2227 -63 2312 -63Q2361 -63 2403 -80.5Q2445 -98 2471 -130L2483 -145L2500 -135L2494 -121Q2468 -60 2410 -25Q2352 10 2279 10Q2208 10 2153.5 -23.5Q2099 -57 2069 -117.5Q2039 -178 2039 -257Q2039 -340 2072.5 -404.5Q2106 -469 2166.5 -504.5Q2227 -540 2306 -540Q2404 -540 2456.5 -482.5Q2509 -425 2511 -314L2504 -308ZM2142 -336 2403 -345Q2406 -357 2406 -386Q2406 -509 2297 -509Q2231 -509 2191 -464Q2151 -419 2142 -336Z M2955 -478Q2955 -454 2938.5 -437.5Q2922 -421 2897 -421Q2873 -421 2859 -440Q2850 -451 2843.5 -455Q2837 -459 2828 -459Q2816 -459 2807 -453.5Q2798 -448 2788 -434Q2771 -411 2766 -403Q2761 -395 2759 -385V-35L2859 -20V0H2588V-20L2664 -35V-451L2590 -479V-492L2745 -541H2755V-432Q2790 -485 2825.5 -513Q2861 -541 2892 -541Q2918 -541 2936.5 -522.5Q2955 -504 2955 -478Z M3327 -523V-384H3306Q3291 -510 3189 -510Q3149 -510 3125.5 -488Q3102 -466 3102 -429Q3102 -401 3116.5 -381.5Q3131 -362 3152 -349Q3173 -336 3210 -319Q3256 -298 3283.5 -280Q3311 -262 3331 -230.5Q3351 -199 3351 -152Q3351 -78 3301.5 -34Q3252 10 3167 10Q3135 10 3096.5 4Q3058 -2 3029 -12L3023 -174H3047Q3054 -98 3086 -59Q3118 -20 3175 -20Q3220 -20 3247 -45Q3274 -70 3274 -112Q3274 -143 3259 -164.5Q3244 -186 3222 -199.5Q3200 -213 3160 -233Q3115 -255 3088 -272.5Q3061 -290 3042 -320Q3023 -350 3023 -394Q3023 -464 3071.5 -502Q3120 -540 3209 -540Q3243 -540 3275.5 -535.5Q3308 -531 3327 -523Z M3527 -18Q3509 -35 3501.5 -60.5Q3494 -86 3494 -132V-495H3429L3427 -511L3571 -661L3589 -659V-530H3732L3724 -495H3589V-141Q3589 -105 3591 -89.5Q3593 -74 3598 -65Q3614 -37 3648 -37Q3668 -37 3688.5 -48Q3709 -59 3724 -78L3741 -65Q3718 -30 3681.5 -10Q3645 10 3605 10Q3557 10 3527 -18Z M4313 -51V-39L4163 10H4156V-81L4152 -82Q4116 -38 4069.5 -14Q4023 10 3973 10Q3933 10 3903 -6Q3873 -22 3859 -51Q3851 -69 3848 -97Q3845 -125 3845 -193V-495L3770 -510V-530H3940V-193Q3940 -146 3942.5 -121Q3945 -96 3952 -81Q3960 -64 3978.5 -54Q3997 -44 4022 -44Q4057 -44 4090 -62Q4123 -80 4150 -114V-495L4075 -510V-530H4245V-75Z M4397 -256Q4397 -339 4430 -403.5Q4463 -468 4523 -504Q4583 -540 4660 -540Q4716 -540 4768 -525V-740L4695 -768V-781L4852 -830H4862V-78L4930 -63V-52L4782 10H4775V-76L4771 -78Q4740 -34 4697 -12Q4654 10 4604 10Q4546 10 4498.5 -24.5Q4451 -59 4424 -120Q4397 -181 4397 -256ZM4768 -114V-400Q4768 -454 4740 -482Q4712 -510 4658 -510Q4612 -510 4576.5 -480.5Q4541 -451 4521.5 -397Q4502 -343 4502 -272Q4502 -171 4540.5 -113Q4579 -55 4646 -55Q4685 -55 4718 -71Q4751 -87 4768 -114Z M5372 -431Q5379 -451 5379 -467Q5379 -506 5302 -510V-530H5527V-510Q5487 -503 5467 -495Q5447 -487 5435.5 -472.5Q5424 -458 5415 -430L5220 141Q5201 198 5173 226Q5158 242 5136 251Q5114 260 5088 260Q5051 260 5028.5 241.5Q5006 223 5006 193Q5006 170 5021.5 155.5Q5037 141 5062 141Q5082 141 5093 151.5Q5104 162 5108 187Q5110 205 5114 211Q5118 217 5128 217Q5144 217 5158 197.5Q5172 178 5187 134L5228 8L5033 -470Q5024 -489 5008 -498Q4992 -507 4962 -510V-530H5209V-510Q5169 -508 5156 -504Q5143 -500 5143 -490Q5143 -481 5151 -460L5273 -144H5278Z"/><rect x="5622" y="-590" width="295" height="590"/></g></symbol>
+</svg>
+<!--/sprite-->
+
+<header class="mast" data-mast>
+  <a class="mast-home" href="#top" tabindex="-1" aria-hidden="true"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#us-mark-sm"/></svg></a>
+  <nav class="mast-nav" aria-label="Acts">
+    <a href="#act-1">The script</a>
+    <a href="#morning">The performance</a>
+  </nav>
+  <a class="mast-logo" href="#top" aria-label="Understudy, back to the cover"><svg viewBox="0 0 5884 1090" aria-hidden="true"><use href="#us-word-sm"/></svg></a>
+  <div class="mast-nav mast-nav--r">
+    <a href="#tickets">Pricing</a>
+    <a class="btn btn--small" href="#tickets">Book a rehearsal</a>
+  </div>
+  <button class="mast-prog" type="button" aria-haspopup="dialog" aria-controls="programme" data-prog-open>Programme</button>
+</header>
+
+<dialog class="prog" id="programme" aria-labelledby="prog-title" data-prog>
+  <div class="prog-in">
+    <div class="prog-bar">
+      <h2 id="prog-title">Programme</h2>
+      <button class="prog-x" type="button" data-prog-close aria-label="Close"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1.5 1.5l9 9M10.5 1.5l-9 9"/></svg></button>
+    </div>
+    <nav class="prog-list" aria-labelledby="prog-title">
+      <ol>
+        <li><a href="#act-1"><span>Act I</span><span>The script</span></a></li>
+        <li><a href="#morning"><span>Act II</span><span>The performance</span></a></li>
+        <li><a href="#tickets"><span>Tickets</span><span>Pricing and booking</span></a></li>
+      </ol>
+    </nav>
+    <a class="btn" href="#tickets" data-prog-link>Book a rehearsal</a>
+  </div>
+</dialog>
+
+<main id="main">
+
+<!-- Cover: the poster. A night office; the screen in the photo types its first rows. -->
+<section class="cover" id="top" aria-labelledby="cover-title">
+  <div class="bill">
+    <svg class="bill-word" viewBox="0 0 4473 967" aria-hidden="true"><use href="#us-word"/></svg>
+    <p class="bill-line">A morning in two acts</p>
+  </div>
+  <div class="stage">
+    <div class="stage-photo">
+      <div class="ph" data-allow-overflow>
+        <img src="img/cover-2400.webp" srcset="img/cover-1200.webp 1200w, img/cover-2400.webp 2400w" sizes="(max-width: 760px) 250vw, 100vw" width="2400" height="1345" fetchpriority="high"
+          alt="Long exposure of an office at night. A translucent figure in a white shirt sits at a beige computer whose screen glows green, between shelves of binders and stacks of paper.">
+        <canvas class="crt" aria-hidden="true" data-crt></canvas>
+      </div>
+    </div>
+    <div class="cover-copy">
+      <h1 id="cover-title"><span class="l">Show it once.</span> <span class="l">It runs the task every morning.</span></h1>
+      <p class="cover-sub">Understudy learns a routine in software with no API, then plays it back before anyone is in.</p>
+      <a class="btn on-dark" href="#morning">Watch a morning</a>
+    </div>
+  </div>
+  <aside class="slip" aria-label="Insert slip">
+    <p>At this performance, the role of</p>
+    <span class="typed">Purchasing clerk</span>
+    <p>will be played by</p>
+    <span class="typed">Understudy</span>
+  </aside>
+</section>
+
+<!-- Act I: the script it wrote, ticked in pencil -->
+<section class="act act--1" id="act-1" aria-labelledby="a1-title">
+  <header class="act-head">
+    <h2 id="a1-title"><span class="act-no">Act I</span> <span class="act-name">The script</span></h2>
+    <p class="act-lead">You do the task once. Understudy writes it down as a script, and you tick each line.</p>
+  </header>
+  <div class="script">
+    <article class="page" data-page aria-label="Script, page 3">
+      <canvas class="pencil" aria-hidden="true" data-pencil></canvas>
+      <p class="pg" aria-hidden="true">3.</p>
+      <div class="typo">
+        <p class="slug">Scene 1. Purchasing, 06:00.</p>
+        <p class="dir">The office is dark. One screen is lit: HD/400, the purchasing system. UNDERSTUDY sits down.</p>
+        <p class="cue">UNDERSTUDY</p>
+        <p class="par" data-tick>(at the menu, types 1, then Enter)</p>
+        <p class="cue">THE SCREEN</p>
+        <p class="dia" data-tick>Purchase Order Entry.</p>
+        <p class="dir">UNDERSTUDY opens the first order in the inbox.</p>
+        <p class="cue">UNDERSTUDY</p>
+        <p class="par">(in Order number)</p>
+        <p class="dia" data-tick><span class="nw">4471-0201.</span></p>
+        <p class="par">(Tab, Supplier)</p>
+        <p class="dia" data-tick>20417.</p>
+        <p class="par">(Tab, Delivery date)</p>
+        <p class="dia" data-tick>05/11/26.</p>
+        <p class="par" data-tick>(one line per item, <span class="nw">then F10)</span></p>
+        <p class="cue">THE SCREEN</p>
+        <p class="dia" data-tick>Order <span class="nw">4471-0201</span> posted.</p>
+        <p class="dir" data-tick>UNDERSTUDY plays the scene again for each order in the inbox.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- Act II: the performance, played on the green screen -->
+<section class="act act--2" id="act-2" aria-labelledby="a2-title">
+  <header class="act-head">
+    <h2 id="a2-title"><span class="act-no">Act II</span> <span class="act-name">The performance</span></h2>
+    <p class="act-lead">At six every morning, the script plays in the real software.</p>
+  </header>
+  <div class="perf" id="morning">
+    <p class="surtitle" aria-hidden="true" data-surtitle><span><span class="who" data-who></span><span data-line>Scene 1. Purchasing, 06:00.</span></span></p>
+    <div class="monitor" data-terminal>
+      <canvas aria-hidden="true" data-screen width="1008" height="650"></canvas>
+      <div class="glass" aria-hidden="true">
+        <div class="hand" data-hand>
+          <svg class="arrow" viewBox="-1 -1 14 21" width="14" height="21"><path d="M0 0V16.2L4 12.4L6.7 18.6L9.3 17.4L6.7 11.4H11.7Z"/></svg>
+          <p class="tag" data-tag><b>Understudy</b> <span data-act>Ready</span></p>
+        </div>
+      </div>
+      <div class="postit" aria-hidden="true" data-postit><svg class="scrawl" viewBox="-3.0 2.5 177.1 139.6"><!--postit--><defs><linearGradient id="pw0g" gradientUnits="userSpaceOnUse" x1="-8.98" x2="3.02" y1="0" y2="0"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient><mask id="pw0" maskUnits="userSpaceOnUse" x="-2.98" y="2.52" width="177.11" height="139.6"><rect x="-2.98" y="2.52" width="177.11" height="139.6" fill="url(#pw0g)"/></mask><linearGradient id="pw1g" gradientUnits="userSpaceOnUse" x1="-3.61" x2="8.39" y1="0" y2="0"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient><mask id="pw1" maskUnits="userSpaceOnUse" x="-2.98" y="2.52" width="177.11" height="139.6"><rect x="-2.98" y="2.52" width="177.11" height="139.6" fill="url(#pw1g)"/></mask><linearGradient id="pw2g" gradientUnits="userSpaceOnUse" x1="4.43" x2="16.43" y1="0" y2="0"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient><mask id="pw2" maskUnits="userSpaceOnUse" x="-2.98" y="2.52" width="177.11" height="139.6"><rect x="-2.98" y="2.52" width="177.11" height="139.6" fill="url(#pw2g)"/></mask><linearGradient id="pw3g" gradientUnits="userSpaceOnUse" x1="113.28" x2="125.28" y1="0" y2="0"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient><mask id="pw3" maskUnits="userSpaceOnUse" x="-2.98" y="2.52" width="177.11" height="139.6"><rect x="-2.98" y="2.52" width="177.11" height="139.6" fill="url(#pw3g)"/></mask></defs><g mask="url(#pw0)" data-x="3.02 132.81"><image href="img/note-0.webp" x="-3.0" y="2.5" width="177.1" height="139.6"/></g><g mask="url(#pw1)" data-x="8.39 144.29"><image href="img/note-1.webp" x="-3.0" y="2.5" width="177.1" height="139.6"/></g><g mask="url(#pw2)" data-x="16.43 108.17"><image href="img/note-2.webp" x="-3.0" y="2.5" width="177.1" height="139.6"/></g><g mask="url(#pw3)" data-x="125.28 168.13"><image href="img/note-3.webp" x="-3.0" y="2.5" width="177.1" height="139.6"/></g><!--/postit--></svg></div>
+    </div>
+    <div class="desk">
+      <p class="journal" aria-hidden="true" data-journal>Ready at 06:00 with 38 orders in the inbox.</p>
+      <button class="cue-key" type="button" data-go aria-label="Go, play the morning" aria-describedby="journal-live">Go</button>
+    </div>
+    <p class="sr" id="journal-live" aria-live="polite" data-live>Ready at 06:00 with 38 orders in the inbox.</p>
+  </div>
+</section>
+
+<!-- Box office: the morning after, the ticket, the credits. One screen. -->
+<section class="morning" id="tickets" aria-labelledby="t-title">
+  <figure class="still">
+    <img src="img/morning-2400.webp" srcset="img/morning-1200.webp 1200w, img/morning-1600.webp 1600w, img/morning-2400.webp 2400w" sizes="100vw" width="2400" height="976" fetchpriority="low" decoding="async"
+      alt="The same office later that morning, in cold daylight. The screen still shows the order entry in green, and a yellow note on its corner reads: Hold it. I’ll call them. M.">
+  </figure>
+  <form class="ticket" data-form novalidate>
+    <div class="ticket-body">
+      <h2 id="t-title">Show it <span class="nw">one task</span> this week.</h2>
+      <p class="price" id="price">$390 a month for each task. The first rehearsal is free.</p>
+      <div class="field">
+        <label for="email">Work email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required spellcheck="false" aria-describedby="price reply">
+        <button class="btn" type="submit">Book a rehearsal</button>
+      </div>
+      <p class="reply" id="reply" role="status" data-reply></p>
+    </div>
+    <div class="ticket-stub" aria-hidden="true">
+      <svg viewBox="0 0 48 48"><use href="#us-mark"/></svg>
+      <p>Admit one</p>
+      <p class="no">No. 004471</p>
+    </div>
+  </form>
+  <footer class="credits">
+    <h2>In order of appearance</h2>
+    <dl>
+      <div><dt>Understudy</dt><dd>Itself</dd></div>
+      <div><dt>Marie</dt><dd>Accounts payable</dd></div>
+      <div><dt>Also appearing</dt><dd><span class="nw">SAP GUI</span>, <span class="nw">Sage 100</span>, Citrix, <span class="nw">Oracle Forms</span></dd></div>
+      <div><dt>Venue</dt><dd>A machine inside <span class="nw">your network</span></dd></div>
+    </dl>
+    <p class="credits-end">A fictional product, designed by <span class="nw">Martin Gerspach.</span> <a class="link" href="#top">Back to top</a></p>
+  </footer>
+</section>
+
+</main>
+</body>
+</html>

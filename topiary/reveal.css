@@ -1,0 +1,70 @@
+/* Topiary v4.1 : les apparitions, reprises d'alt-shift (relevées dans son code le 2026-10-21).
+   Trois gestes, une courbe vive puis très douce :
+   - les titres glissent en place ligne à ligne, en se défloutant (léger étirement et inclinaison qui se résorbent) ;
+   - les textes montent de 16 px en se défloutant, les uns après les autres (80 ms) ;
+   - les images se dévoilent de haut en bas, avec un léger recul (0,98 vers 1).
+   À l'ouverture de la page : la capsule du hero s'ouvre depuis son milieu, l'en-tête se pose, puis le chapeau arrive
+   ligne à ligne. reveal.js déclenche chaque apparition une seule fois, quand l'élément entre à l'écran.
+   La page n'est masquée que si html porte .rv (posé en tête d'index.html, seulement sans « mouvements réduits »). */
+:root {
+  --rv-out: cubic-bezier(.16, 1, .3, 1);   /* expo-out : toutes les apparitions au défilement */
+  --rv-wipe: cubic-bezier(.83, 0, .17, 1); /* expo in-out : les images qui se dévoilent */
+  --rv-line: cubic-bezier(.76, 0, .24, 1); /* les lignes du chapeau, à l'ouverture */
+  --rv-head: cubic-bezier(.22, 1, .36, 1); /* l'en-tête, à l'ouverture */
+}
+
+@keyframes rv-rise {
+  from { opacity: 0; filter: blur(4px); transform: translateY(16px); }
+  to { opacity: 1; filter: blur(0); transform: none; }
+}
+@keyframes rv-kinetic {
+  from { opacity: 0; filter: blur(8px); transform: translateX(-12px) scaleX(1.05) skewX(-2deg); }
+  to { opacity: 1; filter: blur(0); transform: none; }
+}
+@keyframes rv-wipe {
+  from { clip-path: inset(0 0 100% 0); transform: scale(.98); }
+  to { clip-path: inset(0); transform: none; }
+}
+@keyframes rv-open {
+  from { clip-path: inset(50% 0 round var(--r-capsule)); }
+  to { clip-path: inset(0 round var(--r-capsule)); }
+}
+@keyframes rv-drop {
+  from { opacity: 0; filter: blur(6px); }
+  to { opacity: 1; filter: blur(0); }
+}
+
+@media screen {
+  /* ---------- Ouverture ---------- */
+  /* La capsule s'ouvre depuis sa ligne médiane, puis l'en-tête se pose. Pas de déplacement sur l'en-tête : header.js
+     mesure ses pièces pendant ces premiers instants, une transformation les décalerait. */
+  .rv .hero__card { animation: rv-open .3s var(--rv-out) 50ms backwards; }
+  .rv .float { animation: rv-drop .4s var(--rv-head) .2s backwards; }
+  /* Le grand mot attend que la capsule soit ouverte : coupé par l'ouverture, son « y » se lisait « u » (reveal.js pose
+     .rv-opened à 360 ms). Il garde ensuite son fondu (v4.css) et son relief (signatures.js). */
+  .rv:not(.rv-opened) .hero__mark { opacity: 0; }
+
+  /* ---------- Avant l'apparition ----------
+     Les mêmes cibles que la liste TARGETS de reveal.js. Le premier volet de « Ce que nous faisons » seulement :
+     les autres ont leur propre entrée (o/phrase.js). */
+  .rv :is(
+    .hero__lede,
+    .work__head .h2, .proj__text, .pj__name,
+    .pied__title, .pied__text, .pied__mail, .pied__foot
+  ):not(.rv-in),
+  .rv .o-phr:not(.rv-seen) :is(
+    .o-phr__title, #o-phr-p0 > .o-phr__lede, #o-phr-p0 > .o-phr__items > li, .o-phr__foot
+  ):not(.rv-in) { opacity: 0; } /* .rv-seen : un mot choisi avant la fin des apparitions, toute la section est là */
+  .rv .proj__media:not(.rv-in), .rv .pj__cap:not(.rv-in),
+  .rv .pied__art:not(.rv-in) > span { clip-path: inset(0 0 100% 0); }
+
+  /* ---------- Les apparitions ---------- */
+  .rv .rv-go-rise { animation: rv-rise .7s var(--rv-out) var(--rv-d, 0ms) backwards; }
+  .rv .rv-go-kinetic { animation: rv-kinetic .6s var(--rv-out) var(--rv-d, 0ms) backwards; }
+  .rv .rv-go-line { animation: rv-kinetic .4s var(--rv-line) var(--rv-d, 0ms) backwards; }
+  .rv .rv-go-wipe { animation: rv-wipe 1.05s var(--rv-wipe) var(--rv-d, 0ms) backwards; }
+
+  /* Une ligne découpée par reveal.js le temps de son apparition : sa boîte épouse le texte (l'étirement part de son
+     milieu), elle ne se recoupe pas. Le texte d'origine est remis en place à la fin. */
+  .rv-line { display: block; width: fit-content; white-space: nowrap; }
+}

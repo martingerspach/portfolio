@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Banc</title>
+<meta name="description" content="Banc lit le web à votre place et vous répond en quelques lignes. Chaque phrase cite sa source.">
+<meta name="theme-color" content="#f8f8f6">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Manrope:wght@200..700&display=swap">
+<link rel="stylesheet" href="banc.css">
+</head>
+<body>
+
+<a class="skip" href="#q">Aller à la question</a>
+
+<header class="top" id="top">
+  <div class="bar" data-verre="bord:18 force:1 flou:3">
+    <a class="logo" href="#demo" aria-label="Banc, revenir à la question">
+      <svg class="logo-mark" viewBox="0 0 44 24" aria-hidden="true"><g class="s"><rect x="0" y="5" width="4" height="4"/><rect x="0" y="10" width="4" height="4"/><rect x="5" y="10" width="4" height="4"/><rect x="0" y="15" width="4" height="4"/></g><g class="l"><rect x="20" y="0" width="4" height="4"/><rect x="25" y="0" width="4" height="4"/><rect x="25" y="20" width="4" height="4"/></g><g class="d"><rect x="15" y="5" width="4" height="4"/><rect x="20" y="5" width="4" height="4"/><rect x="25" y="5" width="4" height="4"/><rect x="30" y="5" width="4" height="4"/><rect x="35" y="5" width="4" height="4"/><rect x="10" y="10" width="4" height="4"/><rect x="15" y="10" width="4" height="4"/><rect x="20" y="10" width="4" height="4"/><rect x="25" y="10" width="4" height="4"/><rect x="30" y="10" width="4" height="4"/><rect x="40" y="10" width="4" height="4"/><rect x="15" y="15" width="4" height="4"/><rect x="20" y="15" width="4" height="4"/><rect x="25" y="15" width="4" height="4"/><rect x="30" y="15" width="4" height="4"/><rect x="35" y="15" width="4" height="4"/></g></svg>
+      <span class="logo-word">banc</span>
+    </a>
+    <nav class="nav" aria-label="Sections de la page">
+      <span class="nav-plate" aria-hidden="true"></span>
+      <a href="#demo" data-sec="demo"><span class="ref" aria-hidden="true">1</span><span class="lbl">Démo</span></a>
+      <a href="#sources" data-sec="sources"><span class="ref" aria-hidden="true">2</span><span class="lbl">Sources</span></a>
+      <a href="#tarif" data-sec="tarif"><span class="ref" aria-hidden="true">3</span><span class="lbl">Tarif</span></a>
+    </nav>
+    <a class="btn btn--ink top-cta" href="#tarif">Essayer Banc</a>
+  </div>
+</header>
+
+<main id="main">
+<section class="hero" id="demo" aria-labelledby="titre">
+  <canvas class="school" aria-hidden="true"></canvas>
+  <a class="logo logo--page" href="#demo" aria-label="Banc">
+    <svg class="logo-mark" viewBox="0 0 44 24" aria-hidden="true"><g class="s"><rect x="0" y="5" width="4" height="4"/><rect x="0" y="10" width="4" height="4"/><rect x="5" y="10" width="4" height="4"/><rect x="0" y="15" width="4" height="4"/></g><g class="l"><rect x="20" y="0" width="4" height="4"/><rect x="25" y="0" width="4" height="4"/><rect x="25" y="20" width="4" height="4"/></g><g class="d"><rect x="15" y="5" width="4" height="4"/><rect x="20" y="5" width="4" height="4"/><rect x="25" y="5" width="4" height="4"/><rect x="30" y="5" width="4" height="4"/><rect x="35" y="5" width="4" height="4"/><rect x="10" y="10" width="4" height="4"/><rect x="15" y="10" width="4" height="4"/><rect x="20" y="10" width="4" height="4"/><rect x="25" y="10" width="4" height="4"/><rect x="30" y="10" width="4" height="4"/><rect x="40" y="10" width="4" height="4"/><rect x="15" y="15" width="4" height="4"/><rect x="20" y="15" width="4" height="4"/><rect x="25" y="15" width="4" height="4"/><rect x="30" y="15" width="4" height="4"/><rect x="35" y="15" width="4" height="4"/></g></svg>
+    <span class="logo-word">banc</span>
+  </a>
+
+  <div class="ask">
+    <h1 id="titre"><span class="nw">Que voulez-vous</span> savoir&nbsp;?</h1>
+    <p class="lede">Banc envoie une équipe d’agents lire le web à votre place. Vous recevez une réponse de quelques lignes, et chaque phrase cite sa source.</p>
+
+    <div class="console" data-verre="bord:16 force:1">
+      <form class="field field--ask" id="ask-form" autocomplete="off" novalidate>
+        <label class="sr" for="q">Votre question</label>
+        <textarea id="q" name="q" rows="1" enterkeyhint="send" spellcheck="false" placeholder="Posez votre question" aria-describedby="now"></textarea>
+        <button class="send" id="send" type="submit" aria-label="Envoyer la question" data-empty="true">
+          <svg class="send-arrow" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M10.5 5.5 15 10l-4.5 4.5"/></svg>
+          <span class="send-spin" aria-hidden="true"></span>
+        </button>
+      </form>
+      <div class="examples" role="group" aria-label="Questions d’exemple">
+        <button type="button" data-q="0" aria-pressed="false">Délais de paiement en Espagne</button>
+        <button type="button" data-q="1" aria-pressed="false">Congés payés en Allemagne</button>
+        <button type="button" data-q="2" aria-pressed="false">Garder ses factures en France</button>
+      </div>
+    </div>
+
+    <div class="work" id="work" aria-live="polite">
+      <p class="now" id="now"></p>
+      <ol class="reads" id="reads"></ol>
+      <p class="answer" id="answer"></p>
+      <p class="next" id="next"><a class="link" href="#sources">Voir comment Banc cite ses sources</a></p>
+    </div>
+  </div>
+
+  <button class="pause" type="button" id="pause" aria-pressed="false" data-verre="bord:14 force:1 flou:3"><span class="pause-long">Mettre l’animation en pause</span><span class="pause-short" aria-hidden="true">Pause</span></button>
+</section>
+
+<section class="proof" id="sources" aria-labelledby="t-sources">
+  <div class="proof-head">
+    <h2 id="t-sources">Chaque renvoi ouvre le texte cité</h2>
+    <p class="plate-note">Banc écarte les pages périmées ou sans auteur. Quand deux sources se contredisent, il vous le signale.</p>
+  </div>
+  <div class="plate">
+    <div class="plate-a">
+      <p class="plate-q">Combien de temps faut-il garder ses factures en France&nbsp;?</p>
+      <p class="plate-answer" id="plate-answer">Gardez vos factures dix ans&nbsp;: le Code de commerce l’impose pour les pièces <span class="nw">comptables<button class="ref ref--btn" type="button" data-src="0" aria-pressed="true" aria-controls="extrait" aria-label="Source 1, lire le passage">1</button>.</span> Pour l’administration fiscale, six ans <span class="nw">suffisent<button class="ref ref--btn" type="button" data-src="1" aria-pressed="false" aria-controls="extrait" aria-label="Source 2, lire le passage">2</button>.</span></p>
+      <figure class="extract" id="extrait">
+        <blockquote class="extract-text" aria-live="polite"><p id="extrait-text"></p></blockquote>
+        <figcaption id="extrait-from"></figcaption>
+      </figure>
+    </div>
+    <div class="plate-b">
+      <p class="plate-h">Trois pages lues, deux retenues.</p>
+      <ol class="src-list">
+        <li data-src="0" class="is-on"><button class="src-btn" type="button" data-src="0" aria-pressed="true" aria-controls="extrait"><span class="ref" aria-hidden="true">1</span><span class="src-path">legifrance.gouv.fr › Code de commerce › article&nbsp;L123‑22</span></button></li>
+        <li data-src="1"><button class="src-btn" type="button" data-src="1" aria-pressed="false" aria-controls="extrait"><span class="ref" aria-hidden="true">2</span><span class="src-path">legifrance.gouv.fr › Livre des procédures fiscales › article&nbsp;L102&nbsp;B</span></button></li>
+        <li class="is-off"><span class="ref ref--off" aria-hidden="true">×</span><span class="src-path">Un site de conseils, page de 2014&nbsp;: elle confond les deux délais.</span></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="end" id="tarif" aria-labelledby="t-tarif">
+  <h2 id="t-tarif">Combien coûte Banc&nbsp;?</h2>
+  <p class="price">29&nbsp;€ par mois et par personne. Le premier mois est <span class="nw">offert<a class="ref ref--link" href="#conditions" aria-label="Condition 1">1</a>.</span></p>
+  <form class="field field--mail" id="signup" novalidate data-verre="bord:16 lentille:0">
+    <label class="sr" for="mail">Votre adresse e-mail professionnelle</label>
+    <input id="mail" name="mail" type="email" autocomplete="email" inputmode="email" placeholder="Votre adresse e-mail professionnelle" aria-describedby="signup-msg">
+    <button class="btn btn--ink btn--field" id="signup-btn" type="submit"><span class="btn-txt">Recevoir mon accès</span><span class="send-spin" aria-hidden="true"></span></button>
+  </form>
+  <p class="signup-msg" id="signup-msg" role="status"></p>
+  <p class="cond" id="conditions"><span class="ref" aria-hidden="true">1</span>Sans carte bancaire et sans engagement. Vous arrêtez quand vous voulez.</p>
+</section>
+</main>
+
+<footer class="foot" aria-labelledby="t-foot">
+  <h2 class="sr" id="t-foot">Pied de page</h2>
+  <canvas class="foot-word" aria-hidden="true"></canvas>
+  <div class="foot-grid">
+    <div class="foot-col">
+      <p class="foot-h">Banc</p>
+      <ul>
+        <li><a href="#demo"><span class="ref" aria-hidden="true">1</span>Démo</a></li>
+        <li><a href="#sources"><span class="ref" aria-hidden="true">2</span>Sources</a></li>
+        <li><a href="#tarif"><span class="ref" aria-hidden="true">3</span>Tarif</a></li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <p class="foot-h">Aide</p>
+      <ul>
+        <li><a href="#aide" data-nowhere>Centre d’aide</a></li>
+        <li><a href="#etat" data-nowhere>État du service</a></li>
+        <li><a href="#ecrire" data-nowhere>Nous écrire</a></li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <p class="foot-h">Légal</p>
+      <ul>
+        <li><a href="#confidentialite" data-nowhere>Confidentialité</a></li>
+        <li><a href="#mentions" data-nowhere>Mentions légales</a></li>
+        <li><a href="#conditions-utilisation" data-nowhere>Conditions d’utilisation</a></li>
+      </ul>
+    </div>
+    <div class="foot-col">
+      <p class="foot-h">Réseaux</p>
+      <ul>
+        <li><a href="#linkedin" data-nowhere>LinkedIn</a></li>
+        <li><a href="#bluesky" data-nowhere>Bluesky</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-line">
+    <p>Marque fictive, conçue par Topiary.</p>
+    <p class="foot-note" id="foot-note" role="status"></p>
+    <a class="link" href="#demo">Revenir en haut</a>
+  </div>
+</footer>
+
+<script type="module" src="banc.js"></script>
+</body>
+</html>

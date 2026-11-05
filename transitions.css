@@ -1,0 +1,51 @@
+/* Martin Gerspach, portfolio: the layers the page changes draw with (transitions.js). */
+
+/* The page we leave: moved here whole (a live landing keeps playing), or a still copy. */
+.tr-ghost { position: fixed; inset: 0; overflow: hidden; pointer-events: none; transform: translateZ(0); transform-origin: 50% 0; background: var(--bg); }
+.tr-ghost__in { position: absolute; left: 0; top: 0; }
+.tr-ghost * { transition: none !important; }
+.tr-ghost .rise { animation: none !important; opacity: 1 !important; transform: none !important; }
+.tr-ghost .reel__in { animation: none !important; transform: translateY(calc(var(--n) * -1.32em)) !important; }
+.tr-ghost .pv-bar > * { animation: none !important; }
+.tr-ghost .pv-frame { opacity: 1 !important; }
+.tr-ghost img.tr-still { object-fit: cover; object-position: 50% 0; }
+
+/* About, the sheet: behind the page that steps back, the page's own colour in shade (no black bands), the
+   shade that falls on it, and above the rising sheet its shadow, which travels with its top edge. */
+.tr-backdrop { position: fixed; pointer-events: none; }
+.tr-backdrop--full { inset: 0; z-index: 0; }
+.tr-backdrop--sheet { background: color-mix(in oklab, var(--bg) 90%, #000); }
+.tr-veil { position: absolute; inset: 0; background: #0B0C0A; opacity: 0; pointer-events: none; }
+.tr-sheet-edge {
+  position: fixed; left: 0; right: 0; top: 0; height: 72px; z-index: 3; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(12, 13, 11, 0), rgba(12, 13, 11, .13));
+  border-bottom: 1px solid rgba(12, 13, 11, .1);
+}
+
+/* While a page change owns the page, and after it: no CSS entrance of its own. */
+main.tr-own .rise, main.tr-done .rise { animation: none; opacity: 1; transform: none; }
+main.tr-own .pv-bar > *, main.tr-done .pv-bar > * { animation: none; }
+
+/* Contact: the coral in flight, one full-screen layer cut to shape, and its label. */
+.tr-blob { position: fixed; inset: 0; z-index: 48; background: var(--accent); pointer-events: none; clip-path: inset(50%); }
+.tr-label { position: fixed; left: 0; top: 0; z-index: 49; width: 0; height: 0; pointer-events: none; color: var(--on-accent); }
+.tr-label > span { position: absolute; left: 0; top: 0; white-space: nowrap; }
+.tr-label__a.btn { min-height: 0; padding: 0; border: 0; transform: translate(-50%, -50%); }
+.tr-label__b { display: grid; justify-items: center; gap: 8px; text-align: center; font-weight: 500; line-height: 1.15; opacity: 0; }
+.tr-label__b .ico { width: 22px; height: 22px; stroke-width: 1.8; }
+.trn { display: inline-block; }
+
+/* A project: one canvas of squares in its brand's colours, its name above it. */
+.tr-px { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 86; display: block; pointer-events: auto; }
+.tr-px-label { position: fixed; inset: 0; z-index: 87; display: grid; place-content: center; pointer-events: none;
+  padding: 0 max(var(--pad), env(safe-area-inset-right, 0px)) 0 max(var(--pad), env(safe-area-inset-left, 0px)); }
+.tr-px-box { display: grid; justify-items: center; gap: 22px; text-align: center; }
+.tr-px-kind { margin: 0; font-size: 17px; font-weight: 500; letter-spacing: -0.005em; overflow: hidden; padding-bottom: .16em; margin-bottom: -.16em; }
+.tr-px-kind > span { display: inline-block; transform: translateY(110%); }
+.tr-px-name { margin: 0; font-weight: 600; font-size: clamp(56px, 11vw, 168px); line-height: .92; letter-spacing: -0.055em; white-space: nowrap; }
+/* one window per letter, cut to the name's ink by an inline clip-path; the letter rises through it */
+.pxr { display: inline-block; }
+.pxw { display: inline-block; vertical-align: top; height: 1.35em; line-height: 1.35em; margin-block: -.215em; overflow: hidden; }
+.pxc { display: flex; flex-direction: column; will-change: transform; }
+.pxc > span { display: block; height: 1.35em; }
+.pxs { display: inline-block; width: .26em; }

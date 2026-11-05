@@ -1,0 +1,141 @@
+/* Martin Gerspach, portfolio: the About page, « the wiring » (about.js).
+   Desktop and tablet: three rows on one centre line, the row names in a left gutter, the wires underneath in one
+   SVG at the loom's own pixel size. Phone (.is-v): jobs on top as a 2 x 2 index, skills and tools face each other
+   in two columns, the wires run between them from side sockets. Colours: the portfolio's tokens only. */
+.about.cb { max-width: 1680px; margin: 0 auto; padding-bottom: clamp(64px, 12vh, 140px); }
+.cb .nw { white-space: nowrap; }
+
+.cb__head { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 24px 72px; align-items: end; margin-top: clamp(24px, 6vh, 72px); }
+.cb__intro { display: grid; gap: 32px; justify-items: start; }
+.cb__say { margin: 0; max-width: 27ch; font-size: clamp(28px, 2.1vw + 7px, 50px); line-height: 1.13; letter-spacing: -0.03em; font-weight: 500; text-wrap: balance; }
+
+/* the path, said in words; two lines reserved so nothing below moves */
+.cb__read { margin: 0; justify-self: end; width: min(100%, 38ch); min-height: calc(2 * 1.42em); display: grid; align-items: end; font-size: 19px; line-height: 1.42; letter-spacing: -0.01em; }
+.cb__read span { grid-area: 1 / 1; text-wrap: pretty; transition: opacity .28s var(--ease-soft), transform .42s var(--ease); }
+.cb__read .is-hint { color: var(--ink-2); }
+.cb__read span.is-out { opacity: 0; transform: translateY(-8px); }
+.cb__read span.is-in { opacity: 0; transform: translateY(8px); }
+
+/* ---------- the loom ---------- */
+/* sized so the whole graph, group names included, holds in the first screen at 1440 x 900 */
+.cb__loom { --gut: 150px; position: relative; display: grid; row-gap: clamp(80px, 11vh, 140px); margin-top: clamp(40px, 6vh, 96px); padding-left: var(--gut); }
+.cb__wires { position: absolute; left: 0; top: 0; z-index: 0; overflow: visible; pointer-events: none; }
+.cb__loom.is-pre .cb__wires { opacity: 0; }
+.cb__wires path {
+  fill: none; stroke: var(--wire); stroke-width: 1; stroke-linecap: round;
+  transition: opacity .45s var(--ease-soft), stroke .45s var(--ease-soft), stroke-width .45s var(--ease-soft);
+}
+.cb__wires line { stroke: var(--wire); stroke-width: 2; stroke-linecap: round; transition: opacity .45s var(--ease-soft), stroke .45s var(--ease-soft); }
+.cb__loom.is-focus .cb__wires path { opacity: .16; }
+.cb__loom.is-focus .cb__wires path.is-on { opacity: 1; stroke: var(--ink); stroke-width: 1.25; }
+.cb__loom.is-focus .cb__wires path.is-near { stroke: var(--accent); stroke-width: 1.8; }
+.cb__loom.is-focus .cb__wires line { opacity: .3; }
+.cb__loom.is-focus .cb__wires line.is-on { opacity: 1; stroke: var(--ink); }
+.cb__loom.is-focus .cb__wires line.is-near { stroke: var(--accent); }
+
+.cb__row { position: relative; z-index: 1; }
+.cb__row h2 { position: absolute; left: calc(-1 * var(--gut)); top: 50%; transform: translateY(-50%); width: calc(var(--gut) - 24px); margin: 0; font-size: var(--t-small); font-weight: 400; color: var(--ink-2); }
+.cb__row--tools h2 { top: calc(var(--ts) / 2); }
+.cb__row ul { list-style: none; margin: 0; padding: 0; }
+.cb__row--jobs ul, .cb__row--skills ul { display: grid; align-items: start; }
+.cb__row--jobs ul { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.cb__row--skills ul { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.cb__row--jobs li, .cb__row--skills li { display: grid; justify-items: center; text-align: center; }
+.cb__node { display: grid; gap: 4px; justify-items: center; padding: 6px 8px; border-radius: 6px; text-align: center; line-height: 1.3; }
+.cb__node b { font-weight: 500; font-size: 19px; letter-spacing: -0.012em; transition: color .4s var(--ease-soft); }
+.cb__row--skills .cb__node b { font-size: 18px; }
+.cb__node > span { max-width: 22ch; font-size: 16px; color: var(--ink-2); text-wrap: balance; transition: color .4s var(--ease-soft); }
+.cb__loom.is-focus .cb__node.is-off b { color: var(--ink-2); }
+.cb__loom.is-focus .cb__node.is-lit > span { color: var(--ink); }
+.cb__node[aria-pressed="true"] b { text-decoration: underline 2px var(--accent); text-underline-offset: 6px; }
+
+/* tools: three groups spread on the full width, names under the groups */
+.cb__row--tools { --ts: clamp(34px, 2.85vw, 50px); }
+.cb__tools { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+.cb__grp { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.cb__glist { display: flex; gap: clamp(6px, .75vw, 12px); }
+.cb__tool { display: flex; align-items: center; }
+.cb__tname { display: none; }
+.cb__glabel { font-size: var(--t-small); color: var(--ink-2); white-space: nowrap; }
+
+/* the mark on its enamel tile */
+.cb .tool {
+  --s: var(--ts);
+  position: relative; display: inline-grid; place-items: center; flex: none;
+  width: var(--s); height: var(--s); border-radius: calc(var(--s) * .26);
+  background: var(--tool-bg); box-shadow: inset 0 0 0 1px var(--tool-line);
+  color: var(--ink); cursor: default; -webkit-tap-highlight-color: transparent;
+  transition: opacity .45s var(--ease-soft), filter .45s var(--ease-soft), background-color .45s var(--ease-soft);
+}
+.cb .tool__g { grid-area: 1 / 1; display: grid; place-items: center; width: 54%; height: 54%; transition: transform .55s var(--ease); }
+.cb .tool__g svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.cb .tool[data-tool="WebGL"] .tool__g { width: 84%; height: 84%; }   /* no icon, only its wordmark */
+.cb .tool:focus-visible { outline-offset: 4px; border-radius: calc(var(--s) * .26); }
+.cb .tool.is-on { background: color-mix(in oklab, var(--brand) 12%, var(--tool-bg)); }
+.cb .tool.is-on .tool__g { transform: scale(1.08); }
+.cb .tool.is-dim { opacity: .26; filter: grayscale(1); }
+
+/* the name tag: one label that glides from mark to mark (in the body, over the page) */
+.tool-tag {
+  position: absolute; left: 0; top: 0; z-index: 45;
+  height: 36px; border-radius: 8px; overflow: hidden;
+  background: var(--ink); color: var(--bg);
+  font: 500 15px/36px var(--f-sans); letter-spacing: -0.005em; white-space: nowrap;
+  opacity: 0; pointer-events: none; will-change: transform, width;
+  transition: opacity .2s var(--ease-soft);
+}
+.tool-tag.is-shown { opacity: 1; pointer-events: auto; }
+.tool-tag span { position: absolute; left: 50%; top: 0; transform: translate(-50%, 0); transition: opacity .22s var(--ease-soft), transform .32s var(--ease); }
+.tool-tag span.is-out { opacity: 0; transform: translate(-50%, -10px); }
+.tool-tag span.is-in { opacity: 0; transform: translate(-50%, 10px); }
+.tool-tag__m { position: absolute; left: -9999px; top: 0; visibility: hidden; white-space: nowrap; font: 500 15px/1 var(--f-sans); }
+
+/* ---------- foot ---------- */
+.cb__foot { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, .9fr); gap: 40px 56px; margin-top: clamp(72px, 11vh, 128px); padding-top: 32px; border-top: 1px solid var(--line); }
+.cb__foot h2 { margin: 0 0 14px; font-size: var(--t-small); font-weight: 400; color: var(--ink-2); }
+.cb__foot * + h2 { margin-top: 36px; }
+.cb__foot p { margin: 0 0 14px; max-width: 56ch; line-height: 1.55; }
+.cb__foot p.muted { color: var(--ink-2); }
+.cb__list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.cb__list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 20px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.cb__list b { font-weight: 500; }
+.cb__list time { color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* tablet: a narrower gutter; skill descriptions give way (the sentence above says what each one holds) */
+@media (max-width: 1100px) {
+  .cb__head { grid-template-columns: minmax(0, 1fr); }
+  .cb__read { justify-self: start; }
+  .cb__loom { --gut: 104px; row-gap: 100px; }
+  .cb__row--skills .cb__node > span { display: none; }
+  .cb__node b { font-size: 17px; }
+  .cb__row--jobs .cb__node > span { font-size: 15px; }
+  .cb__glabel { white-space: normal; }
+  .cb__foot { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .cb__foot > :first-child { grid-column: 1 / -1; }
+}
+
+/* phone: the graph turns a quarter; the names of the tools are written, there is no hover to ask for them */
+.cb__loom.is-v { padding-left: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr); column-gap: clamp(44px, 15vw, 72px); row-gap: 40px; }
+.is-v .cb__row h2 { position: static; transform: none; width: auto; margin: 0 0 14px; }
+.is-v .cb__row--jobs { grid-column: 1 / -1; }
+.is-v .cb__row--jobs ul { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; }
+.is-v .cb__row--jobs li { justify-items: start; text-align: left; }
+.is-v .cb__row--jobs .cb__node { justify-items: start; text-align: left; padding: 8px 0; }
+.is-v .cb__row--skills { grid-column: 1; display: flex; flex-direction: column; }
+.is-v .cb__row--skills ul { flex: 1; display: flex; flex-direction: column; justify-content: space-around; }
+.is-v .cb__row--skills li { justify-items: end; text-align: right; }
+.is-v .cb__row--skills .cb__node { justify-items: end; text-align: right; padding: 8px 0; }
+.is-v .cb__row--skills .cb__node b { font-size: 17px; }
+.is-v .cb__row--tools { grid-column: 2; --ts: 34px; }
+.is-v .cb__tools { flex-direction: column; justify-content: flex-start; gap: 22px; }
+.is-v .cb__grp { gap: 8px; }
+.is-v .cb__glabel { order: -1; white-space: normal; }
+.is-v .cb__glist { flex-direction: column; gap: 8px; }
+.is-v .cb__tool { gap: 10px; }
+.is-v .cb__tname { display: block; min-width: 0; font-size: 16px; line-height: 1.25; transition: color .4s var(--ease-soft); }
+.is-v.is-focus .cb__tool.is-off .cb__tname { color: var(--ink-2); }
+
+@media (max-width: 640px) { .cb__foot { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) {
+  .cb .tool__g, .tool-tag, .tool-tag span, .cb__read span { transition: none; }
+}

@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="fr" class="no-js">
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiroir</title>
+<meta name="description" content="Tiroir répond à vos questions en citant le passage exact de vos fichiers.">
+<meta name="theme-color" content="#0e4c9e">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Karla:ital,wght@0,400..700;1,400..500&display=swap">
+<link rel="preload" as="image" href="img/colline.webp" type="image/webp" fetchpriority="high">
+<link rel="preload" as="image" href="img/commode-lum.webp" type="image/webp">
+<link rel="stylesheet" href="tiroir.css">
+<script>(function(d){d.classList.remove('no-js');d.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]apparitions=0/.test(location.search)){d.classList.add('rv');setTimeout(function(){d.classList.add('rv-open')},2600);}})(document.documentElement);</script>
+</head>
+<body>
+<a class="skip" href="#demo">Aller à la démonstration</a>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!--logo--><symbol id="logo" viewBox="-9.6 -23.8 76.2 42.1"><path class="lp" fill="currentColor" fill-rule="evenodd" d="M-5.28 -19.50h67.56v24.45h-67.56zM3.21 0V-0.18H5.41V-14.82H3.84Q3.01 -14.82 2.42 -14.48Q1.84 -14.14 1.46 -13.52Q1.08 -12.91 0.88 -12.09Q0.67 -11.27 0.6 -10.32H0.42V-15H13.01V-10.32H12.83Q12.76 -11.27 12.56 -12.09Q12.35 -12.91 11.97 -13.52Q11.59 -14.14 11 -14.48Q10.42 -14.82 9.58 -14.82H8.03V-0.18H10.23V0ZM16.51 -12.18Q15.89 -12.18 15.45 -12.62Q15.01 -13.06 15.01 -13.68Q15.01 -14.32 15.45 -14.75Q15.89 -15.19 16.51 -15.19Q17.15 -15.19 17.58 -14.75Q18.01 -14.32 18.01 -13.68Q18.01 -13.06 17.58 -12.62Q17.15 -12.18 16.51 -12.18ZM17.71 -9.2V-0.18H19V0H14.02V-0.18H15.31V-9.02H14.02V-9.2ZM23.72 -4.37Q23.72 -5.35 23.86 -6.25Q24 -7.15 24.33 -7.86Q24.65 -8.57 25.2 -8.98Q25.74 -9.4 26.54 -9.4Q27.17 -9.4 27.62 -9.13Q28.07 -8.86 28.3 -8.43Q28.53 -8 28.53 -7.51Q28.53 -6.89 28.14 -6.44Q27.74 -5.99 27.08 -5.99Q26.41 -5.99 26.01 -6.39Q25.6 -6.79 25.6 -7.35Q25.6 -8.02 26.03 -8.42Q26.47 -8.81 27.07 -8.81Q27.48 -8.81 27.81 -8.63Q28.14 -8.45 28.33 -8.15Q28.52 -7.86 28.52 -7.51H28.35Q28.35 -7.96 28.12 -8.34Q27.9 -8.73 27.49 -8.97Q27.08 -9.21 26.52 -9.21Q25.79 -9.21 25.28 -8.82Q24.77 -8.42 24.45 -7.74Q24.13 -7.05 23.98 -6.19Q23.84 -5.32 23.84 -4.37ZM23.84 -9.2V-0.18H25.25V0H20.16V-0.18H21.45V-9.02H20.16V-9.2ZM34.73 0.2Q33.26 0.2 32.19 -0.46Q31.12 -1.12 30.54 -2.21Q29.96 -3.3 29.96 -4.6Q29.96 -5.9 30.54 -6.99Q31.12 -8.08 32.19 -8.74Q33.26 -9.4 34.73 -9.4Q36.2 -9.4 37.26 -8.74Q38.33 -8.08 38.91 -6.99Q39.48 -5.9 39.48 -4.6Q39.48 -3.3 38.91 -2.21Q38.33 -1.12 37.26 -0.46Q36.2 0.2 34.73 0.2ZM34.73 0.02Q35.38 0.02 35.8 -0.39Q36.22 -0.8 36.45 -1.47Q36.68 -2.15 36.77 -2.97Q36.86 -3.79 36.86 -4.6Q36.86 -5.42 36.77 -6.24Q36.68 -7.05 36.45 -7.73Q36.22 -8.4 35.8 -8.81Q35.38 -9.22 34.73 -9.22Q34.07 -9.22 33.65 -8.81Q33.23 -8.4 33 -7.73Q32.77 -7.05 32.68 -6.24Q32.59 -5.42 32.59 -4.6Q32.59 -3.79 32.68 -2.97Q32.77 -2.15 33 -1.47Q33.23 -0.8 33.65 -0.39Q34.07 0.02 34.73 0.02ZM43.65 -12.18Q43.03 -12.18 42.59 -12.62Q42.15 -13.06 42.15 -13.68Q42.15 -14.32 42.59 -14.75Q43.03 -15.19 43.65 -15.19Q44.29 -15.19 44.72 -14.75Q45.15 -14.32 45.15 -13.68Q45.15 -13.06 44.72 -12.62Q44.29 -12.18 43.65 -12.18ZM44.85 -9.2V-0.18H46.14V0H41.16V-0.18H42.45V-9.02H41.16V-9.2ZM50.86 -4.37Q50.86 -5.35 51 -6.25Q51.14 -7.15 51.47 -7.86Q51.79 -8.57 52.34 -8.98Q52.88 -9.4 53.68 -9.4Q54.31 -9.4 54.76 -9.13Q55.21 -8.86 55.44 -8.43Q55.67 -8 55.67 -7.51Q55.67 -6.89 55.28 -6.44Q54.88 -5.99 54.22 -5.99Q53.55 -5.99 53.15 -6.39Q52.74 -6.79 52.74 -7.35Q52.74 -8.02 53.17 -8.42Q53.61 -8.81 54.21 -8.81Q54.62 -8.81 54.95 -8.63Q55.28 -8.45 55.47 -8.15Q55.66 -7.86 55.66 -7.51H55.49Q55.49 -7.96 55.26 -8.34Q55.04 -8.73 54.63 -8.97Q54.22 -9.21 53.66 -9.21Q52.93 -9.21 52.42 -8.82Q51.91 -8.42 51.59 -7.74Q51.27 -7.05 51.12 -6.19Q50.98 -5.32 50.98 -4.37ZM50.98 -9.2V-0.18H52.39V0H47.3V-0.18H48.59V-9.02H47.3V-9.2Z"/><path d="M-8.80 -23.02H65.79V8.47H36.60A8.11 8.80 0 0 1 20.39 8.47H-8.80Z" style="opacity:var(--logo-frame,1)" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol><!--/logo-->
+  <symbol id="i-poignee" viewBox="0 0 28 10"><path d="M1 1h26" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6.5 1a7.5 7 0 0 0 15 0z" fill="currentColor"/></symbol>
+  <symbol id="i-serrure" viewBox="0 0 14 18"><path d="M3.6 1.2h6.8a2.4 2.4 0 0 1 2.4 2.4v10.8a2.4 2.4 0 0 1-2.4 2.4H3.6a2.4 2.4 0 0 1-2.4-2.4V3.6a2.4 2.4 0 0 1 2.4-2.4z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="7" cy="7.2" r="1.9" fill="currentColor"/><path d="M6.15 8.2h1.7l.55 4.1H5.6z" fill="currentColor"/></symbol>
+  <symbol id="i-file" viewBox="0 0 20 20"><path d="M5 2.5h6.5L15.5 6.5v11h-10.5z M11.5 2.5v4h4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+  <symbol id="i-search" viewBox="0 0 20 20"><circle cx="8.6" cy="8.6" r="5.4" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12.6 12.6 17 17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+</svg>
+
+<header class="head" data-state="top">
+  <div class="head-strip" aria-hidden="true">
+    <svg class="head-pull" viewBox="0 0 40 14" preserveAspectRatio="none"><path class="head-pull-fill" d="M0 0H40V1H34.5A14.5 12 0 0 1 5.5 1H0Z"/><path class="head-pull-line" d="M0 .5H5.5A14.5 12 0 0 0 34.5 .5H40"/></svg>
+  </div>
+  <div class="head-in">
+    <nav class="head-nav" aria-label="Sections de la page">
+      <ul>
+        <li><a class="nav-link" href="#demo"><span class="trait">La démo</span></a></li>
+        <li><a class="nav-link" href="#dossiers"><span class="trait">Vos dossiers</span></a></li>
+        <li><a class="nav-link" href="#tarif"><span class="trait">Tarif</span></a></li>
+      </ul>
+    </nav>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu"><span class="menu-btn-label">Menu</span></button>
+    <a class="brand" href="#haut" aria-label="Tiroir, retour en haut de la page"><svg class="brand-mark" aria-hidden="true"><use href="#logo"/></svg></a>
+    <a class="btn btn--sheet btn--s head-cta" href="#essai">Essayer</a>
+  </div>
+</header>
+
+<div class="menu" id="menu" hidden>
+  <ul class="menu-list">
+    <li><a class="menu-link" href="#demo"><span class="trait">La démo</span></a></li>
+    <li><a class="menu-link" href="#dossiers"><span class="trait">Vos dossiers</span></a></li>
+    <li><a class="menu-link" href="#tarif"><span class="trait">Tarif</span></a></li>
+  </ul>
+  <div class="menu-foot">
+    <p class="menu-note">Le premier mois est offert.</p>
+    <a class="btn btn--sheet menu-cta" href="#essai">Essayer avec vos dossiers</a>
+  </div>
+</div>
+
+<main>
+  <section class="hero" id="haut" aria-labelledby="titre">
+    <canvas class="trame" aria-hidden="true"></canvas>
+    <div class="hero-in wrap">
+      <h1 id="titre">La réponse est déjà <span class="nw">dans vos dossiers.</span></h1>
+      <div class="hero-row">
+        <div class="hero-copy">
+          <p class="lede"><span class="cite" id="p-comment">Posez votre question. Tiroir cherche dans vos fichiers et vous montre le passage exact.</span></p>
+          <a class="btn btn--sheet" href="#essai">Essayer avec vos dossiers</a>
+        </div>
+        <div class="sheet ask" aria-hidden="true">
+          <p class="ask-q"><svg class="i"><use href="#i-search"/></svg><span>Quel est notre délai de préavis pour le bail de Lyon&nbsp;?</span></p>
+          <p class="ask-a ruled">Six mois avant la fin de chaque période de trois ans, par lettre recommandée ou acte de commissaire de justice.</p>
+          <p class="ask-src"><svg class="i"><use href="#i-file"/></svg>Bail commercial Lyon 3e.pdf, page 3</p>
+        </div>
+        <p class="sr-only">Exemple&nbsp;: à la question «&nbsp;Quel est notre délai de préavis pour le bail de Lyon&nbsp;?&nbsp;», Tiroir répond «&nbsp;Six mois avant la fin de chaque période de trois ans, par lettre recommandée ou acte de commissaire de justice.&nbsp;» et cite le bail commercial de Lyon, page 3.</p>
+      </div>
+    </div>
+    <div class="hill" aria-hidden="true">
+      <img src="img/colline.webp" width="1456" height="346" alt="" decoding="async" fetchpriority="high">
+      <canvas class="perso"></canvas>
+    </div>
+    <button class="perso-pause" type="button" aria-pressed="false" hidden>
+      <svg class="perso-ico perso-ico--pause" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 2h3v10H3zM8 2h3v10H8z" fill="currentColor"/></svg>
+      <svg class="perso-ico perso-ico--play" viewBox="0 0 14 14" aria-hidden="true"><path d="M3.5 1.8 12 7l-8.5 5.2z" fill="currentColor"/></svg>
+      <span class="sr-only">Mettre en pause l’animation du personnage</span>
+    </button>
+  </section>
+
+  <section class="demo" id="demo" aria-labelledby="demo-titre">
+    <div class="demo-head wrap">
+      <h2 id="demo-titre">Choisissez une question. Tiroir répond, preuve à l’appui.</h2>
+      <div class="qs" role="group" aria-label="Questions d’exemple">
+        <button type="button" class="q" data-q="0" aria-pressed="true"><span class="crayon">Quel est notre délai de préavis pour le bail de Lyon&nbsp;?</span></button>
+        <button type="button" class="q" data-q="1" aria-pressed="false"><span class="crayon">Qui peut signer un devis de plus de 5&nbsp;000&nbsp;€&nbsp;?</span></button>
+        <button type="button" class="q" data-q="2" aria-pressed="false"><span class="crayon">Notre assurance couvre-t-elle le matériel prêté aux clients&nbsp;?</span></button>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="stage" aria-hidden="true">
+        <canvas class="stage-dots"></canvas>
+        <p class="stage-reply"></p>
+        <div class="fiche-shadow"></div>
+        <div class="sheet fiche">
+          <div class="fiche-top">
+            <svg class="i"><use href="#i-file"/></svg>
+            <div class="fiche-id"><p class="fiche-name"></p><p class="fiche-path"></p></div>
+            <p class="fiche-page"></p>
+          </div>
+          <p class="fiche-h"></p>
+          <p class="fiche-body ruled"></p>
+          <canvas class="fiche-ink"></canvas>
+        </div>
+      </div>
+    </div>
+    <p class="reply-live sr-only" aria-live="polite"></p>
+  </section>
+
+  <section class="keys" id="dossiers" aria-labelledby="cles-titre">
+    <div class="wrap">
+      <div class="keys-grid">
+      <div class="nope" aria-hidden="true">
+        <p class="sheet nope-q"><svg class="i"><use href="#i-search"/></svg><span>Quel est le code du portail de l’entrepôt&nbsp;?</span></p>
+        <p class="nope-a">Je ne trouve pas cette information dans les dossiers que vous m’avez ouverts.</p>
+      </div>
+      <figure class="meuble" aria-hidden="true">
+        <div class="meuble-plateau"></div>
+        <div class="meuble-caisson">
+          <div class="casier is-ouvert"><div class="casier-face"><span class="casier-plaque">Baux</span><svg class="casier-poignee"><use href="#i-poignee"/></svg></div></div>
+          <div class="casier is-ouvert"><div class="casier-face"><span class="casier-plaque">Contrats</span><svg class="casier-poignee"><use href="#i-poignee"/></svg></div></div>
+          <div class="casier is-ouvert"><div class="casier-face"><span class="casier-plaque">Assurances</span><svg class="casier-poignee"><use href="#i-poignee"/></svg></div></div>
+          <div class="casier is-ouvert"><div class="casier-face"><span class="casier-plaque">Direction</span><svg class="casier-poignee"><use href="#i-poignee"/></svg></div></div>
+          <div class="casier"><div class="casier-face"><span class="casier-plaque">RH</span><svg class="casier-serrure"><use href="#i-serrure"/></svg></div></div>
+          <div class="casier is-ouvert"><div class="casier-face"><span class="casier-plaque">Comptabilité</span><svg class="casier-poignee"><use href="#i-poignee"/></svg></div></div>
+          <div class="casier"><div class="casier-face"><span class="casier-plaque">Paie</span><svg class="casier-serrure"><use href="#i-serrure"/></svg></div></div>
+          <div class="casier"><div class="casier-face"><span class="casier-plaque">Entrepôt</span><svg class="casier-serrure"><use href="#i-serrure"/></svg></div></div>
+        </div>
+        <div class="meuble-socle"></div>
+      </figure>
+      </div>
+      <div class="keys-in">
+        <h2 id="cles-titre"><span class="cite" id="p-acces">Tiroir ne lit que les dossiers que vous lui ouvrez.</span></h2>
+        <p><span class="cite" id="p-sources">Vous les choisissez dans Google Drive, SharePoint ou Dropbox.</span> <span class="cite" id="p-preuve">Chaque réponse cite son passage.</span></p>
+      </div>
+      <p class="sr-only">Exemple&nbsp;: à une question dont la réponse n’est dans aucun dossier ouvert, Tiroir répond qu’il ne trouve pas l’information.</p>
+    </div>
+  </section>
+
+  <section class="offer" id="tarif" aria-labelledby="tarif-titre">
+    <div class="offer-grid wrap">
+      <h2 id="tarif-titre" class="offer-price"><span class="cite-src" id="p-prix">
+        <span class="offer-num">15<span class="offer-cur">€&nbsp;HT</span></span>
+        <span class="offer-unit"><span class="cite">par mois et par personne, pour tous vos dossiers.</span></span></span>
+      </h2>
+      <div class="sheet offer-side">
+        <p class="offer-gift"><span class="gift cite" id="p-essai">Le premier mois est offert.</span><canvas class="gift-ink" aria-hidden="true"></canvas></p>
+        <form class="signup" id="essai" novalidate>
+          <label class="field-label" for="email">Votre adresse e-mail</label>
+          <div class="signup-row">
+            <input class="field" id="email" name="email" type="email" autocomplete="email" inputmode="email" placeholder="nom@entreprise.fr" aria-describedby="signup-msg" required>
+            <button class="btn btn--sky" type="submit"><span class="btn-label">Commencer l’essai</span></button>
+          </div>
+          <p class="signup-msg" id="signup-msg" role="status"></p>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="end" id="pied">
+  <div class="end-top wrap">
+    <section class="faq" aria-labelledby="faq-titre">
+      <div class="faq-head">
+        <h2 class="faq-title" id="faq-titre">Une question sur Tiroir&nbsp;?</h2>
+        <p class="faq-lede">Tiroir cherche la réponse dans cette page et vous montre le passage.</p>
+      </div>
+      <div class="faq-body">
+        <form class="sheet faq-card" role="search" novalidate>
+          <label class="sr-only" for="faq-q">Votre question sur Tiroir</label>
+          <div class="faq-field">
+            <svg class="i" aria-hidden="true"><use href="#i-search"/></svg>
+            <input id="faq-q" name="q" type="search" autocomplete="off" enterkeyhint="search" placeholder="Votre question" aria-describedby="faq-a">
+            <button class="btn btn--sky btn--s faq-go" type="submit">Demander</button>
+          </div>
+          <div class="faq-lines ruled">
+            <p class="faq-a" aria-hidden="true"></p>
+            <p class="faq-ex-row"><span class="faq-ex-lead">Exemples&nbsp;:</span>
+              <button type="button" class="faq-ex"><span class="trait">Combien ça coûte&nbsp;?</span></button>
+              <button type="button" class="faq-ex"><span class="trait">Quels dossiers Tiroir lit-il&nbsp;?</span></button>
+              <button type="button" class="faq-ex"><span class="trait">Comment vérifier une réponse&nbsp;?</span></button>
+            </p>
+          </div>
+          <p class="faq-cite"><svg class="i" aria-hidden="true"><use href="#i-file"/></svg><span class="faq-where"></span><a class="faq-src" href="#haut"><span class="trait">Lire le passage</span></a></p>
+          <p class="sr-only" id="faq-a" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+    <div class="end-id">
+      <a class="brand brand--end" href="#haut" aria-label="Tiroir, retour en haut de la page"><svg class="brand-mark" aria-hidden="true"><use href="#logo"/></svg></a>
+      <p class="credit"><span class="cite" id="p-fictif">Marque fictive, conçue par Topiary.</span></p>
+    </div>
+    <nav class="end-nav" aria-label="Pied de page">
+      <div class="end-col">
+        <h2 class="end-h"><span>Sur cette page</span></h2>
+        <ul>
+          <li><a class="end-link" href="#demo"><span class="trait">La démo</span></a></li>
+          <li><a class="end-link" href="#dossiers"><span class="trait">Vos dossiers</span></a></li>
+          <li><a class="end-link" href="#tarif"><span class="trait">Tarif</span></a></li>
+          <li><a class="end-link" href="#essai"><span class="trait">Essayer</span></a></li>
+        </ul>
+      </div>
+      <div class="end-col">
+        <h2 class="end-h"><span>Aide</span></h2>
+        <ul>
+          <li><a class="end-link" href="#aide" data-fictif><span class="trait">Centre d’aide</span></a></li>
+          <li><a class="end-link" href="#etat" data-fictif><span class="trait">État du service</span></a></li>
+          <li><a class="end-link" href="#ecrire" data-fictif><span class="trait">Écrire à Tiroir</span></a></li>
+          <li><a class="end-link" href="#linkedin" data-fictif><span class="trait">LinkedIn</span></a></li>
+        </ul>
+      </div>
+      <div class="end-col">
+        <h2 class="end-h"><span>Informations légales</span></h2>
+        <ul>
+          <li><a class="end-link" href="#confidentialite" data-fictif><span class="trait">Confidentialité</span></a></li>
+          <li><a class="end-link" href="#mentions" data-fictif><span class="trait">Mentions légales</span></a></li>
+          <li><a class="end-link" href="#conditions" data-fictif><span class="trait">Conditions d’utilisation</span></a></li>
+        </ul>
+      </div>
+      <p class="sheet end-note" role="status" aria-live="polite"></p>
+    </nav>
+  </div>
+  <div class="end-scene" aria-hidden="true">
+  <p class="end-word">Tir<span class="end-o">o<img class="end-commode" src="img/commode-fin.webp" width="148" height="136" alt="" decoding="async" fetchpriority="low"></span>ir</p>
+  <div class="end-hill">
+    <img src="img/colline-fin-nue.webp" width="1456" height="446" alt="" decoding="async" fetchpriority="low">
+  </div>
+  </div>
+</footer>
+
+<script src="perso.js"></script>
+<script src="tiroir.js"></script>
+</body>
+</html>

@@ -1,0 +1,823 @@
+/* Tiroir : ciel cobalt uni, colline, trame blanche, crayon vert.
+   Le monde du fichier de bureau : porte-étiquette, poignée coquille, fiche bristol lignée.
+   Bodoni Moda seulement au-dessus de 36 px ; Karla en dessous. */
+
+/* Replis calés en métrique (largeur et hauteurs mesurées sur les polices, _outils/logo/metrics.py) */
+@font-face { font-family: "Bodoni repli"; src: local("Georgia"); size-adjust: 103.3%; ascent-override: 108.9%; descent-override: 38.7%; line-gap-override: 0%; }
+@font-face { font-family: "Karla repli"; src: local("Arial"), local("ArialMT"); size-adjust: 101.3%; ascent-override: 90.6%; descent-override: 24.9%; line-gap-override: 0%; }
+
+@property --logo-frame { syntax: "<number>"; inherits: true; initial-value: 1; }
+
+:root {
+  /* Couleurs de base */
+  --cobalt: #0e4c9e;
+  --cobalt-700: #0b3d80;
+  --cobalt-100: #e3ebf7;
+  --cobalt-50: #eef2f9;
+  --white: #ffffff;
+  --paper: #f6f4ef;
+  --ink: #0d2c57;
+  --ink-2: #3c5275;
+  --ink-3: #56657c;
+  --sky-2: #d5e0f1;
+  --green: #86b83e;
+  --brick: #a3321f;
+
+  /* Rôles */
+  --c-sky: var(--cobalt);
+  --c-paper: var(--paper);
+  --c-sheet: var(--white);
+  --c-on-sky: var(--white);
+  --c-on-sky-2: var(--sky-2);
+  --c-ink: var(--ink);
+  --c-ink-2: var(--ink-2);
+  --c-ink-3: var(--ink-3);
+  --c-doc: #1d2a3d;
+  --c-accent: var(--cobalt);
+  --c-crayon: var(--green);
+  --c-rule-sky: rgba(255, 255, 255, .26);
+  --c-rule-sky-2: rgba(255, 255, 255, .5);
+  --c-rule-ink: rgba(14, 76, 158, .2);
+  --c-rule-ink-2: rgba(14, 76, 158, .45);
+  --c-bristol: #d6e1f1;
+  --c-field-line: rgba(14, 76, 158, .62);   /* 3,3:1 sur blanc */
+  --c-error: var(--brick);
+  --c-shadow: rgba(4, 20, 50, .6);
+
+  /* Polices */
+  --serif: "Bodoni Moda", "Bodoni repli", Georgia, serif;
+  --sans: "Karla", "Karla repli", Arial, sans-serif;
+
+  /* Échelle de tailles */
+  --t-monument: clamp(112px, 31vw, 560px);   /* le grand « Tiroir » de la fin */
+  --t-price: clamp(150px, 19vw, 300px);      /* le prix */
+  --t-display: clamp(46px, 7.3vw, 128px);    /* titre du hero */
+  --t-confession: clamp(42px, 5.6vw, 92px);  /* « Je ne trouve pas » */
+  --t-title: clamp(38px, 3.9vw, 60px);       /* titres de section */
+  --t-answer: clamp(36px, 3.3vw, 52px);      /* réponse de la démo */
+  --t-menu: 44px;                            /* liens du menu de téléphone */
+  --t-lede: clamp(19px, 1.45vw, 22px);
+  --t-lead: clamp(20px, 1.7vw, 24px);        /* phrases du tarif */
+  --t-body: 18px;
+  --t-ui: 17px;
+  --t-small: 15px;
+
+  /* Espaces */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px;
+  --s-7: 48px; --s-8: 64px; --s-9: 96px; --s-10: 144px;
+  --gut: clamp(20px, 4.45vw, 64px);
+  --section: clamp(96px, 10vw, 160px);
+  --max: 1640px;
+  --head-h: 64px;
+  --head-drop: 16px;           /* l'en-tête descend de 16 px tout en haut de page */
+
+  /* Mouvement : « coulisse » (ce qui sort d'un tiroir), « rangement » (ce qui y rentre), survol lent à s'éteindre */
+  --e-coulisse: cubic-bezier(.16, .84, .24, 1);
+  --e-rangement: cubic-bezier(.55, 0, .3, 1);
+  --e-doux: cubic-bezier(.22, .7, .18, 1);
+  --e-pose: cubic-bezier(.16, 1, .3, 1);          /* les entrées : départ vif, arrivée très longue, sans rebond */
+  --d-coulisse: .7s;
+  --d-rangement: .45s;
+  --d-survol-in: .3s;
+  --d-survol-out: .8s;
+  --d-fondu: .3s;
+
+  /* Porte-étiquette : le cadre fin autour d'une plaque (logo, boutons, champ) */
+  --frame-gap: 3px;
+  --frame-w: 1.5px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: calc(var(--head-h) + 24px); background: var(--c-sky); }
+html.is-locked { overflow: hidden; }
+body {
+  margin: 0; background: var(--c-sky); color: var(--c-ink);
+  font: 400 var(--t-body)/1.55 var(--sans);
+  -webkit-font-smoothing: antialiased; font-kerning: normal;
+}
+h1, h2, p, ul { margin: 0; }
+ul { padding: 0; list-style: none; }
+a { color: inherit; }
+img, svg, canvas { display: block; }
+.wrap { width: 100%; max-width: calc(var(--max) + 2 * var(--gut)); margin-inline: auto; padding-inline: var(--gut); }
+.nw { white-space: nowrap; }
+.i { width: 20px; height: 20px; flex: none; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.skip { position: fixed; left: var(--s-3); top: -80px; z-index: 60; background: var(--c-sheet); color: var(--c-accent); padding: var(--s-3) var(--s-4); font: 600 var(--t-ui)/1.2 var(--sans); }
+.skip:focus { top: var(--s-3); }
+:focus-visible { outline: 2px solid var(--c-on-sky); outline-offset: 4px; }
+.on-paper :focus-visible, .demo :focus-visible, .offer :focus-visible { outline-color: var(--c-accent); }
+.caret {
+  display: inline-block; width: 2px; height: 1em; margin-left: 2px; vertical-align: -.12em; background: currentColor;
+  animation: caret 1s steps(1) infinite;
+}
+@keyframes caret { 50% { opacity: 0; } }
+
+/* =========================================================
+   Composants
+   ========================================================= */
+
+/* Boutons : une plaque nette. Au survol, le cadre du porte-étiquette se pose autour (lent à s'éteindre). */
+.btn {
+  --bg: var(--c-sheet); --fg: var(--c-accent); --bg-h: var(--cobalt-100); --frame: var(--c-on-sky); --halo: var(--c-sky);
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--s-3);
+  min-height: 54px; padding: 0 28px; border: 0; border-radius: 0; cursor: pointer;
+  background: var(--bg); color: var(--fg);
+  font: 600 var(--t-ui)/1 var(--sans); letter-spacing: .01em; text-decoration: none; white-space: nowrap;
+  box-shadow: 0 0 0 var(--frame-gap) var(--halo), 0 0 0 calc(var(--frame-gap) + var(--frame-w)) transparent;
+  transition: background-color var(--d-survol-out) var(--e-doux), color var(--d-survol-out) var(--e-doux),
+              box-shadow var(--d-survol-out) var(--e-doux), transform .25s var(--e-doux);
+}
+.btn:hover {
+  background: var(--bg-h);
+  box-shadow: 0 0 0 var(--frame-gap) var(--halo), 0 0 0 calc(var(--frame-gap) + var(--frame-w)) var(--frame);
+  transition-duration: var(--d-survol-in);
+}
+.btn:active { transform: translateY(1px); transition-duration: .08s; }
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 var(--frame-gap) var(--halo), 0 0 0 calc(var(--frame-gap) + 2px) var(--frame);
+}
+.btn[disabled], .btn[aria-disabled="true"] { cursor: not-allowed; background: var(--bg); opacity: .55; box-shadow: 0 0 0 var(--frame-gap) var(--halo); transform: none; }
+.btn.is-busy { cursor: progress; opacity: 1; }
+/* succès : la plaque se vide, son cadre reste */
+.btn.is-done, .btn.is-done:hover { cursor: default; opacity: 1; background: transparent; color: var(--fg-done, var(--c-accent)); box-shadow: inset 0 0 0 1.5px currentColor; transform: none; }
+.btn--s { min-height: 44px; padding: 0 20px; font-size: 16px; }
+.btn--sheet { --bg: var(--c-sheet); --fg: var(--c-accent); --bg-h: var(--cobalt-100); --frame: var(--c-on-sky); --halo: var(--c-sky); }
+.btn--sky { --bg: var(--c-accent); --fg: var(--c-on-sky); --bg-h: var(--cobalt-700); --frame: var(--c-accent); --halo: var(--c-paper); }
+/* chargement : une rangée de trame qui se remplit, après le libellé */
+.btn-wait { display: none; gap: 5px; }
+.btn.is-busy .btn-wait { display: inline-flex; }
+.btn-wait i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .25; animation: wait 1.2s var(--e-doux) infinite; }
+.btn-wait i:nth-child(2) { animation-delay: .15s; } .btn-wait i:nth-child(3) { animation-delay: .3s; }
+@keyframes wait { 30% { opacity: 1; } 70% { opacity: .25; } }
+
+/* Liens de texte : un trait de crayon vert se dessine de gauche à droite au survol,
+   et repart vers la droite à la sortie (la position bascule quand le trait est vide ou plein : jamais de saut). */
+:root { --trait: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 8' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%2386b83e' stroke-linecap='round'%3E%3Cpath d='M2 4.3C44 3.3 96 5.1 150 4.2S214 3.4 238 4.5' stroke-width='2.3' stroke-dasharray='26 1.1 38 .8 52 1.2'/%3E%3Cpath d='M7 5.6C70 5 150 6.3 233 5.1' stroke-width='1.1' opacity='.5'/%3E%3C/g%3E%3C/svg%3E"); --trait-h: 7px; }
+/* Le trait : une image fixe (jamais étirée pendant l'animation), dévoilée par une découpe qui avance de gauche à droite.
+   À la sortie, il finit son tracé en partant vers la droite (classes posées par le script, souris seulement). */
+.trait { position: relative; display: inline-block; padding-bottom: var(--trait-h); }
+.trait::after {
+  content: ""; position: absolute; left: -1px; right: -1px; bottom: 0; height: var(--trait-h);
+  background: var(--trait) 0 0 / 100% 100% no-repeat; pointer-events: none;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path .56s var(--e-coulisse);
+}
+.trait.is-on::after { clip-path: inset(0 0 0 0); }
+.trait.is-out::after { clip-path: inset(0 0 0 100%); transition: clip-path .46s cubic-bezier(.45, 0, .3, 1); }
+.trait.is-reset::after { transition: none; }
+[aria-current="true"] > .trait::after, :focus-visible > .trait::after { clip-path: inset(0 0 0 0); }
+/* Les passages cités : surlignés à la demande du pied de page (plusieurs lignes possibles) */
+.cite {
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  background: var(--trait) no-repeat 100% 100% / 0% var(--trait-h);
+  padding-bottom: var(--trait-h);
+  transition: background-size .5s var(--e-rangement);
+}
+.cite.is-cited { background-position: 0 100%; background-size: 100% var(--trait-h); transition: background-size 1.1s var(--e-coulisse); }
+
+.cite:focus, .cite-src:focus { outline: none; }
+.offer .cite {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%2386b83e' stroke-linecap='round' opacity='.55'%3E%3Cpath d='M2 5 C60 3 140 6 198 4' stroke-width='5'/%3E%3Cpath d='M1 10 C70 9 130 11 199 9' stroke-width='6'/%3E%3Cpath d='M3 15 C60 16 150 14 197 16' stroke-width='5'/%3E%3C/g%3E%3C/svg%3E") no-repeat 100% 50% / 0% 100%;
+  padding: 2px 4px; margin: 0 -4px;
+}
+.offer .cite.is-cited { background-position: 0 50%; background-size: 100% 100%; }
+.nav-link, .end-link, .menu-link { text-decoration: none; transition: color var(--d-survol-out) var(--e-doux); }
+.nav-link:hover, .end-link:hover, .menu-link:hover { color: var(--c-on-sky); transition-duration: var(--d-survol-in); }
+.nav-link:focus-visible, .menu-link:focus-visible, .end-link:focus-visible { outline: none; color: var(--c-on-sky); }
+/* les exemples de la FAQ sont sur la fiche blanche : cadre cobalt (le trait vert seul y est à 2,35:1) */
+.faq-ex:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 3px; }
+.brand:focus-visible { outline-offset: 8px; }
+
+/* Le crayon vert : traits serrés, posés de gauche à droite (section en cours, question choisie) */
+.crayon {
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%2386b83e' stroke-linecap='round' opacity='.55'%3E%3Cpath d='M2 5 C60 3 140 6 198 4' stroke-width='5'/%3E%3Cpath d='M1 10 C70 9 130 11 199 9' stroke-width='6'/%3E%3Cpath d='M3 15 C60 16 150 14 197 16' stroke-width='5'/%3E%3C/g%3E%3C/svg%3E") 0 50% / 0% 100% no-repeat;
+  transition: background-size .8s cubic-bezier(.5, .05, .2, 1);
+}
+
+/* Fiche bristol : papier blanc, filet de tête, lignes bleu pâle calées sur l'interligne */
+.sheet {
+  background: var(--c-sheet); color: var(--c-doc);
+  box-shadow: 0 30px 60px -38px var(--c-shadow);
+}
+.ruled {
+  --lh: 30px; --rule-y: 23px;
+  line-height: var(--lh);
+  background-image: linear-gradient(to bottom, transparent calc(var(--rule-y) - .5px), var(--c-bristol) calc(var(--rule-y) - .5px), var(--c-bristol) calc(var(--rule-y) + .5px), transparent calc(var(--rule-y) + .5px));
+  background-size: 100% var(--lh);
+  background-repeat: repeat-y;
+}
+
+/* Champ */
+.field-label { display: block; margin-bottom: var(--s-3); font: 500 var(--t-ui)/1.3 var(--sans); color: var(--c-ink-2); }
+.field {
+  flex: 1 1 auto; min-width: 0; min-height: 54px; padding: 0 var(--s-4);
+  background: var(--c-sheet); color: var(--c-ink); border: 1.5px solid var(--c-field-line); border-radius: 0;
+  font: 400 var(--t-body)/1 var(--sans);
+  box-shadow: 0 0 0 var(--frame-gap) var(--c-paper), 0 0 0 calc(var(--frame-gap) + var(--frame-w)) transparent;
+  transition: border-color var(--d-survol-out) var(--e-doux), box-shadow var(--d-survol-out) var(--e-doux), background-color var(--d-survol-out) var(--e-doux);
+}
+.field::placeholder { color: #66748a; opacity: 1; }
+.field:hover { border-color: var(--c-rule-ink-2); transition-duration: var(--d-survol-in); }
+.field:focus-visible, .field:focus {
+  outline: none; border-color: var(--c-accent);
+  box-shadow: 0 0 0 var(--frame-gap) var(--c-paper), 0 0 0 calc(var(--frame-gap) + 2px) var(--c-accent);
+  transition-duration: var(--d-survol-in);
+}
+.field[aria-invalid="true"] { border-color: var(--c-error); }
+.field[aria-invalid="true"]:focus { box-shadow: 0 0 0 var(--frame-gap) var(--c-paper), 0 0 0 calc(var(--frame-gap) + 2px) var(--c-error); }
+.field.is-done, .field:disabled { background: transparent; color: var(--c-ink-2); border-color: var(--c-rule-ink); cursor: not-allowed; }
+
+/* =========================================================
+   En-tête : la façade. Liens à gauche, porte-étiquette au centre, essai à droite.
+   ========================================================= */
+/* Le rangement de l'en-tête suit le défilement au pixel près (tiroir.js pose transform) : aucune transition ici. */
+.head {
+  position: fixed; inset: 0 0 auto; z-index: 40; color: var(--c-on-sky); padding-top: env(safe-area-inset-top, 0px);
+  will-change: transform;
+}
+/* la bande cobalt, son filet, et sa poignée sous le logo */
+.head-strip {
+  position: absolute; inset: 0; background: var(--c-sky);
+  border-bottom: 1px solid var(--c-rule-sky);
+  opacity: 0; transition: opacity var(--d-fondu) linear;
+}
+.head-pull { position: absolute; left: 50%; top: 100%; width: 40px; height: 14px; margin: -1px 0 0 -20px; overflow: visible; transition: opacity var(--d-fondu) linear; }
+.head.is-low .head-pull { opacity: 0; }
+.head-pull-fill { fill: var(--c-sky); }
+.head-pull-line { fill: none; stroke: var(--c-rule-sky); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.head[data-state="strip"] .head-strip { opacity: 1; }
+.head-in {
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center;
+  height: var(--head-h); max-width: calc(var(--max) + 2 * var(--gut)); margin-inline: auto; padding-inline: var(--gut);
+  transform: translateY(var(--head-drop)); transition: transform var(--d-coulisse) var(--e-coulisse);
+}
+.head[data-state="strip"] .head-in { transform: none; }
+.head-nav { justify-self: start; }
+.head-nav ul { display: flex; gap: clamp(20px, 2.4vw, 40px); }
+.nav-link { display: inline-block; padding: var(--s-2) 0; font: 500 var(--t-ui)/1.2 var(--sans); text-decoration: none; }
+.brand { justify-self: center; display: block; color: var(--c-on-sky); border-radius: 0; }
+.brand-mark {
+  --logo-frame: 1; height: 50px; width: calc(50px * 76.2 / 42.1); color: inherit; overflow: visible;
+  transform-origin: 50% 39%;   /* le centre de la plaque */
+  transition: transform var(--d-coulisse) var(--e-coulisse), --logo-frame var(--d-fondu) linear, color var(--d-survol-out) var(--e-doux);
+}
+/* en bande : la plaque seule, centrée ; la poignée passe sous la bande */
+.head[data-state="strip"] .brand-mark { transform: scale(.78) translateY(7px); --logo-frame: 0; }
+.brand:hover .brand-mark { color: var(--c-on-sky-2); transition-duration: var(--d-survol-in); }
+.head[data-state="strip"] .brand:hover .brand-mark { --logo-frame: 1; }
+.head-cta { justify-self: end; }
+.menu-btn { display: none; }
+/* La bande se forme pendant les 120 premiers pixels de défilement, sans seuil : fond, filet, descente, logo qui se range.
+   Menu ouvert : la bande est là tout de suite. Sans timelines de défilement : les transitions ci-dessus, sur data-state. */
+@keyframes head-strip { from { opacity: 0; } to { opacity: 1; } }
+@keyframes head-in { from { transform: translateY(var(--head-drop)); } to { transform: none; } }
+@keyframes head-brand { from { transform: none; --logo-frame: 1; } to { transform: scale(.78) translateY(7px); --logo-frame: 0; } }
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .head-strip { transition: none; animation: head-strip linear both; animation-timeline: scroll(root); animation-range: 0 120px; }
+    .head-in { transition: none; animation: head-in linear both; animation-timeline: scroll(root); animation-range: 0 120px; }
+    .head .brand-mark { transition: color var(--d-survol-out) var(--e-doux), --logo-frame var(--d-survol-out) var(--e-doux); animation: head-brand linear both; animation-timeline: scroll(root); animation-range: 0 120px; }
+    .head.is-menu .head-strip { animation: none; opacity: 1; }
+    .head.is-menu .head-in { animation: none; transform: none; }
+    .head.is-menu .brand-mark { animation: none; transform: scale(.78) translateY(7px); --logo-frame: 0; }
+    .head .brand:hover .brand-mark { --logo-frame: 1 !important; transition-duration: var(--d-survol-in); }
+  }
+}
+
+/* Menu de téléphone : le panneau sort vers le bas comme un tiroir */
+.menu {
+  position: fixed; inset: 0; z-index: 35; display: flex; flex-direction: column;
+  padding: calc(var(--head-h) + var(--s-7)) var(--gut) max(var(--s-6), env(safe-area-inset-bottom));
+  background: var(--c-sky); color: var(--c-on-sky); overflow-y: auto; overscroll-behavior: contain;
+  box-shadow: 0 1px 0 var(--c-rule-sky-2), 0 28px 40px -22px rgba(2, 10, 32, .7);
+  transform: translateY(-100%);
+  transition: transform var(--d-rangement) var(--e-rangement);
+}
+.menu.is-open { transform: none; transition: transform var(--d-coulisse) var(--e-coulisse); }
+.menu[hidden] { display: none; }
+.menu-list { border-top: 1px solid var(--c-rule-sky); }
+.menu-list li { border-bottom: 1px solid var(--c-rule-sky); }
+.menu-link {
+  display: block; padding: var(--s-4) 0 var(--s-4); font: 400 var(--t-menu)/1.1 var(--serif); letter-spacing: -.015em; text-decoration: none;
+  transform: translateY(-10px); opacity: 0;
+  transition: transform var(--d-coulisse) var(--e-coulisse), opacity var(--d-fondu) linear;
+}
+.menu.is-open .menu-link { transform: none; opacity: 1; }
+.menu.is-open li:nth-child(2) .menu-link { transition-delay: .05s; }
+.menu.is-open li:nth-child(3) .menu-link { transition-delay: .1s; }
+.menu-foot { padding-top: var(--s-8); }
+.menu-note { font: 500 var(--t-ui)/1.4 var(--sans); color: var(--c-on-sky-2); margin-bottom: var(--s-4); }
+.menu-cta { width: 100%; }
+
+/* =========================================================
+   Hero
+   ========================================================= */
+.hero {
+  position: relative; isolation: isolate; overflow: clip;
+  background: var(--c-sky); color: var(--c-on-sky);
+  display: flex; flex-direction: column; min-height: 100svh;
+}
+/* la trace de la fiche : devant la colline (elle sort du tiroir tiré, devant la commode), derrière le texte et la fiche */
+.trame { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+.hero-in { position: relative; z-index: 2; padding-top: calc(var(--head-h) + var(--head-drop) + clamp(40px, 7svh, 84px)); }
+h1 {
+  font: 400 var(--t-display)/.98 var(--serif);
+  letter-spacing: -.025em;
+  max-width: 13.5em; text-wrap: balance;
+}
+.hero-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 470px); gap: var(--s-7); margin-top: clamp(28px, 4.5svh, 52px); align-items: start; }
+.lede { max-width: 24em; font-size: var(--t-lede); line-height: 1.5; color: var(--c-on-sky); text-wrap: pretty; }
+.hero-copy .btn { margin-top: var(--s-6); }
+
+/* la fiche du hero : la question posée, la réponse écrite sur les lignes, la source */
+.ask { position: relative; z-index: 2; padding: var(--s-4) var(--s-5) var(--s-5); }
+.ask-q {
+  display: flex; align-items: center; gap: var(--s-3); padding: var(--s-1) 0 var(--s-3);
+  border-bottom: 2px solid var(--c-accent);
+  font: 500 var(--t-ui)/1.35 var(--sans); color: var(--c-ink); text-wrap: pretty;
+}
+.ask-q .i, .nope-q .i { color: var(--c-accent); }
+.ask-a {
+  margin-top: var(--s-2); min-height: 90px; font: 500 20px/30px var(--sans); color: var(--c-accent);
+}
+.ask-src { display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-2); font: 500 var(--t-small)/1.3 var(--sans); color: var(--c-ink-2); transition: opacity .9s var(--e-doux); }
+.ask-src .i { width: 17px; height: 17px; }
+.js .ask-src.wait { opacity: 0; }
+
+/* Le chercheur (perso.js) : un canevas posé sur la photo, recalé sur elle par tiroir.js */
+.perso { position: absolute; left: 0; top: 0; pointer-events: none; }
+/* Sa pause (l'animation dure plus de 5 s) : une petite plaque cobalt cerclée, en bas à droite, sur l'herbe */
+.perso-pause {
+  position: absolute; z-index: 3; right: var(--gut); bottom: 20px;
+  display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; padding: 0;
+  border: 0; border-radius: 0; cursor: pointer; color: var(--c-on-sky); font: 500 var(--t-ui)/1 var(--sans);
+  background: rgba(14, 76, 158, .86); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .9);   /* cadre ≥ 3,3:1 même sur les touffes claires */
+  transition: background-color var(--d-survol-out) var(--e-doux), box-shadow var(--d-survol-out) var(--e-doux);
+}
+.perso-pause:hover { background: var(--c-sky); box-shadow: 0 0 0 1.5px var(--c-on-sky); transition-duration: var(--d-survol-in); }
+.perso-pause:focus-visible { outline: 2px solid var(--c-on-sky); outline-offset: 3px; }
+.perso-pause[hidden] { display: none; }
+.perso-ico { width: 14px; height: 14px; }
+.perso-pause .perso-ico--play, .perso-pause[aria-pressed="true"] .perso-ico--pause { display: none; }
+.perso-pause[aria-pressed="true"] .perso-ico--play { display: block; }
+.hill { position: relative; z-index: 0; margin-top: auto; height: calc(100vw * 346 / 1456); flex: none; margin-bottom: calc(-1 * var(--hill-crop, 0px)); }
+/* max-width: none : le squelette de l'artefact pose img { max-width: 100% }, qui écrasait au téléphone
+   les collines plus larges que l'écran (la commode disparaissait du hero, le grand mot perdait sa colline). */
+.hill img, .end-hill img { position: absolute; left: 0; bottom: 0; width: 100%; max-width: none; height: auto; }
+
+/* =========================================================
+   Démo
+   ========================================================= */
+.demo { padding: var(--section) 0 var(--section); background: var(--c-paper); color: var(--c-ink); }
+.demo h2, .keys h2 {
+  font: 400 var(--t-title)/1.04 var(--serif);
+  letter-spacing: -.02em; text-wrap: balance;
+}
+.demo h2 { color: var(--c-accent); max-width: 13em; }
+.demo-head { display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 5fr); gap: clamp(32px, 5vw, 80px); align-items: end; }
+.qs { border-bottom: 1.5px solid var(--c-rule-ink); }
+.q {
+  position: relative; display: block; width: 100%; text-align: left; cursor: pointer;
+  padding: 14px 0 15px; background: none; border: 0; border-top: 1.5px solid var(--c-rule-ink); border-radius: 0;
+  font: 500 19px/1.4 var(--sans); color: var(--c-ink-2);
+  transition: color var(--d-survol-out) var(--e-doux), border-color var(--d-survol-out) var(--e-doux);
+}
+.q span { position: relative; z-index: 1; padding: 2px 4px; margin: 0 -4px; text-wrap: pretty; }
+.q:hover { color: var(--c-ink); border-top-color: var(--c-rule-ink-2); transition-duration: var(--d-survol-in); }
+.q:active span { color: var(--c-accent); }
+.q[aria-pressed="true"] { color: var(--c-ink); border-top-color: var(--c-accent); }
+.q[aria-pressed="true"] span { background-size: 100% 100%; }
+.q:focus-visible { outline-offset: 3px; }
+
+.stage {
+  position: relative; margin-top: var(--s-6); overflow: hidden;
+  background: var(--c-sky); color: var(--c-on-sky);
+  height: clamp(600px, min(52vw, calc(100svh - 230px)), 780px);
+}
+.stage-dots { position: absolute; inset: 0; width: 100%; height: 100%; }
+.stage-reply {
+  position: absolute; left: clamp(28px, 3.4vw, 56px); top: clamp(28px, 3.4vw, 52px); width: min(40%, 12.5em);
+  font: 400 var(--t-answer)/1.08 var(--serif); letter-spacing: -.015em; color: var(--c-on-sky);
+  text-wrap: pretty;
+}
+.fiche {
+  position: absolute; left: 0; top: 0; width: var(--fw, 460px);
+  transform-origin: 50% 50%;
+  padding: 18px 22px 22px;
+  box-shadow: 0 34px 60px -40px rgba(4, 20, 50, .7);
+  visibility: hidden;
+}
+/* l'ombre de la fiche en vol : un aplat flou qui s'éloigne quand elle monte */
+.fiche-shadow {
+  position: absolute; left: 0; top: 0; width: 460px; height: 300px; transform-origin: 50% 50%;
+  background: rgba(3, 16, 44, .9); filter: blur(20px); opacity: 0; pointer-events: none; will-change: transform, opacity;
+}
+.fiche-top { display: flex; align-items: flex-start; gap: var(--s-3); padding-bottom: 12px; border-bottom: 2px solid var(--c-accent); }
+.fiche-top .i { margin-top: 2px; color: var(--c-accent); }
+.fiche-id { flex: 1 1 auto; min-width: 0; }
+.fiche-name { font: 700 16px/1.3 var(--sans); color: var(--c-accent); text-wrap: pretty; }
+.fiche-path { margin-top: 2px; font: 400 var(--t-small)/1.3 var(--sans); color: var(--c-ink-3); }
+.fiche-page { font: 500 var(--t-small)/1.3 var(--sans); color: var(--c-ink-3); white-space: nowrap; }
+.fiche-h { margin-top: 14px; font: 700 16px/1.3 var(--sans); }
+.fiche-body { position: relative; z-index: 1; margin-top: 4px; font: 400 17px/28px var(--sans); --lh: 28px; --rule-y: 22px; }
+.fiche-body mark { background: none; color: inherit; }
+.fiche-ink { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; mix-blend-mode: multiply; z-index: 2; }
+
+/* =========================================================
+   « Je ne trouve pas »
+   ========================================================= */
+.keys {
+  position: relative; isolation: isolate; overflow: hidden;
+  padding: var(--section) 0;
+  background: var(--c-sky); color: var(--c-on-sky);
+}
+.keys-grid {
+  display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(32px, 5vw, 80px); align-items: end;
+}
+.nope { min-width: 0; }
+.nope-q {
+  display: inline-flex; align-items: center; gap: var(--s-3); min-height: 56px; padding: 10px 20px 10px 16px;
+  color: var(--c-ink); font: 500 var(--t-ui)/1.35 var(--sans);
+}
+.nope-a {
+  margin-top: clamp(28px, 3vw, 44px);
+  font: 400 italic clamp(42px, 4.7vw, 80px)/1.04 var(--serif);
+  letter-spacing: -.02em; color: var(--c-on-sky); max-width: 11.5em; text-wrap: pretty;
+}
+/* la réponse s'écrit par-dessus le texte entier, invisible, qui lui réserve sa place */
+.nope-a:has(.nope-plein) { display: grid; }
+.nope-a > span:not(.caret) { grid-area: 1 / 1; }
+.nope-plein { visibility: hidden; }
+/* Le meuble à fiches, dessiné comme le logo : un plateau, un caisson au trait, des façades à panneau,
+   un porte-étiquette cadré (le motif du logo) et une poignée coquille. Les tiroirs ouverts à Tiroir sont entrebâillés :
+   on voit le haut des fiches au-dessus de la façade, et leur étiquette est pleine. Les autres sont fermés à clé.
+   Pendant la lecture (tiroir.js), le tiroir est tiré de --ajar à --pull : la façade descend et grandit un peu,
+   son ombre se pose sur le tiroir du dessous, les fiches viennent avec elle. */
+.meuble {
+  --line: rgba(255, 255, 255, .92); --line-dim: rgba(255, 255, 255, .5); --text-dim: rgba(255, 255, 255, .72);
+  --ajar: 0px; --pull: 30px;
+  margin: 0; justify-self: end; width: min(100%, 460px);
+}
+.meuble-plateau { height: 12px; margin: 0 -9px; border: 1.5px solid var(--line); border-bottom: 0; }
+.meuble-caisson {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 12px 12px 16px;
+  border: 1.5px solid var(--line); border-bottom-width: 3px;
+}
+/* Un tiroir : l'ouverture dans le caisson (sombre), les fiches, l'ombre, et la façade. */
+.casier { position: relative; height: 82px; background: rgba(2, 12, 40, .5); }
+.casier.is-tire { z-index: 2; }
+.casier-fond { position: absolute; inset: 0; overflow: hidden; }
+/* le haut des fiches : un calque au-dessus de l'ouverture, qui descend avec la façade (posé par tiroir.js) ;
+   chaque fiche est une tranche fine avec son onglet ; les côtés du tiroir l'encadrent */
+.casier-fiches { position: absolute; left: 3px; top: -44px; width: calc(100% - 6px); height: 44px; transform: translateY(var(--ajar)); }
+.casier-ombre {
+  position: absolute; left: 5%; right: 5%; bottom: -12px; height: 20px; pointer-events: none;
+  background: rgba(2, 10, 32, .8); filter: blur(9px); opacity: 0;
+  transform: translateY(var(--ajar));
+}
+.casier-face {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 11px;
+  background: var(--c-sky); border: 1.5px solid var(--line-dim); color: var(--line-dim);
+  box-shadow: inset 0 0 0 5px var(--c-sky), inset 0 0 0 6px rgba(255, 255, 255, .16);   /* le panneau de la façade */
+}
+.casier.is-ouvert .casier-face {
+  border-color: var(--line); color: var(--line);
+  box-shadow: inset 0 0 0 5px var(--c-sky), inset 0 0 0 6px rgba(255, 255, 255, .3);
+  transform: translateY(var(--ajar));
+}
+/* le porte-étiquette : la plaque, puis son cadre fin à 2 px (comme le logo) */
+.casier-plaque {
+  position: relative; padding: 3px 10px 4px; border: 0;
+  font: 600 15px/1.2 var(--sans); letter-spacing: .01em; white-space: nowrap;
+  box-shadow: 0 0 0 2px var(--c-sky), 0 0 0 3.5px currentColor;
+}
+.casier:not(.is-ouvert) .casier-plaque { color: var(--text-dim); box-shadow: 0 0 0 2px var(--c-sky), 0 0 0 3.5px var(--line-dim), inset 0 0 0 1.5px var(--line-dim); }
+.casier.is-ouvert .casier-plaque { background: var(--c-on-sky); color: var(--c-sky); box-shadow: 0 0 0 2px var(--c-sky), 0 0 0 3.5px var(--c-on-sky); }
+.casier-poignee { width: 28px; height: 10px; color: inherit; }
+.casier-serrure { width: 12px; height: 15px; color: var(--line-dim); }
+/* Tiroir lit ce tiroir : l'étiquette est surlignée au crayon vert, de gauche à droite, puis le surlignage s'en va */
+.casier-plaque::after {
+  content: ""; position: absolute; inset: -2px -3px; mix-blend-mode: multiply; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%2386b83e' stroke-linecap='round' opacity='.7'%3E%3Cpath d='M2 5 C60 3 140 6 198 4' stroke-width='5'/%3E%3Cpath d='M1 10 C70 9 130 11 199 9' stroke-width='6'/%3E%3Cpath d='M3 15 C60 16 150 14 197 16' stroke-width='5'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path .42s var(--e-coulisse);
+}
+.casier.is-lu .casier-plaque::after { clip-path: inset(0 0 0 0); }
+.casier.is-lu-out .casier-plaque::after { clip-path: inset(0 0 0 100%); transition: clip-path .34s cubic-bezier(.45, 0, .3, 1); }
+.meuble-socle { position: relative; height: 18px; margin: 0 14px; }
+.meuble-socle::before, .meuble-socle::after { content: ""; position: absolute; top: 0; width: 14px; height: 18px; background: var(--line); clip-path: polygon(0 0, 100% 0, 78% 100%, 22% 100%); }
+.meuble-socle::before { left: 0; } .meuble-socle::after { right: 0; }
+.keys-in {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(28px, 5vw, 80px); align-items: end;
+  margin-top: clamp(56px, 6vw, 96px); padding-top: var(--s-6); border-top: 1.5px solid var(--c-rule-sky-2);
+}
+.keys h2 { font-size: clamp(38px, 3.3vw, 50px); }
+.keys-in p { max-width: 30em; font-size: var(--t-lede); line-height: 1.55; color: var(--c-on-sky); text-wrap: pretty; }
+
+/* =========================================================
+   Tarif
+   ========================================================= */
+.offer { padding: var(--section) 0; background: var(--c-paper); color: var(--c-ink); }
+.offer-grid {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); column-gap: clamp(32px, 5vw, 80px); align-items: start;
+}
+.offer-price { font-weight: 400; padding-bottom: var(--s-2); }
+.offer-num {
+  display: flex; align-items: flex-start; margin-left: -.05em;
+  font: 500 var(--t-price)/.8 var(--serif); font-variation-settings: "opsz" 20;
+  letter-spacing: -.06em; color: var(--c-accent); font-variant-numeric: lining-nums;
+}
+.offer-cur { margin: .07em 0 0 .2em; font: 600 clamp(24px, 2.2vw, 36px)/1 var(--sans); letter-spacing: 0; }
+.offer-unit {
+  display: block; margin-top: clamp(24px, 2.4vw, 36px); padding-top: var(--s-5); border-top: 1.5px solid var(--c-accent);
+  max-width: 19em; font: 500 var(--t-lead)/1.35 var(--sans); color: var(--c-ink); text-wrap: balance;
+}
+/* l'essai : une fiche bristol posée à côté du prix, de son haut au bas de la phrase */
+.offer-side {
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: clamp(28px, 3vw, 44px) clamp(24px, 3vw, 44px) clamp(20px, 2vw, 28px);
+  border-top: 2px solid var(--c-accent); color: var(--c-ink);
+  box-shadow: 0 1px 0 rgba(13, 44, 87, .08), 0 22px 34px -30px rgba(4, 20, 50, .45);
+}
+.offer-how { margin-top: var(--s-3); max-width: 26em; font: 400 var(--t-ui)/1.55 var(--sans); color: var(--c-ink-2); text-wrap: pretty; }
+.offer-gift { position: relative; display: inline-block; font: 600 var(--t-lead)/1.35 var(--sans); color: var(--c-ink); }
+.gift { position: relative; z-index: 1; }
+.gift-ink { position: absolute; left: -10px; top: -6px; width: calc(100% + 20px); height: calc(100% + 12px); pointer-events: none; mix-blend-mode: multiply; }
+.signup { position: relative; margin-top: auto; padding-top: var(--s-6); }
+.offer-side .field { box-shadow: 0 0 0 var(--frame-gap) var(--c-sheet), 0 0 0 calc(var(--frame-gap) + var(--frame-w)) transparent; }
+.offer-side .field:focus, .offer-side .field:focus-visible { box-shadow: 0 0 0 var(--frame-gap) var(--c-sheet), 0 0 0 calc(var(--frame-gap) + 2px) var(--c-accent); }
+.offer-side .field[aria-invalid="true"]:focus { box-shadow: 0 0 0 var(--frame-gap) var(--c-sheet), 0 0 0 calc(var(--frame-gap) + 2px) var(--c-error); }
+.offer-side .btn--sky { --halo: var(--c-sheet); }
+.signup-row { display: flex; flex-wrap: wrap; gap: var(--s-3); }
+.signup-row .field { flex: 1 1 200px; }
+.signup-row .btn { flex: 0 0 auto; }
+.signup-msg { margin-top: var(--s-3); min-height: 0; font: 500 var(--t-ui)/1.55 var(--sans); color: var(--c-ink); text-wrap: pretty; }
+.signup-msg.is-error { color: var(--c-error); }
+.signup.is-used .signup-msg { min-height: calc(2 * 1.55em); }
+.signup-msg.is-done span { background-size: 100% 100%; }
+
+/* =========================================================
+   Fin : les liens, puis le grand mot et la commode
+   ========================================================= */
+.end { position: relative; background: var(--c-sky); color: var(--c-on-sky); padding-top: clamp(72px, 7vw, 112px); overflow: clip; }
+/* Deux rangées sur la même grille : la question et son champ, puis l'identité et les colonnes de liens. */
+.end-top {
+  --cols: minmax(0, 5fr) minmax(0, 7fr); --cgap: clamp(40px, 6vw, 112px);
+  display: grid; grid-template-columns: var(--cols); gap: var(--s-8) var(--cgap); align-items: start;
+}
+.faq { grid-column: 1 / -1; display: grid; grid-template-columns: var(--cols); column-gap: var(--cgap); align-items: start; }
+.faq-body { min-width: 0; }
+.end-id { grid-column: 1; display: flex; flex-direction: column; align-items: flex-start; gap: var(--s-4); padding-top: var(--s-5); border-top: 1px solid var(--c-rule-sky); }
+.end-id .brand { margin-bottom: var(--s-2); }
+.end-nav { position: relative; grid-column: 2; padding-top: var(--s-5); padding-bottom: 104px; border-top: 1px solid var(--c-rule-sky); }
+/* Une question sur Tiroir : la page est un dossier, Tiroir y répond en citant le passage */
+.faq-title { font: 400 var(--t-title)/1.04 var(--serif); letter-spacing: -.02em; text-wrap: balance; }
+.faq-lede { margin-top: var(--s-4); max-width: 28em; font-size: var(--t-lede); line-height: 1.5; color: var(--c-on-sky-2); text-wrap: pretty; }
+.faq-field {
+  display: flex; align-items: center; gap: var(--s-3); padding: 6px 0 8px;
+  border-bottom: 2px solid var(--c-accent); color: var(--c-ink);
+}
+.faq-field .i { color: var(--c-accent); }
+.faq-field input {
+  flex: 1 1 auto; min-width: 0; height: 44px; padding: 0; border: 0; background: transparent; color: var(--c-ink);
+  font: 500 var(--t-body)/1 var(--sans); outline: none;
+}
+.faq-field input::placeholder { color: #66748a; opacity: 1; }
+.faq-field input::-webkit-search-cancel-button { display: none; }
+.faq-go { --halo: var(--c-sheet); flex: none; }
+/* La fiche du pied de page : celle du hero, vivante. Le champ en tête, souligné de cobalt ; les lignes portent les exemples,
+   puis la citation exacte ; la source en pied. Sa hauteur ne bouge pas d'un état à l'autre. */
+.faq-card {
+  display: block; padding: 6px 22px 16px;
+  box-shadow: 0 1px 0 rgba(4, 20, 50, .25), 0 18px 24px -20px rgba(4, 20, 50, .5);
+  transition: box-shadow var(--d-survol-out) var(--e-doux);
+}
+.faq-card:focus-within { box-shadow: 0 0 0 var(--frame-gap) var(--c-sky), 0 0 0 calc(var(--frame-gap) + 2px) var(--c-on-sky); transition-duration: var(--d-survol-in); }
+.faq-lines { --lh: 30px; --rule-y: 23px; position: relative; min-height: 60px; margin-top: 10px; }
+.faq-card.is-used .faq-lines { min-height: 90px; }
+.faq-card:not(.is-used) .faq-cite { display: none; }
+.faq-a { font: 500 20px/30px var(--sans); color: var(--c-accent); text-wrap: pretty; }
+.faq-a:empty { display: none; }
+.faq-a.is-nope { font-style: italic; color: var(--c-ink-2); }
+.faq-ex-row { font: 500 var(--t-ui)/30px var(--sans); color: var(--c-ink-2); }
+.faq-ex-row[hidden] { display: none; }
+.faq-ex-lead { margin-right: 10px; }
+.faq-ex { padding: 0; margin-right: 18px; border: 0; background: none; color: var(--c-accent); font: 600 var(--t-ui)/30px var(--sans); cursor: pointer; text-align: left; }
+.faq-cite { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px var(--s-2); min-height: 32px; margin-top: 8px; font: 500 var(--t-small)/1.3 var(--sans); color: var(--c-ink-2); }
+.faq-cite .i { width: 17px; height: 17px; align-self: center; color: var(--c-ink-2); }
+.faq-cite.is-off { visibility: hidden; }
+.faq-src { margin-left: auto; padding: 6px 0 2px; font: 600 var(--t-ui)/1.2 var(--sans); color: var(--c-accent); text-decoration: none; }
+.faq-src:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 3px; }
+
+/* Les colonnes : liens posés sur les lignes d'une fiche */
+.end-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-6) clamp(24px, 3vw, 48px); }
+.end-h { margin-bottom: var(--s-3); font: 600 var(--t-ui)/1.2 var(--sans); color: var(--c-on-sky); }
+
+.end-col ul { border-top: 1px solid var(--c-rule-sky); }
+.end-col li { border-bottom: 1px solid var(--c-rule-sky); }
+.end-link { display: block; padding: 8px 0 1px; font: 400 var(--t-ui)/1.35 var(--sans); color: var(--c-on-sky-2); }
+.end-link .trait { padding-bottom: 5px; }
+/* la réponse d'un lien vide : une petite fiche qui sort de sous les liens */
+.end-note {
+  position: absolute; left: 0; bottom: 8px; z-index: 3; width: min(100%, 34em); margin: 0;
+  box-shadow: 0 1px 0 rgba(4, 20, 50, .25), 0 18px 24px -20px rgba(4, 20, 50, .5);
+  padding: var(--s-3) var(--s-4);
+  font: 500 var(--t-ui)/1.5 var(--sans); text-wrap: pretty;
+  clip-path: inset(0 0 100% 0); transform: translateY(-8px);
+  transition: clip-path var(--d-rangement) var(--e-rangement), transform var(--d-rangement) var(--e-rangement);
+}
+.end-note.is-on { clip-path: inset(0 0 -40px 0); transform: none; transition: clip-path var(--d-coulisse) var(--e-coulisse), transform var(--d-coulisse) var(--e-coulisse); }
+.credit { font-size: var(--t-small); color: var(--c-on-sky-2); }
+.end-up { display: inline-block; padding: 4px 0; font-size: var(--t-small); color: var(--c-on-sky); }
+/* La fin : le grand mot au dernier plan, la colline devant, la commode posée sur la crête dans l'œil du « o ».
+   Mesures : crête de l'image à 150 px (sur 446) sous le « o » ; ligne de base du mot à .0375 em du bas de sa boîte
+   (Bodoni Moda, interligne .8) ; la crête passe à .095 em au-dessus de la ligne de base sous le « o », moins vers les bords
+   où elle descend, assez pour couvrir les empattements du dernier « r » ;
+   œil du « o » : de .1525 à .4005 em, centre à .2765 em du début de la lettre. */
+.end-scene { --k: .095; --crete: 150; position: relative; margin-top: clamp(40px, 4.5vw, 80px); }
+.end-word {
+  position: relative; z-index: 0; padding: 0 var(--gut); text-align: center;
+  font: 400 var(--t-monument)/.8 var(--serif); font-variation-settings: "opsz" 96; letter-spacing: -.04em;
+  view-timeline-name: --fin;
+}
+.end-o { position: relative; }
+.end-commode {
+  position: absolute; left: .2765em; width: .2em; height: auto; transform: translateX(-50%);
+  /* le bas de la boîte d'un élément en ligne est à .4 em sous la ligne de base ; les pieds s'enfoncent de .012 em */
+  bottom: calc(.4em + var(--k) * 1em - .012em);
+}
+.end-hill {
+  position: relative; z-index: 1; aspect-ratio: 1456 / 446;
+  margin-top: calc(-1 * (.0375 + var(--k)) * var(--t-monument) - var(--crete) / 1456 * 100%);
+}
+@supports (animation-timeline: view()) {
+  /* le mot se lève derrière la colline quand on arrive en bas de page ; la commode reste posée sur la crête */
+  .end-word { animation: lever linear both; animation-timeline: --fin; animation-range: entry 0% entry 100%; }
+  .end-commode { animation: rester linear both; animation-timeline: --fin; animation-range: entry 0% entry 100%; }
+  @keyframes lever { from { transform: translateY(.16em); } to { transform: none; } }
+  @keyframes rester { from { transform: translateX(-50%) translateY(-.16em); } to { transform: translateX(-50%); } }
+}
+
+/* =========================================================
+   Grands écrans, tablette, téléphone
+   ========================================================= */
+@media (min-width: 1680px) {
+  .hero-row { grid-template-columns: minmax(0, 1fr) minmax(0, 520px); }
+}
+@media (max-width: 1100px) {
+  .end-top, .faq { grid-template-columns: minmax(0, 1fr); }
+  .faq { row-gap: var(--s-6); }
+  .end-nav, .end-id { grid-column: 1; }
+  .end-nav { order: 1; } .end-id { order: 2; }
+  /* la note des liens fictifs se pose par-dessus le crédit ; le logo cède la place au grand « Tiroir » qui suit */
+  .end-nav { padding-bottom: 0; }
+  .end-note { bottom: auto; top: calc(100% + 10px); }
+  .end-id .brand { display: none; }
+}
+@media (max-width: 879px) {
+  :root { --head-drop: 6px; }
+  .head-nav { display: none; }
+  .menu-btn {
+    display: inline-flex; align-items: center; justify-self: start; min-height: 44px; padding: 0 2px; margin-left: -2px;
+    background: none; border: 0; border-radius: 0; color: inherit; cursor: pointer;
+    font: 500 var(--t-ui)/1 var(--sans);
+  }
+  .menu-btn-label { padding: 2px 0; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 7px; text-decoration-color: var(--c-rule-sky-2); }
+  .menu-btn:hover .menu-btn-label { text-decoration-color: currentColor; }
+  .brand-mark { height: 42px; width: calc(42px * 76.2 / 42.1); }
+  /* Téléphone et tablette : le titre, le chapeau, le bouton, la fiche, puis la commode sur sa colline.
+     40 px au moins entre la fiche et la colline. La commode est un peu à droite (58 %) : le chercheur est assis à sa droite,
+     la trace de la fiche monte en diagonale dans le ciel libre à sa gauche.
+     La colline est coupée 75 px sous les pieds de la commode, pour que la commode tienne dans le premier écran. */
+  .hero-in { padding-top: calc(var(--head-h) + var(--head-drop) + 22px); padding-bottom: 40px; }
+  .hero-row { grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 22px; }
+  .hero-copy .btn { margin-top: 24px; }
+  .ask { max-width: 480px; justify-self: end; width: 100%; }
+  .hill { height: 190px; }
+  .hill img { width: 980px; left: calc(58% - 549px); top: 0; bottom: auto; }
+  .demo-head { grid-template-columns: minmax(0, 1fr); }
+  .stage { height: 900px; }
+  .stage-reply { left: 22px; top: 24px; width: calc(100% - 44px); font-size: clamp(32px, 8.4vw, 40px); }
+  .keys-in, .offer-grid, .keys-grid { grid-template-columns: minmax(0, 1fr); }
+  /* au téléphone : la question, le meuble où Tiroir cherche, puis sa réponse */
+  .nope { display: contents; }
+  .nope-q { order: 1; justify-self: start; }
+  .meuble { order: 2; justify-self: start; width: min(100%, 440px); }
+  .nope-a { order: 3; margin-top: 0; }
+  .keys-grid { row-gap: 40px; }
+  .offer-side { margin-top: var(--s-7); }
+  .end-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .end-col:last-of-type { grid-column: 1 / -1; }
+  .end-word { font-variation-settings: "opsz" 36; }
+  .end-scene { --t-monument: clamp(112px, 36vw, 320px); }
+  .end-hill { aspect-ratio: auto; height: calc(900px * 446 / 1456); margin-top: calc(-1 * (.0375 + var(--k)) * var(--t-monument) - 147 / 1456 * 900px); }
+  .end-hill img { width: 900px; left: calc(50% - 437px); }
+}
+@media (max-width: 879px) and (max-height: 520px) and (orientation: landscape) {
+  .hero-in { padding-top: calc(var(--head-h) + var(--head-drop) + 6px); padding-bottom: 40px; }
+  h1 { font-size: clamp(30px, 4.6vw, 40px); max-width: none; }
+  .hero-row { grid-template-columns: minmax(0, 1fr) minmax(0, 380px); gap: 28px; margin-top: 14px; }
+  .lede { font-size: 17px; }
+  .hero-copy .btn { margin-top: 18px; }
+  .ask { justify-self: end; }
+  .hill img { left: calc(22% - 549px); }
+}
+@media (max-width: 479px) {
+  .faq-card { padding: 4px 16px 14px; }
+  .faq-field { flex-wrap: wrap; padding-bottom: 10px; }
+  .faq-field input { flex-basis: calc(100% - 40px); }
+  .faq-go { width: 100%; }
+  .faq-card.is-used .faq-lines { min-height: 120px; }
+  .casier { height: 70px; }
+  .casier-face { gap: 7px; }
+  .casier-plaque { font-size: 15px; padding: 3px 8px 4px; }
+  h1 { font-size: clamp(38px, 11.4vw, 46px); }
+  h1 .nw { white-space: normal; }
+  .signup.is-used .signup-msg { min-height: calc(3 * 1.55em); }
+  .signup-row .btn { flex: 1 1 100%; }
+  .ask { padding: var(--s-3) var(--s-4) var(--s-4); }
+  .ask-a { font-size: 18px; line-height: 28px; min-height: 84px; }
+  .nope-q { font-size: 16px; }
+  .fiche { padding: 14px 16px 18px; }
+  .fiche-body { font-size: 16px; }
+  .head-cta { padding: 0 16px; }
+}
+/* Téléphone : deux marges de section de 96 px bout à bout faisaient jusqu'à 190 px de vide (passe mobile, 2026-10-27) */
+@media (max-width: 599px) {
+  :root { --section: 64px; }
+}
+@media (max-width: 359px) {
+  .brand-mark { height: 38px; width: calc(38px * 76.2 / 42.1); }
+  .head-cta { padding: 0 12px; }
+  .end-nav { grid-template-columns: minmax(0, 1fr); }
+  .end-col:last-of-type { grid-column: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* =========================================================
+   Les entrées : la grammaire « coulisse ». Tout sort d'une fente, de bas en haut, et se pose sans rebond.
+   - les titres sortent ligne à ligne de leur fente (masque par ligne, 90 ms d'une ligne à l'autre) ;
+   - les textes montent de 16 px en apparaissant ; les fiches et composants, de 28 px ;
+   - à l'ouverture : l'en-tête se pose, la colline monte, le titre sort, puis le chapeau et le bouton ;
+     la fiche sort du tiroir (fantômes en trame) et la fiche posée arrive en dernier.
+   html.rv : posé en tête de page, sans « mouvements réduits » ; html.rv-open : la police et la colline sont prêtes.
+   Une seule fois par élément ; aucun style d'animation ne reste une fois arrivé.
+   ========================================================= */
+/* la ligne part entièrement sous sa fente : la fente déborde de .22em sous la ligne, les accents montent de .35em au-dessus */
+@keyframes rv-up { from { transform: translateY(calc(100% + .62em)); } to { transform: none; } }
+/* l'opacité arrive avant la fin du geste, qui finit seul, lentement */
+@keyframes rv-rise { from { opacity: 0; transform: translateY(18px); } 55% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes rv-sheet { from { opacity: 0; transform: translateY(34px); } 50% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes rv-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rv-hill { from { opacity: 0; transform: translateY(30px); } 35% { opacity: 1; } to { opacity: 1; transform: none; } }
+@keyframes rv-block { from { transform: translateY(.62em); clip-path: inset(-.2em -.1em .62em -.1em); } to { transform: none; clip-path: inset(-.2em -.1em -.2em -.1em); } }
+
+/* une ligne découpée le temps de son entrée : sa fente (le masque) et son texte */
+.ln { display: block; clip-path: inset(-.35em -.4em -.22em -.4em); }
+.ln-in { display: block; white-space: nowrap; }
+
+@media screen {
+  /* ---------- Ouverture ---------- */
+  .rv:not(.rv-open) :is(.head, .hero h1, .lede, .hero-copy .btn, .ask, .hill) { opacity: 0; }
+  .rv-open .head { animation: rv-fade .8s var(--e-doux) .1s backwards; }
+  .rv-open .hill { animation: rv-hill 1.1s var(--e-pose) backwards; }
+  .rv-open .hero h1 .ln-in { animation: rv-up 1.05s var(--e-coulisse) calc(140ms + var(--ln, 0) * 100ms) backwards; }
+  .rv-open .lede { animation: rv-rise .95s var(--e-coulisse) .46s backwards; }
+  .rv-open .hero-copy .btn { animation: rv-rise .95s var(--e-coulisse) .56s backwards; }
+  /* la fiche du hero sort du tiroir : son vol est joué par tiroir.js (heroFly) */
+
+  /* ---------- Au défilement ---------- */
+  .rv [data-rv]:not(.rv-in) { opacity: 0; }
+  .rv .rv-go-slot .ln-in { animation: rv-up 1.05s var(--e-pose) calc(var(--d, 0ms) + var(--ln, 0) * 85ms) backwards; }
+  .rv .rv-go-block { animation: rv-block 1.1s var(--e-pose) var(--d, 0ms) backwards; }
+  .rv .rv-go-rise { animation: rv-rise .95s var(--e-pose) var(--d, 0ms) backwards; }
+  .rv .rv-go-sheet { animation: rv-sheet 1.2s var(--e-pose) var(--d, 0ms) backwards; }
+}
+
+/* ---------- La page répond au défilement, légèrement ----------
+   Le contenu du hero remonte un peu plus vite que la colline ; les grands titres et le prix glissent de quelques pixels
+   par rapport à leur section. Propriété translate seulement : les entrées gardent transform. */
+@keyframes px-hero { to { translate: 0 calc(-1 * var(--px-hero)); } }
+@keyframes px-title { from { translate: 0 14px; } to { translate: 0 -14px; } }
+@keyframes px-price { from { translate: 0 30px; } to { translate: 0 -30px; } }
+:root { --px-hero: 8svh; }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .hero-in { animation: px-hero linear both; animation-timeline: scroll(root); animation-range: 0 100svh; }
+    .demo h2, #cles-titre, .faq-title { animation: px-title linear both; animation-timeline: view(); animation-range: cover; }
+    .offer-price { animation: px-price linear both; animation-timeline: view(); animation-range: cover; }
+  }
+}
+
+/* Une image qui arriverait après l'ouverture (réseau lent) se fond au lieu d'apparaître d'un coup. */
+.rv .hill img:not(.is-ready), .rv .end-hill img:not(.is-ready), .rv .end-commode:not(.is-ready) { opacity: 0; }
+.rv .hill img, .rv .end-hill img, .rv .end-commode { transition: opacity .7s var(--e-doux); }

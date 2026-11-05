@@ -1,0 +1,144 @@
+/* Piste 2 « La phrase », version 2 : la phrase-titre dont les trois noms se choisissent, un volet par mot.
+   Mise en page : la phrase sur deux lignes au bureau ; dessous, la situation à gauche et les livrables à droite, sur la
+   même ligne de base ; « Ensuite » au pied de la colonne de gauche, à une place fixe. */
+.o-phr {
+  --o-gap: clamp(24px, 5vw, 96px);
+  --o-hair: color-mix(in oklab, var(--ink) 26%, var(--paper));   /* filet des mots non choisis */
+  --o-in: cubic-bezier(.16, .84, .24, 1);                          /* arrivées : vif puis très doux */
+}
+
+/* ---------- La phrase ---------- */
+.o-phr__title {
+  margin: 0;
+  font-size: clamp(40px, 1rem + 4.3vw, 88px);
+  font-weight: 500; line-height: 1.06; letter-spacing: calc(-0.045em * var(--tight, 1));
+  text-wrap: balance;
+}
+/* Au bureau, la coupe est choisie : « Nous créons votre marque, » puis « vos médias et vos outils. » */
+@media (min-width: 1100px) { .o-phr__l1, .o-phr__l2 { display: block; } }
+
+/* La boîte du mot est serrée sur l'œil des lettres (interligne propre de .9, sans effet sur la ligne) : l'anneau de
+   focus ne mord plus sur les jambages de la ligne du dessus. Les traits sont placés depuis ce bas de boîte. */
+.o-phr__w {
+  position: relative; display: inline-block; vertical-align: baseline;
+  margin: 0 0 -.2em; padding: 0 0 .2em; border: 0; background: none; /* la boîte descend sous les jambages, la ligne ne bouge pas */
+  font: inherit; letter-spacing: inherit; line-height: .9; color: var(--ink-2);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: color .45s var(--ease);
+}
+.o-phr__w::before, .o-phr__w::after { content: ""; position: absolute; left: .03em; right: .03em; pointer-events: none; }
+/* Le filet de repos : on voit que le mot se choisit */
+.o-phr__w::before {
+  bottom: .035em; height: max(1.5px, .022em);
+  background: var(--o-hair); transform-origin: left center;
+  transition: transform .8s cubic-bezier(.65, 0, .25, 1), opacity .35s var(--ease), background-color .45s var(--ease);
+}
+/* Le trait corail : il se retire vers le nouveau mot (rapide, en accélérant)… */
+.o-phr__w::after {
+  bottom: .01em; height: max(3px, .068em);
+  background: var(--accent);
+  transform: scaleX(0); transform-origin: var(--o, left) center;
+  transition: transform .3s cubic-bezier(.55, 0, .75, .2);
+}
+/* … puis entre dans le nouveau depuis le côté de l'ancien, quand le retrait s'achève (en freinant) */
+.o-phr__w[aria-pressed="true"] { color: var(--ink); cursor: default; }
+.o-phr__w[aria-pressed="true"]::before { opacity: 0; }
+.o-phr__w[aria-pressed="true"]::after { transform: scaleX(1); transition: transform .62s cubic-bezier(.2, .75, .25, 1) .16s; }
+@media (hover: hover) {
+  .o-phr__w:not([aria-pressed="true"]):hover { color: var(--ink); }
+  .o-phr__w:not([aria-pressed="true"]):hover::before { background: var(--ink); }
+}
+.o-phr__w:focus-visible { outline-offset: 4px; border-radius: 4px; }
+
+/* L'arrivée : avant d'être vus, les soulignés sont rentrés ; ils se tracent de gauche à droite, le corail d'abord */
+/* « Vivante » : montée par le script (.is-live), ou annoncée par la page avant le montage (html.js, posé en tête de
+   index.html) ; la section statique prend alors la mise en page de la section montée : rien ne saute au montage. */
+:is(.o-phr.is-live, .js .o-phr):not(.is-seen) .o-phr__w::before,
+:is(.o-phr.is-live, .js .o-phr):not(.is-seen) .o-phr__w::after { transform: scaleX(0); transition: none; }
+.o-phr.is-arriving .o-phr__w::after { transform-origin: left center; transition: transform .9s cubic-bezier(.65, 0, .25, 1) .12s; }
+.o-phr.is-arriving .o-phr__w::before { transition: transform .8s cubic-bezier(.65, 0, .25, 1) calc(.42s + var(--i) * .16s); }
+
+/* ---------- Les volets ---------- */
+.o-phr__stage {
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: var(--o-gap);
+  margin-top: clamp(48px, 5.6vw, 92px);
+}
+.o-phr__panels { grid-column: 1 / -1; grid-row: 1; display: grid; touch-action: pan-y; }
+/* Les trois volets dans la même case : au bureau, le plus haut fixe la hauteur, rien ne saute */
+.o-phr__panel {
+  grid-area: 1 / 1; align-self: start;
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); column-gap: var(--o-gap); row-gap: 28px;
+  align-items: baseline;
+}
+:is(.o-phr.is-live, .js .o-phr) .o-phr__panel { visibility: hidden; }
+:is(.o-phr.is-live, .js .o-phr) .o-phr__panel:is(.is-on, .is-leaving) { visibility: visible; }
+/* Sans script : les trois familles l'une sous l'autre */
+html:not(.js) .o-phr:not(.is-live) .o-phr__panel { grid-area: auto; }
+html:not(.js) .o-phr:not(.is-live) .o-phr__panel + .o-phr__panel { margin-top: 64px; }
+html:not(.js) .o-phr:not(.is-live) .o-phr__foot { display: none; }
+
+.o-phr__lede {
+  margin: 0; padding-bottom: 104px; /* la place de « Ensuite », sous la situation */
+  max-width: 19em;
+  font-size: clamp(22px, 1rem + .75vw, 29px); line-height: 1.36; letter-spacing: -0.012em;
+  text-wrap: pretty;
+}
+.o-phr__items { list-style: none; margin: 0; padding: 0; }
+.o-phr__items li { display: grid; gap: 3px; padding-block: 0 17px; border-bottom: 1px solid var(--line); }
+.o-phr__items li + li { padding-top: 17px; }
+.o-phr__items .o-it { font-size: 19px; font-weight: 500; letter-spacing: -0.01em; }
+.o-phr__items .o-id { font-size: 17px; color: var(--ink-2); text-wrap: pretty; }
+
+/* ---------- « Ensuite » : au pied de la colonne de gauche, à une place fixe ---------- */
+.o-phr__foot { grid-column: 1; grid-row: 1; align-self: end; justify-self: start; position: relative; z-index: 1; }
+.o-phr__next {
+  display: inline-flex; align-items: center; gap: 14px;
+  min-height: 48px; margin: 0 0 -10px -2px; padding: 0 2px;
+  border: 0; background: none; color: var(--ink);
+  font: inherit; font-size: clamp(19px, 1rem + .3vw, 22px); letter-spacing: -0.01em;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+/* Les trois étiquettes dans la même case (o/phrase.js) : la case a la largeur de la plus longue, la flèche ne bouge pas
+   d'un mot à l'autre. Seule l'étiquette affichée se voit, sauf pendant le passage de l'une à l'autre (.is-moving). */
+.o-phr__next-t { display: inline-grid; text-align: start; } /* un bouton centre son texte : chaque étiquette part du bord gauche */
+.o-phr__next-l { grid-area: 1 / 1; }
+.o-phr__next-k, .o-phr__next-v { display: inline-block; }
+.o-phr__next-l:not(.is-on, .is-moving), .o-phr__ico-i:not(.is-on, .is-moving) { visibility: hidden; }
+.o-phr__ico { position: relative; width: 22px; height: 22px; flex: none; }
+.o-phr__ico-i { position: absolute; inset: 0; }
+.o-phr__ico .o-phr__arr { display: block; }
+.o-phr__next-k { color: var(--ink-2); }
+.o-phr__next-v {
+  font-weight: 500;
+  text-decoration: underline; text-decoration-color: transparent; text-decoration-thickness: 1.5px; text-underline-offset: 6px;
+  transition: text-decoration-color .4s var(--ease);
+}
+.o-phr__arr { width: 22px; height: 22px; flex: none; transform-origin: 50% 50%; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: transform .5s var(--ease); }
+@media (hover: hover) {
+  .o-phr__next:hover .o-phr__next-v { text-decoration-color: currentColor; }
+  .o-phr__next:hover .o-phr__arr { transform: translateX(4px); }
+  .o-phr__next:hover .o-phr__arr--back { transform: rotate(-40deg); }
+}
+.o-phr__next:focus-visible { outline-offset: 4px; }
+
+/* ---------- Téléphone et tablette : une colonne, la hauteur suit le volet ---------- */
+@media (max-width: 960px) {
+  .o-phr__stage { grid-template-columns: minmax(0, 1fr); }
+  .o-phr__panel { grid-template-columns: minmax(0, 1fr); }
+  .o-phr__lede { padding-bottom: 0; }
+  .o-phr.is-live .o-phr__panels { overflow: visible clip; transition: height .46s cubic-bezier(.22, .7, .18, 1); }
+  /* Avant le montage, seul le volet affiché prend sa place, comme après (le script règle ensuite la hauteur) */
+  .js .o-phr:not(.is-live) .o-phr__panel:not(.is-on) { display: none; }
+  .o-phr__foot { grid-row: 2; align-self: start; margin-top: 30px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .o-phr__w::before, .o-phr__w::after, .o-phr__panels { transition: none !important; }
+}
+@media (forced-colors: active) {
+  .o-phr__w::after { background: CanvasText; }
+  .o-phr__w::before { background: GrayText; }
+}
+
+/* Mots composés insécables (Onest n'a pas de trait d'union insécable) ; venait de la feuille du banc (offres.css). */
+.o-nw { white-space: nowrap; }

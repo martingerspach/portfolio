@@ -1,0 +1,8 @@
+/* Topiary v4.1 : la désintégration du grand mot au survol (desint/desint.js, version « Le souffle »).
+   Le canevas des éclats couvre la capsule, sous le SVG du mot. Pendant l'effet, il prend la place du mot entier (relief,
+   face et enfants) ; au repos, il est caché et le mot d'origine revient, au pixel près. */
+.hero__desint { position: absolute; inset: 0; width: 100%; height: 100%; visibility: hidden; pointer-events: none; }
+.desint-on .hero__desint { visibility: visible; }
+.desint-on .hero__sig--buis,
+.desint-on .hero__mark .hero__child { visibility: hidden; }
+.desint-on .hero__mark svg > text { fill: transparent; }

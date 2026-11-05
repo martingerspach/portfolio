@@ -1,0 +1,960 @@
+/* Auvent · landing v3 « Ciel » (2026-10-09).
+   Mise en page : une seule colonne de ciel, de la nuit (6 h, le bulletin) au jour (le bureau) et retour ; chaque section
+   commence sur la couleur où finit la précédente. Grille de 12 colonnes, gouttière de 16 à 36 px ; les pièces flottantes
+   sont en verre liquide (lib/verre.js). Tout vient de tokens/tokens.css (préfixe --av-). */
+
+:root {
+  --gouttiere: clamp(16px, 2.5vw, 36px);
+  --colonne-gap: clamp(12px, 1.6vw, 24px);
+  --tete-h: 72px;
+  --section-pad: clamp(88px, 11vw, 168px);
+  /* Lignes de construction : les colonnes de la grille, en pointillés très fins (et ce que le verre réfracte). */
+  --trame: rgb(10 18 32 / 0.075);
+  /* Trame anti-bandes : ±1 à 3 niveaux, statique (images/trame.png, 64 px), posée sur chaque ciel (défaut P2-4) */
+  --grain: url(../images/trame.png) 0 0 / 64px 64px;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 88px; -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--av-ciel-950);
+  color: var(--av-text);
+  font-family: var(--av-font);
+  font-size: var(--av-text-body);
+  line-height: var(--av-leading-body);
+  letter-spacing: var(--av-tracking-body);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-kerning: normal;
+  overflow-x: clip;
+}
+img { max-width: 100%; display: block; }
+h1, h2, h3, p, ol, ul, dl, dd, figure { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+h1, h2, h3 { font-weight: 400; text-wrap: balance; }
+p { text-wrap: pretty; }
+button, select, input { font: inherit; color: inherit; letter-spacing: inherit; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--av-focus); outline-offset: 3px; border-radius: 4px; }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.cadre { width: 100%; max-width: 1512px; margin-inline: auto; padding-inline: var(--gouttiere); }
+.evitement { position: absolute; left: 12px; top: -80px; z-index: 100; padding: 12px 16px; border-radius: var(--av-radius-s); background: var(--av-lait-0); color: var(--av-encre-900); }
+.evitement:focus { top: 12px; }
+
+.av-jour, .av-nuit { color: var(--av-text); }
+
+/* ---------- Boutons : deux pièces jointes (le libellé, la flèche) ; jamais de pilule, jamais de soulèvement ---------- */
+.bouton {
+  --b-h: 48px;
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  height: var(--b-h);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 12px;
+  -webkit-tap-highlight-color: transparent;
+}
+.bouton-texte { display: inline-flex; align-items: center; padding: 0 18px; border-radius: inherit; white-space: nowrap; transition: background-color var(--av-duration-moyen) var(--av-ease-standard), color var(--av-duration-moyen) var(--av-ease-standard); }
+.bouton-fleche { display: inline-grid; place-items: center; width: var(--b-h); border-radius: inherit; overflow: hidden; }
+.bouton-fleche svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: transform var(--av-duration-moyen) var(--av-ease-cordeau); }
+.bouton--plein .bouton-texte { background: var(--av-text); color: var(--av-bg); border-radius: 12px 4px 4px 12px; }
+.bouton--plein .bouton-fleche { background: var(--av-signal-500); color: var(--av-lait-0); border-radius: 4px 12px 12px 4px; }
+.av-jour .bouton--plein .bouton-texte, .bouton--plein.av-jour .bouton-texte { background: var(--av-encre-900); color: var(--av-lait-0); }
+.av-nuit .bouton--plein .bouton-texte { background: var(--av-brume-50); color: var(--av-encre-900); }
+.bouton--plein:hover .bouton-fleche svg, .bouton--plein:focus-visible .bouton-fleche svg { transform: translateX(3px); }
+.bouton--plein:hover .bouton-texte { background: var(--av-lait-0); }
+/* le carré de la flèche s'éclaire au survol (sur la nuit, le passage du libellé de brume à blanc ne se voyait pas) */
+.bouton--plein .bouton-fleche { transition: background-color var(--av-duration-moyen) var(--av-ease-standard); }
+.bouton--plein:hover .bouton-fleche { background: #3D86FF; }
+.av-jour .bouton--plein:hover .bouton-texte { background: var(--av-ciel-800); }
+.bouton:active { transform: scale(0.985); }
+.bouton--verre { align-items: center; padding: 0 18px; border-radius: 12px; color: var(--av-text); }
+.bouton--verre .bouton-texte { padding: 0; }
+.bouton--verre:hover { background: color-mix(in srgb, var(--av-verre-teinte), var(--av-text) 8%); }
+.bouton-icone { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--av-signal-500); color: var(--av-lait-0); flex: none; }
+.bouton-icone svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: transform var(--av-duration-moyen) var(--av-ease-cordeau); }
+.bouton-icone:hover svg { transform: translateX(3px); }
+
+/* Sélecteur natif habillé de verre */
+.choix { position: relative; display: inline-flex; align-items: center; height: 44px; border-radius: 12px; vertical-align: middle; }
+.choix select { appearance: none; -webkit-appearance: none; border: 0; background: transparent; height: 100%; padding: 0 40px 0 14px; font-size: 17px; font-weight: 500; cursor: pointer; border-radius: inherit; }
+.choix select option { color: var(--av-encre-900); background: var(--av-lait-0); }
+.choix svg { position: absolute; right: 14px; top: 50%; width: 12px; height: 8px; margin-top: -4px; fill: none; stroke: currentColor; stroke-width: 1.5; pointer-events: none; }
+.choix select:focus-visible { outline: 2px solid var(--av-focus); outline-offset: 2px; }
+
+/* ---------- Logo ---------- */
+.logo { display: block; color: var(--av-text); transition: color var(--av-duration-moyen) var(--av-ease-standard); }
+.logo svg { display: block; height: 100%; width: auto; overflow: visible; }
+.logo svg path { fill: currentColor; }
+
+/* ---------- En-tête : fixe, en verre, qui prend le contexte de la section qu'il survole ---------- */
+.tete {
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  left: 0; right: 0;
+  z-index: 50;
+  height: var(--tete-h);
+  display: flex; align-items: center; justify-content: space-between;
+  padding-inline: max(var(--gouttiere), calc((100% - 1512px) / 2 + var(--gouttiere)));
+  pointer-events: none;
+  color: var(--av-text);
+  transition: color var(--av-duration-moyen) var(--av-ease-standard);
+}
+.tete > * { pointer-events: auto; }
+/* Le logo a sa plaque de verre (même hauteur et même rayon que la navigation) : elle se matérialise dès que la page
+   défile, sinon le texte passait sous le mot (défaut P1-1 de la v10). Sur écran étroit, la bande .tete-fond la remplace. */
+.tete-marque { position: relative; isolation: isolate; display: flex; align-items: center; height: 48px; padding: 0 14px; margin-left: -14px; text-decoration: none; border-radius: 12px; }
+.tete-marque .logo { height: 26px; }
+.tete-plaque { position: absolute; inset: 0; z-index: -1; border-radius: inherit; opacity: 0; pointer-events: none; transition: opacity var(--av-duration-moyen) var(--av-ease-standard), background-color var(--av-duration-moyen) var(--av-ease-standard); }
+.tete.defile .tete-plaque { opacity: 1; }
+.av-nuit .tete-plaque, .av-nuit.tete .tete-plaque { background: rgb(6 21 40 / 0.74); }
+.av-jour .tete-plaque, .av-jour.tete .tete-plaque { background: rgb(247 249 252 / 0.8); }
+@media (max-width: 899px) { .tete-plaque { display: none; } }
+.tete-nav { display: flex; align-items: center; gap: 8px; }
+.tete-liens { display: flex; align-items: stretch; height: 48px; padding: 4px; gap: 2px; border-radius: 12px; transition: background-color var(--av-duration-moyen) var(--av-ease-standard); }
+/* le texte de navigation passe sur tout (chrome, cartes, titres blancs) : teinte dense, comme le verre « regular »
+   d'Apple qui ajuste la luminosité de ce qu'il couvre (un titre blanc sous la plaque devenait une lueur sous le logo) */
+.av-nuit .tete-liens, .av-nuit.tete .tete-liens { background: rgb(6 21 40 / 0.74); }
+.av-jour .tete-liens, .av-jour.tete .tete-liens { background: rgb(247 249 252 / 0.8); }
+.tete-liens a { position: relative; z-index: 1; display: flex; align-items: center; padding: 0 14px; border-radius: 8px; font-size: 15px; font-weight: 500; text-decoration: none; white-space: nowrap; color: var(--av-text); transition: color var(--av-duration-moyen) var(--av-ease-standard); }
+/* L'indicateur glisse SOUS les libellés : un remplissage et un liseré, pas une seconde pièce de verre (HIG : « always
+   avoid glass on glass »). La loupe de la v10, posée au-dessus, floutait le libellé visé sous Safari et Firefox (défaut
+   P1-4). Sa largeur s'anime avec sa position : exception mesurée, une boîte absolue de 40 px.
+   Position et largeur sur la même courbe, sans rebond : ses deux bords vont droit d'un lien à l'autre et restent dans la
+   barre. Le ressort « verre » (8 % de dépassement) le sortait du cadre, jusqu'à 27 px à gauche et 16 px à droite. */
+.tete-curseur {
+  position: absolute; z-index: 0; top: 4px; left: 0; height: 40px; width: 64px;
+  border-radius: 8px;
+  opacity: 0; transform: translateX(0);
+  transition: transform 420ms var(--av-ease-standard), width 420ms var(--av-ease-standard), opacity 220ms var(--av-ease-standard), background-color var(--av-duration-moyen) var(--av-ease-standard);
+  pointer-events: none;
+}
+.tete-liens:hover .tete-curseur, .tete-liens:focus-within .tete-curseur { opacity: 1; }
+.av-nuit .tete-curseur { background: rgb(242 245 250 / 0.12); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), inset 0 0 0 1px rgb(255 255 255 / 0.06); }
+.av-jour .tete-curseur { background: rgb(255 255 255 / 0.92); box-shadow: 0 1px 2px rgb(10 18 32 / 0.12), inset 0 0 0 1px rgb(255 255 255 / 0.9); }
+.tete-appel { --b-h: 48px; }
+@media (max-width: 899px) {
+  .tete-liens { display: none; }
+  .tete { --tete-h: 64px; }
+  /* sur écran étroit, une bande de verre derrière le logo dès que la page défile */
+  .tete-fond { position: absolute; inset: 0; z-index: -1; border-radius: 0; opacity: 0; transition: opacity var(--av-duration-moyen) var(--av-ease-standard), background-color var(--av-duration-moyen) var(--av-ease-standard); box-shadow: none; pointer-events: none; }
+  .tete.defile .tete-fond { opacity: 1; }
+  .av-nuit .tete-fond, .av-nuit.tete .tete-fond { background: rgb(6 21 40 / 0.72); }
+  .av-jour .tete-fond, .av-jour.tete .tete-fond { background: rgb(247 249 252 / 0.8); }
+}
+@media (min-width: 900px) { .tete-fond { display: none; } }
+/* Section active : au repos, l'indicateur reste sous le lien de la section lue (landing.js pose .a-actif et
+   aria-current) ; au survol il suit le pointeur, puis revient. Dans le héros, aucune section n'est active. */
+.tete-liens.a-actif .tete-curseur { opacity: 1; }
+
+/* Menu de téléphone : un bouton de verre (deux traits qui se croisent), une feuille de verre qui se déroule sous
+   l'en-tête comme la toile d'un store (landing.js : clip-path du haut vers le bas, 460 ms à l'ouverture, 280 ms à la
+   fermeture), un voile sur la page. Clavier : le focus reste dans le menu, Échap le ferme et rend le focus au bouton. */
+.tete-menu, .tete-feuille, .tete-voile { display: none; }
+.tete-menu {
+  place-items: center; width: 48px; height: 48px; padding: 0; border: 0; border-radius: 12px;
+  color: var(--av-text); cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--av-duration-moyen) var(--av-ease-standard), transform 420ms var(--av-ease-verre);
+}
+.av-nuit .tete-menu, .av-nuit.tete .tete-menu { background: rgb(6 21 40 / 0.74); }
+.av-jour .tete-menu, .av-jour.tete .tete-menu { background: rgb(247 249 252 / 0.8); }
+.tete-menu:active { transform: scale(0.96); }
+.tete-menu:focus-visible { outline: 2px solid var(--av-focus); outline-offset: 3px; }
+.tete-menu-traits { position: relative; display: block; width: 18px; height: 10px; }
+.tete-menu-traits i { position: absolute; left: 0; right: 0; height: 1.5px; border-radius: 1px; background: currentColor; transition: transform var(--av-duration-moyen) var(--av-ease-standard); }
+.tete-menu-traits i:first-child { top: 0; }
+.tete-menu-traits i:last-child { bottom: 0; }
+.tete-menu[aria-expanded="true"] .tete-menu-traits i:first-child { transform: translateY(4.25px) rotate(45deg); }
+.tete-menu[aria-expanded="true"] .tete-menu-traits i:last-child { transform: translateY(-4.25px) rotate(-45deg); }
+
+.tete-voile { position: fixed; inset: 0; z-index: -3; background: rgb(2 10 18 / 0.46); }
+.tete-feuille {
+  position: absolute; z-index: 2; top: calc(var(--tete-h) + 2px); left: var(--gouttiere); right: var(--gouttiere);
+  flex-direction: column; gap: 18px; padding: 6px 6px 18px; border-radius: var(--av-radius-l);
+  max-height: calc(100svh - var(--tete-h) - 16px); overflow-y: auto; overscroll-behavior: contain;
+}
+.tete-feuille-fond { position: absolute; inset: 0; z-index: -1; border-radius: inherit; }
+.av-nuit .tete-feuille-fond, .av-nuit.tete .tete-feuille-fond { background: rgb(6 21 40 / 0.97); }
+.av-jour .tete-feuille-fond, .av-jour.tete .tete-feuille-fond { background: rgb(247 249 252 / 0.98); }
+.tete-feuille-nav { display: flex; flex-direction: column; }
+.tete-feuille-nav a {
+  display: flex; align-items: center; min-height: 58px; padding: 0 14px;
+  font-size: var(--av-text-h3); line-height: var(--av-leading-h3); letter-spacing: var(--av-tracking-h3);
+  color: var(--av-text); text-decoration: none; border-bottom: 1px solid var(--av-line); border-radius: 4px;
+  transition: color var(--av-duration-moyen) var(--av-ease-standard);
+}
+.tete-feuille-nav a:last-child { border-bottom: 0; }
+.tete-feuille-nav a[aria-current="true"] { color: var(--av-accent); }
+.tete-feuille-nav a:active { opacity: 0.7; }
+.tete-feuille-nav a:focus-visible { outline: 2px solid var(--av-focus); outline-offset: -2px; }
+.tete-feuille-appel { margin-inline: 14px; align-self: flex-start; }
+html.menu-ouvert { overflow: hidden; }
+@media (max-width: 899px) {
+  .tete-menu { display: inline-grid; }
+  .tete-feuille:not([hidden]), .tete-voile:not([hidden]) { display: flex; }
+}
+/* Sous 360 px, l'appel quitte la barre (il est dans le menu et dans le héros) : logo, menu, rien ne se touche */
+@media (max-width: 359px) { .tete-appel { display: none; } }
+
+/* ---------- 1 · Héros « L'instrument » (v25, 2026-11-03) ----------
+   Le pluviomètre au centre ; tout se lit à travers lui, de gauche à droite. Au-dessus, la promesse. À gauche, la ville
+   du chantier (ce qui entre) ; à droite, le verdict posé sur la surface de l'eau (ce qui sort), qui monte et descend avec
+   elle quand on change de ville. Le pied de l'instrument descend dans « À 6 h » : la nuit continue.
+   Géométrie (aucun calcul de mise en page en script, donc aucun saut au chargement) : la figure garde les proportions de
+   l'image, 1360 × 2048 ; --G est sa hauteur et --g-top son haut. Repères relevés au pixel sur l'image (IMG dans
+   landing.js) : demi-largeur de l'éprouvette 178/2048 de la hauteur, zéro de la graduation à 1 509,6/2048, une
+   graduation (1 mm) tous les 29,6/2048. --mm (posée par landing.js) est le niveau lu, en millimètres. */
+.heros {
+  --h: clamp(640px, 100svh, 1120px);
+  --titre-fs: min(var(--av-text-h1), 10.2svh);
+  --titre-haut: calc(var(--tete-h) + clamp(12px, 3.6svh, 52px));
+  --g-top: calc(var(--titre-haut) + var(--titre-fs) * 2 + clamp(14px, 2.6svh, 32px));
+  --debord: 1.1;                         /* le pied de l'instrument descend dans la section suivante */
+  --G: calc((var(--h) - var(--g-top)) * var(--debord));
+  --tube: calc(var(--G) * 0.0869);
+  --rappel: clamp(52px, 5vw, 92px);
+  --bord: max(var(--gouttiere), calc((100% - 1512px) / 2 + var(--gouttiere)));
+  --mesure-mi: 12px;
+  position: relative; z-index: 1;
+  height: var(--h);
+  overflow-x: clip;
+  /* Le bas du héros rejoint ciel-800, la nuit de « À 6 h », en smoothstep (aucune bande) */
+  background:
+    var(--grain),
+    var(--heros-fin),
+    radial-gradient(70% 50% at 50% 104%, var(--lueur-1), transparent 70%),
+    radial-gradient(90% 60% at 50% 120%, var(--lueur-2), transparent 72%),
+    linear-gradient(180deg, var(--av-ciel-950) 0%, var(--av-ciel-900) 38%, #0B2140 70%, var(--av-ciel-800) 100%);
+  isolation: isolate;
+}
+:root {
+  --lueur-1: rgb(64 112 181 / 0.42); --lueur-2: rgb(28 76 142 / 0.5);
+  /* ciel-800 avec une opacité en smoothstep : pente nulle aux deux bouts, donc aucune bande */
+  --heros-fin: linear-gradient(180deg, rgb(11 37 71 / 0) calc(100% - 360px), rgb(11 37 71 / 0.028) calc(100% - 324px), rgb(11 37 71 / 0.104) calc(100% - 288px), rgb(11 37 71 / 0.216) calc(100% - 252px), rgb(11 37 71 / 0.352) calc(100% - 216px), rgb(11 37 71 / 0.5) calc(100% - 180px), rgb(11 37 71 / 0.648) calc(100% - 144px), rgb(11 37 71 / 0.784) calc(100% - 108px), rgb(11 37 71 / 0.896) calc(100% - 72px), rgb(11 37 71 / 0.972) calc(100% - 36px), rgb(11 37 71) 100%);
+}
+/* La pluie s'efface sur les 280 derniers pixels du héros (courbe douce) */
+.heros-pluie {
+  position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;
+  --fin-pluie: linear-gradient(180deg, #000 0, #000 calc(100% - 280px), rgb(0 0 0 / 0.86) calc(100% - 224px), rgb(0 0 0 / 0.6) calc(100% - 168px), rgb(0 0 0 / 0.32) calc(100% - 112px), rgb(0 0 0 / 0.1) calc(100% - 56px), transparent 100%);
+  -webkit-mask-image: var(--fin-pluie); mask-image: var(--fin-pluie);
+}
+
+.heros-titre { position: relative; z-index: 2; font-size: var(--titre-fs); line-height: 0.98; letter-spacing: -0.045em; text-align: center; }
+.heros-chapeau { position: relative; z-index: 2; font-size: var(--av-text-lead); line-height: var(--av-leading-lead); letter-spacing: var(--av-tracking-lead); color: var(--av-text-muted); }
+
+.heros-objet { position: absolute; z-index: 1; aspect-ratio: 1360 / 2048; height: var(--G); }
+.heros-instrument { position: absolute; inset: 0; }
+.heros-image { width: 100%; height: 100%; object-fit: contain; user-select: none; -webkit-user-drag: none; }
+/* L'eau du pluviomètre : l'image est l'éprouvette sèche (outils/eau.py) ; la colonne teinte le verre en multiplication
+   et le ménisque se pose à la hauteur de la pluie de la ville (une graduation par millimètre). landing.js place le
+   calque sur l'intérieur du tube et règle --eau-y (ligne de lecture du ménisque) et --eau-k (hauteur de la colonne). */
+.heros { --eau-duree: 1100ms; }
+.eau { position: absolute; pointer-events: none; }
+.eau-colonne { position: absolute; inset: 0; background: url(../images/eau.png) 0 0 / 100% 100% no-repeat; mix-blend-mode: multiply; transform-origin: 50% 100%; transform: scaleY(var(--eau-k, 0)); }
+.eau-menisque { position: absolute; left: 0; top: 0; width: 100%; height: auto; max-width: none; translate: 0 var(--eau-y, 0px); opacity: var(--eau-o, 0); will-change: translate, transform; }
+/* L'eau, le verdict et sa ligne de lecture bougent ensemble : même durée, même courbe (départ doux, arrivée lente) */
+.eau-colonne, .eau-menisque, .heros-sortie { transition: transform var(--eau-duree) var(--eau-courbe, cubic-bezier(.45, .05, .2, 1)), translate var(--eau-duree) var(--eau-courbe, cubic-bezier(.45, .05, .2, 1)), opacity 420ms var(--av-ease-standard); }
+.heros.pose .eau-colonne, .heros.pose .eau-menisque, .heros.pose .heros-sortie { transition: none; }
+@media (prefers-reduced-motion: reduce) { .heros { --eau-duree: 0ms !important; } }
+@media (forced-colors: active) { .eau { display: none; } }
+.cotes { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.cotes line { fill: none; stroke: rgb(242 245 250 / 0.26); stroke-width: 1; vector-effect: non-scaling-stroke; }
+
+/* La ville : un libellé, puis le sélecteur en grand (le même verre que la navigation) */
+.heros-entree { position: relative; z-index: 3; display: flex; flex-direction: column; gap: 10px; }
+.heros-entree-libelle { font-size: var(--av-text-lead); line-height: 1.3; color: var(--av-brume-200); }
+.choix--grand { height: 56px; border-radius: 14px; color: var(--av-text); }
+.choix--grand select { padding: 0 52px 0 18px; font-size: clamp(1.375rem, 1.2rem + 0.5vw, 1.75rem); font-weight: 400; letter-spacing: -0.02em; }
+.choix--grand svg { right: 18px; width: 14px; height: 9px; margin-top: -4.5px; }
+
+/* Le verdict : la mesure (dans la police des cotes), puis la phrase. Le niveau lu fixe sa hauteur. */
+.heros-sortie { position: relative; z-index: 2; }
+.heros-mesure { height: calc(var(--mesure-mi) * 2); display: flex; align-items: center; font-family: var(--av-font-mono); font-size: 17px; letter-spacing: 0; color: var(--av-signal-300); white-space: nowrap; }
+.heros-mesure b { font-weight: 400; font-variant-numeric: tabular-nums; }
+.heros-verdict { margin-top: 10px; min-height: calc(2em * var(--av-leading-h3)); font-size: var(--av-text-h3); line-height: var(--av-leading-h3); letter-spacing: var(--av-tracking-h3); color: var(--av-text); text-wrap: balance; }
+.heros-actions { position: relative; z-index: 2; display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* Grand écran : tout se pose autour de l'instrument */
+@media (min-width: 900px) {
+  .heros-titre { position: absolute; top: var(--titre-haut); left: 50%; translate: -50% 0; width: max-content; max-width: min(13.4em, calc(100% - 2 * var(--gouttiere))); }
+  .heros-objet { top: var(--g-top); left: 50%; translate: -50% 0; }
+  .heros-entree { position: absolute; right: calc(50% + var(--tube) + var(--rappel)); top: calc(var(--g-top) + var(--G) * 0.42); translate: 0 -50%; align-items: flex-end; text-align: right; }
+  /* la ligne de rappel : du sélecteur au bord de l'éprouvette */
+  .heros-entree::after { content: ''; position: absolute; left: calc(100% + 14px); bottom: 28px; width: calc(var(--rappel) - 18px); height: 1px; background: rgb(242 245 250 / 0.34); }
+  .heros-sortie {
+    position: absolute; left: calc(50% + var(--tube) + var(--rappel)); top: 0;
+    width: min(16em, calc(50% - var(--tube) - var(--rappel) - var(--bord)));
+    font-size: var(--av-text-h3);
+    translate: 0 calc(var(--g-top) + var(--G) * (0.73711 - var(--mm, 0.36) * 0.014453) - var(--mesure-mi));
+  }
+  /* la ligne de lecture : en travers de l'éprouvette, à la surface de l'eau, jusqu'à la mesure */
+  .heros-sortie::before { content: ''; position: absolute; top: calc(var(--mesure-mi) - 0.625px); right: calc(100% + 14px); width: calc(var(--rappel) + 2 * var(--tube) - 18px); height: 1.25px; background: var(--av-signal-300); }
+  .heros-chapeau { position: absolute; left: var(--bord); bottom: calc(clamp(24px, 5svh, 56px) + 44px + 22px); width: min(23em, calc(50% - var(--tube) - var(--rappel) - var(--bord) - 24px)); }
+  .heros-actions { position: absolute; left: var(--bord); bottom: clamp(24px, 5svh, 56px); }
+}
+@media (min-width: 900px) and (max-width: 1199px) {
+  .heros-chapeau { font-size: var(--av-text-body); }
+}
+/* écran bas (portable de 720 à 800 px) : moins de débord, le verdict d'une ville sèche reste dans l'écran */
+@media (min-width: 900px) and (max-height: 800px) { .heros { --debord: 1.02; } }
+
+/* Téléphone et tablette : la promesse et la ville en colonne, puis l'instrument à gauche et le verdict qui monte avec
+   l'eau à sa droite, dans une même scène */
+@media (max-width: 899px) {
+  .heros {
+    --G: min(460px, 58svh);
+    --g-top: 0px;
+    --rappel: 26px;
+    height: auto;
+    display: grid; grid-template-columns: minmax(0, 1fr);
+    padding: calc(var(--tete-h) + 20px) var(--gouttiere) 0;
+  }
+  .heros-titre { font-size: clamp(2.375rem, 1.6rem + 3.4vw, 3.5rem); max-width: 11em; text-align: left; }
+  .heros-chapeau { margin-top: 16px; max-width: 26em; }
+  .heros-entree { margin-top: 28px; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .heros-entree-libelle { font-size: var(--av-text-body); }
+  .choix--grand { height: 52px; }
+  /* la scène : l'instrument et le verdict partagent une rangée de la hauteur de l'instrument */
+  .heros-objet, .heros-sortie { grid-row: 5; grid-column: 1; align-self: start; }
+  .heros-objet { position: relative; margin-top: 20px; margin-left: calc(var(--G) * -0.12); }
+  .heros-sortie { margin-top: 20px; margin-left: calc(var(--G) * 0.212 + var(--tube) + var(--rappel)); max-width: 15em; translate: 0 calc(var(--G) * (0.73711 - var(--mm, 0.36) * 0.014453) - var(--mesure-mi)); }
+  .heros-sortie::before { content: ''; position: absolute; top: calc(var(--mesure-mi) - 0.625px); right: calc(100% + 8px); width: calc(var(--rappel) + 2 * var(--tube) - 10px); height: 1.25px; background: var(--av-signal-300); }
+  .heros-verdict { font-size: clamp(1.25rem, 1.1rem + 0.8vw, 1.5rem); min-height: calc(3em * var(--av-leading-h3)); }
+  .heros-actions { grid-row: 6; margin-top: 8px; padding-bottom: 40px; }
+  .heros-titre { grid-row: 1; } .heros-chapeau { grid-row: 2; } .heros-entree { grid-row: 3; }
+}
+/* Tablette : la promesse en tête, puis la scène du grand écran (la ville à gauche de l'éprouvette, le verdict à droite) */
+@media (min-width: 600px) and (max-width: 899px) {
+  .heros { --G: min(640px, 60svh); --rappel: 46px; }
+  .heros-titre { max-width: 12em; }
+  .heros-entree, .heros-objet, .heros-sortie { grid-row: 5; grid-column: 1; align-self: start; }
+  .heros-objet { justify-self: center; margin-left: 0; margin-top: 32px; }
+  .heros-entree { margin-top: calc(32px + var(--G) * 0.42 - 45px); width: calc(50% - var(--tube) - var(--rappel)); flex-direction: column; align-items: flex-end; text-align: right; }
+  .heros-entree::after { content: ''; position: absolute; left: calc(100% + 10px); bottom: 26px; width: calc(var(--rappel) - 12px); height: 1px; background: rgb(242 245 250 / 0.34); }
+  .heros-sortie { margin-top: 32px; margin-left: calc(50% + var(--tube) + var(--rappel)); max-width: calc(50% - var(--tube) - var(--rappel)); }
+  .heros-sortie::before { right: calc(100% + 10px); width: calc(var(--rappel) + 2 * var(--tube) - 12px); }
+  .heros-actions { margin-top: 16px; }
+}
+
+/* Entrée du héros : une fois, au chargement */
+@media (prefers-reduced-motion: no-preference) {
+  .js .heros-titre .ligne { display: inline-block; animation: monte 1100ms var(--av-ease-reveal) both; animation-delay: calc(var(--i, 0) * 60ms + 80ms); }
+  .js .heros-chapeau, .js .heros-actions { animation: monte-doux 1000ms var(--av-ease-reveal) both 620ms; }
+  .js .heros-entree { animation: monte-doux 1000ms var(--av-ease-reveal) both 460ms; }
+  .js .heros-instrument { animation: objet 1600ms var(--av-ease-reveal) both 120ms; }
+  .js .heros-verdict, .js .heros-mesure { animation: monte-doux 900ms var(--av-ease-reveal) both 900ms; }
+  .js .cotes, .js .heros-entree::after, .js .heros-sortie::before { animation: apparait 900ms var(--av-ease-standard) both 1000ms; }
+}
+@keyframes monte { from { opacity: 0; transform: translateY(0.42em); } to { opacity: 1; transform: none; } }
+@keyframes monte-doux { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes objet { from { opacity: 0; transform: translateY(5%) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes apparait { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- Lignes de construction (sections claires) : les colonnes de la grille, en pointillés ----------
+   Elles passent sous les pièces de verre, dont le bord les courbe : c'est là que la lentille se voit. */
+.guides { position: absolute; inset: calc(-1 * var(--section-pad)) 0; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--colonne-gap); pointer-events: none; z-index: 0; }
+.guides i { grid-row: 1; width: 1px; justify-self: start; background: repeating-linear-gradient(180deg, var(--trame) 0 2px, transparent 2px 6px); }
+.guides i.fin { justify-self: end; }
+.tarif-grille, .plan { position: relative; }
+.tarif-grille > :not(.guides), .plan > :not(.guides) { position: relative; z-index: 1; }
+.plan > .guides { bottom: var(--plan-fondu); }
+@media (max-width: 899px) { .guides { display: none; } }
+
+/* ---------- 2 · « À 6 h » (v25) ----------
+   À 6 h, en octobre, il fait encore nuit : la section garde la nuit du héros (aucune bande de dégradé entre les deux) et
+   reçoit le pied de l'instrument, qui déborde du héros. Le graphique est posé à même le ciel, sans carte ; le téléphone
+   du chef de chantier à côté. L'aube vient ensuite, en haut du planning. */
+@property --aube { syntax: '<length>'; inherits: false; initial-value: 0px; }
+.traduction {
+  position: relative; z-index: 0;
+  padding-block: clamp(96px, 10vw, 152px) clamp(40px, 4vw, 64px);
+  background: var(--grain), var(--av-ciel-800);
+}
+/* Rendu final (2026-10-24) : le titre et sa phrase en rangée au-dessus, comme dans les limites ; le graphique sur huit
+   colonnes, le téléphone sur quatre, la phrase posée exactement au-dessus du téléphone (même largeur, même bord). La
+   v22 laissait sous le titre une colonne vide de 600 px. */
+.trad { position: relative; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--colonne-gap); row-gap: clamp(40px, 4.4vw, 64px); }
+.trad-texte { grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: end; row-gap: 20px; position: relative; z-index: 1; }
+.trad-texte h2 { grid-column: 1 / span 7; }
+.trad-texte p { grid-column: 9 / span 4; padding-inline: max(0px, calc((100% - 340px) / 2)); }
+.trad-texte h2, .plan-texte h2, .pied-appel h2, .questions-titre, .prix-titre { font-size: var(--av-text-h2); line-height: var(--av-leading-h2); letter-spacing: var(--av-tracking-h2); }
+.trad-texte p { color: var(--av-brume-200); }   /* sur ciel-800 */
+
+
+/* La météo à gauche, le téléphone à droite, chacun avec sa légende dessous : la même journée, avant et après Auvent.
+   La carte prend la hauteur du téléphone (rangée de la grille). */
+.releve { grid-column: 1 / span 8; position: relative; z-index: 1; margin: 0; display: flex; flex-direction: column; gap: 14px; }
+.releve-carte {
+  flex: 1; display: flex; flex-direction: column;
+  min-height: 520px;
+  color: var(--av-brume-50);
+}
+.releve-tete { font-size: var(--av-text-lead); line-height: 1.3; color: var(--av-brume-50); }
+.releve-legende[hidden] { display: none; }
+.releve-legende { display: flex; align-items: center; gap: 10px; margin-top: 6px; font-size: 15px; font-weight: 500; color: var(--av-signal-300); }
+.releve-tirets { width: 26px; height: 0; border-top: 1.25px dashed currentColor; }
+.releve-graphe { position: relative; flex: 1; min-height: 300px; margin-top: 18px; }
+.releve-graphe svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+/* avant l'entrée (landing.js) : le graphique attend vide, la notification n'est pas encore arrivée */
+.releve-graphe.attente .b-pluie { transform: scaleY(0); }
+.releve-graphe.attente .b-depasse, .releve-graphe.attente .g-fenetre, .releve-graphe.attente .g-fenetre-txt, .releve-graphe.attente .g-accolade, .releve-graphe.attente .g-seuil-txt { opacity: 0; }
+.releve-graphe.attente .g-limite { clip-path: inset(-4px 100% -4px 0); }
+.tel.attente .notif-place { height: 0; margin-bottom: -8px; overflow: visible; }
+.tel.attente #notif { opacity: 0; transform: translateY(-18px) scale(0.92); }
+.trad-legende { font-size: 15px; color: var(--av-encre-700); text-align: center; }
+
+/* Grammaire des icônes des limites : trait fort, trait fin, caché */
+.dessin .d-fort, .dessin .d-fin, .dessin .d-cache { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.dessin .d-fort { stroke-width: 1.25; }
+.dessin .d-fin { stroke-width: 0.75; opacity: 0.62; }
+.dessin .d-cache { stroke-width: 0.85; stroke-dasharray: 3 2.5; opacity: 0.7; }
+.icone .d-fort { stroke-width: 1.25; }
+
+/* Verre : sur fond clair, un liseré blanc et une ombre de bord donnent l'épaisseur ; à l'appui, la pièce s'enfonce */
+.av-jour [data-verre]:not(.tete-curseur) { box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.75), inset 0 -1px 0 rgb(10 18 32 / 0.05), 0 1px 1px rgb(10 18 32 / 0.04), 0 18px 40px -24px rgb(6 21 40 / 0.22); }
+.bouton--verre, .essai { transition: transform 420ms var(--av-ease-verre), box-shadow var(--av-duration-moyen) var(--av-ease-standard); }
+.bouton--verre:active { transform: scale(0.985); }
+
+@media (max-width: 1099px) {
+  .trad-texte h2 { grid-column: 1 / span 6; }
+  .trad-texte p { grid-column: 7 / span 6; }
+  .releve { grid-column: 1 / span 6; }
+}
+@media (max-width: 799px) {
+  .trad-texte { display: flex; flex-direction: column; align-items: stretch; }
+  .trad-texte p { padding-inline: 0; max-width: 34em; }
+  .releve { grid-column: 1 / -1; }
+  .releve-carte { min-height: 380px; }
+}
+
+/* ---------- 4 · Planning ---------- */
+/* Grammaire du mouvement de la section (détail dans planning.js) : --av-duration-long pour ce qui voyage, -moyen pour ce
+   qui change d'état, -court pour ce qui s'efface ; une seule courbe, --av-ease-standard ; --d porte le délai d'un élément
+   dans la chorégraphie d'un passage. */
+.planning {
+  position: relative;
+  /* l'aube : la nuit de « À 6 h » s'éclaircit en haut de la section ; le titre se pose aux deux tiers du fondu, où le ciel est
+     assez clair pour l'encre. --aube est lue par landing.js pour basculer l'en-tête au milieu du fondu. */
+  --aube: clamp(240px, 22vw, 320px);
+  --plan-fondu: clamp(300px, 30vw, 440px);
+  padding-block: calc(var(--aube) * 0.66) 0;
+  background:
+    var(--grain),
+    var(--av-fondu-aube) top / 100% var(--aube) no-repeat,
+    var(--av-fondu-traduction) 0 var(--aube) / 100% clamp(320px, 36vw, 560px) no-repeat,
+    var(--av-fondu-planning) bottom / 100% var(--plan-fondu) no-repeat,
+    linear-gradient(180deg, var(--av-lait-50) 0%, var(--av-ciel-50) 100%);
+}
+/* Fin de la section : la colonne des étapes se prolonge de 160 px sous le filet (.plan-texte), la fenêtre reste donc
+   épinglée 160 px de plus à la dernière étape (les accusés arrivent pendant qu'elle est posée) ; le fondu vers la nuit
+   commence sous la fin de la colonne (38 % de sa hauteur) au lieu de 24 px après : la fenêtre qui part découvre le ciel
+   qui fonce, plus un long aplat clair. */
+.plan { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--colonne-gap); padding-bottom: calc(var(--plan-fondu) * 0.42); }
+.plan-texte { grid-column: 1 / span 4; position: relative; z-index: 1; padding-bottom: 160px; }   /* le maintien de la dernière étape, sous le filet */
+.plan-chapeau { margin-top: 20px; color: var(--av-text-muted); max-width: 28em; }
+/* Repère de progression : un filet à gauche des étapes, encré jusqu'à la ligne de lecture (la mi-hauteur de l'écran, là
+   où une étape devient active). Lié au défilement par le navigateur (scroll-driven animation, sans script et sans retard
+   d'une image) ; landing.js le pose quand le navigateur ne connaît pas ces animations, et par étape entière en mouvements
+   réduits. */
+.etapes {
+  position: relative; margin-top: clamp(40px, 8vh, 96px); display: flex; flex-direction: column;
+  view-timeline: --etapes block; view-timeline-inset: 0px 50%;
+}
+.etapes::before, .etapes::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; pointer-events: none; }
+.etapes::before { width: 1px; background: var(--av-line); }
+.etapes::after { width: 2px; background: var(--av-text); transform-origin: 0 0; transform: scaleY(var(--rail, 0)); }
+@keyframes plan-rail { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    html:not(.rm) .etapes::after { animation: plan-rail linear both; animation-timeline: --etapes; animation-range: entry-crossing 0% entry-crossing 100%; }
+  }
+}
+.etape { padding: 22px 0 26px 24px; border-top: 1px solid var(--av-line); min-height: 27vh; transition: border-top-color var(--av-duration-moyen) var(--av-ease-standard); }
+.etape:last-child { min-height: 30vh; }
+.etape-bouton { all: unset; display: flex; flex-direction: column; gap: 6px; cursor: pointer; border-radius: 6px; }
+.etape-bouton:focus-visible { outline: 2px solid var(--av-focus); outline-offset: 4px; }
+.etape-quand { font-size: 15px; font-weight: 500; color: var(--av-text-muted); }
+.etape-titre { font-size: var(--av-text-h3); line-height: var(--av-leading-h3); letter-spacing: var(--av-tracking-h3); color: var(--av-text-muted); }
+.etape-texte { margin-top: 10px; color: var(--av-text-muted); max-width: 30em; }
+.etape-quand, .etape-titre, .etape-texte { transition: color var(--av-duration-moyen) var(--av-ease-standard); }
+.etape.actif .etape-titre { color: var(--av-text); }
+.etape.actif .etape-quand { color: var(--av-text); }   /* v25 : l'aube passe sous les premières étapes ; le bleu d'accent y tombait à 4,3:1 */
+.etape.actif .etape-texte { color: var(--av-text); }
+.etape.actif { border-top-color: var(--av-text); }
+.plan-scene { grid-column: 5 / span 8; position: relative; }
+/* La fenêtre du planning est du contenu : une fenêtre d'application pleine, liseré et ombre de fenêtre (défaut P1-6). */
+.app { position: sticky; top: calc(var(--tete-h) + 20px); border-radius: var(--av-radius-l); padding: 6px; background: rgb(246 248 251 / 0.96); box-shadow: inset 0 0 0 1px rgb(10 18 32 / 0.08), 0 1px 2px rgb(10 18 32 / 0.05), 0 40px 80px -48px rgb(6 21 40 / 0.45); }
+.app-barre { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 14px 16px 14px; }
+.app-titre { font-weight: 500; }
+.app-sous { margin-left: 10px; font-weight: 400; color: var(--av-text-muted); }
+.app-emis { font-size: 15px; font-weight: 500; color: var(--av-accent); text-align: right; }
+.app-defile { border-radius: calc(var(--av-radius-l) - 6px); background: var(--av-lait-0); box-shadow: inset 0 0 0 1px rgb(10 18 32 / 0.06); overflow: hidden; }
+.app-grille { position: relative; }
+.app-etat { padding: 14px 16px 12px; font-size: 15px; color: var(--av-text-muted); min-height: 50px; }
+/* Fondu enchaîné d'un texte (planning.js) : le texte sortant et le texte entrant partagent la même case */
+.fondu { display: grid; min-width: 0; }
+.fondu > * { grid-area: 1 / 1; min-width: 0; }
+.fondu > .sortant { pointer-events: none; }
+
+/* La grille du planning (dessinée par planning.js) */
+.pg { position: relative; display: grid; grid-template-columns: 168px repeat(4, minmax(0, 1fr)); }
+.pg-jour { padding: 12px 12px 10px; font-size: 15px; color: var(--av-text-muted); border-left: 1px solid var(--av-line); border-bottom: 1px solid var(--av-line); }
+.pg-jour b { font-weight: 500; color: var(--av-text); }
+.pg-jour { container-type: inline-size; white-space: nowrap; }
+@container (max-width: 179px) { .pg-jour-suf { display: none; } }
+.pg-coin { border-bottom: 1px solid var(--av-line); padding: 12px 14px 10px; font-size: 15px; color: var(--av-text-muted); }
+.pg-site { position: relative; padding: 12px 14px; border-bottom: 1px solid var(--av-line); display: flex; flex-direction: column; justify-content: center; min-height: 94px; }
+.pg-site b { font-weight: 500; font-size: 16px; line-height: 1.25; }
+.pg-site span { font-size: 15px; color: var(--av-text-muted); }
+/* Accusé de lecture : le nom et la ville remontent d'une ligne, l'accusé arrive dessous dans le même mouvement */
+/* transformations jamais « none » : un calque qui disparaît en fin de transition coûte une mise en page */
+.pg-site > :not(.vu) { transform: translateY(0); transition: transform var(--av-duration-moyen) var(--av-ease-standard) var(--d, 0ms); }
+/* calques préparés au montage : à l'envoi, quinze textes devenaient calques d'un coup (une image de 80 à 150 ms au premier
+   passage, à rastériser) */
+.pg-site > * { will-change: transform; }
+.pg-site .vu { will-change: transform, opacity; }
+.etiquette { will-change: opacity; }
+.pg-site.lu > :not(.vu) { transform: translateY(-13px); }
+.pg-site .vu {
+  /* dans le flux sous la ville, sans hauteur : le bloc reste centré quel que soit le nombre de lignes du nom (à 390 px,
+     « Résidence du Parc » tient sur deux) ; montré, il remonte avec le nom (−13 px, moins 3 px d'interligne) */
+  display: block; height: 0; overflow: visible;
+  font-weight: 500; color: var(--av-text-muted); white-space: nowrap;   /* teinte rendue par la v12 (8:1 ; le bleu tomberait à 4,7:1 mesuré) */
+  opacity: 0; transform: translateY(3px); visibility: hidden;
+  transition: opacity var(--av-duration-court) var(--av-ease-standard) var(--d, 0ms), transform var(--av-duration-court) var(--av-ease-standard) var(--d, 0ms), visibility 0s linear calc(var(--d, 0ms) + var(--av-duration-court));
+}
+.pg-site.lu .vu { opacity: 1; transform: translateY(-10px); visibility: visible; transition: opacity var(--av-duration-moyen) var(--av-ease-standard) var(--d, 0ms), transform var(--av-duration-moyen) var(--av-ease-standard) var(--d, 0ms), visibility 0s linear var(--d, 0ms); }
+.pg-case { position: relative; border-left: 1px solid var(--av-line); border-bottom: 1px solid var(--av-line); min-height: 94px; }
+.pg-ligne:last-child > * { border-bottom: 0; }
+/* Le front : cinq calques composés à part ; le faisceau se resserre par la translation de ses deux moitiés vers le trait,
+   le trait plein se pose sur les tirets (planning.js règle les délais --t-front, --t-plein, --t-tirets) */
+.pg-front { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.pg-front svg { position: absolute; left: 0; top: 0; overflow: visible; }
+.pf-moitie { position: absolute; inset: 0; overflow: clip; }   /* la moitié translatée ne doit pas agrandir la zone de défilement */
+.pf-bande { will-change: transform; transition: transform var(--av-duration-long) var(--av-ease-standard) var(--t-front, 0ms); }
+.pg--sure .pf-bande--g { transform: translateX(var(--decal, 0px)); }
+.pg--sure .pf-bande--d { transform: translateX(calc(-1 * var(--decal, 0px))); }
+.pf-fond { fill: rgb(15 91 230 / 0.07); }
+.pf-bord { fill: none; stroke: rgb(15 91 230 / 0.22); stroke-width: 1; stroke-dasharray: 2 3; }
+.pf-heures path { fill: none; stroke: var(--av-signal-600); stroke-width: 1; opacity: 0.55; }
+.pf-ligne { fill: none; stroke: var(--av-signal-600); stroke-linecap: round; }
+.pf-trait--tirets .pf-ligne { stroke-width: 1.75; stroke-dasharray: 7 6; }
+.pf-trait--tirets .pf-dents path { fill: none; stroke: var(--av-signal-600); stroke-width: 1.25; stroke-linejoin: round; }
+.pf-trait--tirets { transition: opacity 0s linear var(--t-tirets, 0ms); }
+.pg--sure .pf-trait--tirets { opacity: 0; }
+.pf-trait--plein .pf-ligne { stroke-width: 2; }
+.pf-trait--plein .pf-dents path { fill: var(--av-signal-600); }
+.pf-trait--plein { opacity: 0; will-change: opacity; transition: opacity var(--av-duration-moyen) var(--av-ease-standard) var(--t-plein, 0ms); }
+.pg--sure .pf-trait--plein { opacity: 1; }
+.barre {
+  position: absolute; top: 10px; bottom: 10px;
+  display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  container-type: inline-size;
+  padding: 6px 9px; border-radius: 8px; overflow: hidden;
+  font-size: 15px; line-height: 1.2; color: var(--av-encre-900);
+  background: var(--av-lait-0);
+  box-shadow: inset 0 0 0 1px rgb(10 18 32 / 0.14);
+  z-index: 2;
+  will-change: transform;
+  isolation: isolate;
+  /* l'état d'une barre change en long, comme elle voyage : passer du blanc à l'encre en 320 ms paraissait sec */
+  transition: background-color var(--av-duration-long) var(--av-ease-standard) var(--d, 0ms), color var(--av-duration-long) var(--av-ease-standard) var(--d, 0ms), box-shadow var(--av-duration-long) var(--av-ease-standard) var(--d, 0ms);
+}
+.barre-nom { font-weight: 500; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.barre-nom-court { display: none; }
+@container (max-width: 112px) { .barre-nom-long { display: none; } .barre-nom-court { display: inline; } }
+.barre-etat { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--av-encre-600); font-variant-numeric: tabular-nums; }
+.barre-nom, .barre-etat { transition: color var(--av-duration-long) var(--av-ease-standard) var(--d, 0ms); }
+@container (max-width: 112px) { .etat-pre, .etat-suf { display: none; } }
+/* opaque : deux barres se croisent pendant le repli, le texte du dessous ne doit pas se lire au travers */
+.barre--abri { background: #F4F6F9; box-shadow: inset 0 0 0 1px rgb(10 18 32 / 0.16); }
+.barre.voyage, .barre.voyage .barre-nom, .barre.voyage .barre-etat, .barre.voyage::before, .barre.voyage::after { transition-duration: var(--av-duration-court); }
+.barre--abri .barre-nom { font-weight: 400; color: var(--av-encre-700); }
+.barre--bloquee { background: var(--av-encre-900); color: var(--av-lait-0); box-shadow: none; }
+.barre--bloquee .barre-etat { color: var(--av-brume-200); }
+/* hachures : la pluie (bloquée) et l'incertitude (à suivre), toujours présentes, qui apparaissent et s'effacent en fondu */
+.barre::before, .barre::after {
+  content: ''; position: absolute; inset: 0; z-index: -1; opacity: 0;
+  transition: opacity var(--av-duration-long) var(--av-ease-standard) var(--d, 0ms);
+}
+.barre::before { background: repeating-linear-gradient(70.5deg, transparent 0 5px, rgb(127 166 255 / 0.55) 5px 6.25px); }
+.barre::after { background: repeating-linear-gradient(70.5deg, transparent 0 9px, rgb(10 18 32 / 0.12) 9px 10.25px); }
+.barre--bloquee::before { opacity: 0.55; }
+.barre--surveiller::after { opacity: 1; }
+.barre--surveiller { background: var(--av-lait-0); box-shadow: inset 0 0 0 1.5px var(--av-encre-900); }
+.barre--deplacee { background: var(--av-lait-0); box-shadow: inset 0 0 0 1.5px var(--av-signal-600); }
+.barre--deplacee .barre-etat { color: var(--av-signal-600); }
+.fantome { position: absolute; top: 10px; bottom: 10px; border-radius: 8px; border: 1.25px dashed rgb(10 18 32 / 0.35); z-index: 1; opacity: 0; transition: opacity var(--av-duration-moyen) var(--av-ease-standard) var(--d, 0ms); }
+.fantome.visible { opacity: 1; }
+/* pose sans transition (montage, redimensionnement), et mouvements réduits forcés par ?rm=1 ou ?fige=1 */
+.pg--fixe, .pg--fixe *, .pg--fixe *::before, .pg--fixe *::after,
+.rm .planning *, .rm .planning *::before, .rm .planning *::after { transition: none !important; }
+@media (forced-colors: active) {
+  .etapes::before { forced-color-adjust: none; background: GrayText; }
+  .etapes::after { forced-color-adjust: none; background: CanvasText; }
+  /* contours en outline (hors de la boîte) : une bordure élargirait les barres et ferait défiler la grille */
+  .barre { outline: 1px solid CanvasText; outline-offset: -1px; }
+  .barre--bloquee { outline-width: 3px; outline-offset: -3px; }
+  .barre--deplacee { outline: 2px solid Highlight; outline-offset: -2px; }
+  .barre--surveiller { outline-style: dashed; }
+  .barre::before, .barre::after { display: none; }
+  .pf-fond { fill: none; }
+  .pf-bord { stroke: GrayText; }
+  .pf-ligne, .pf-heures path, .pf-trait--tirets .pf-dents path { stroke: Highlight; }
+  .pf-trait--plein .pf-dents path { fill: Highlight; }
+  .pg-site .vu { color: CanvasText; }
+}
+
+@media (max-width: 1099px) {
+  .plan-texte { grid-column: 1 / -1; }
+  .plan-scene { grid-column: 1 / -1; margin-top: 32px; order: -1; }
+  .plan-texte { order: 0; }
+  .etape { min-height: 0; }
+  .etape:last-child { min-height: 0; }
+  .etapes { margin-top: 28px; }
+  .app { position: relative; top: 0; }
+  .plan { row-gap: 0; padding-bottom: calc(var(--plan-fondu) + 24px); }
+}
+/* Téléphone et tablette : la grille montre des jours entiers (deux de 480 à 799 px, un seul en dessous, où une tâche
+   d'une demi-journée n'aurait plus la place de son nom), la colonne des chantiers reste collée à gauche, le défilement
+   s'aimante au jour, et 28 px du jour suivant restent visibles sous un fondu : on voit qu'il y a une suite, sans lire de
+   mot coupé. La grille s'ouvre sur mercredi. La v20 montrait un jour et demi : jeudi était coupé au milieu des mots. */
+@media (max-width: 799px) {
+  .app-sous { display: block; margin-left: 0; }
+  .app-defile { --pg-site: 104px; position: relative; }
+  .app-defile::after { content: ''; position: absolute; z-index: 6; top: 0; bottom: 0; right: 0; width: 40px; pointer-events: none; border-radius: 0 inherit inherit 0; background: linear-gradient(90deg, rgb(255 255 255 / 0), var(--av-lait-0) 70%); transition: opacity var(--av-duration-moyen) var(--av-ease-standard); }
+  .app-defile.au-bout::after { opacity: 0; }
+  .app-grille { overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-left: var(--pg-site); scrollbar-width: none; }
+  .app-grille::-webkit-scrollbar { display: none; }
+  .pg { min-width: 0; width: calc(200% - var(--pg-site) - 56px); grid-template-columns: var(--pg-site) repeat(4, minmax(0, 1fr)); }
+  .pg-jour { scroll-snap-align: start; padding-inline: 10px; }
+  .pg-jour-suf { display: none; }
+  .pg > .pg-coin, .pg-site { position: sticky; left: 0; z-index: 5; background: #FAFBFC; }
+  .pg-coin { padding-inline: 10px; }
+  .pg-site { padding: 10px; }
+  .pg-site b { font-size: 15px; }
+  .app-barre { flex-direction: column; gap: 4px; }
+  .app-emis { text-align: left; }
+}
+@media (max-width: 479px) {
+  .pg { width: calc(400% - 3 * var(--pg-site) - 112px); }
+}
+/* 320 px : la colonne des chantiers cède 12 px, les barres étroites leur marge intérieure (« À suivre » tient entier) */
+@media (max-width: 359px) { .app-defile { --pg-site: 92px; } }
+@container (max-width: 84px) { .barre { padding-inline: 6px; } }
+
+/* ---------- 3 · Comment ça marche : le téléphone du chef de chantier ---------- */
+.tel-socle { grid-column: 9 / span 4; position: relative; z-index: 1; margin: 0; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+@media (max-width: 1099px) { .tel-socle { grid-column: 7 / span 6; } }
+@media (max-width: 799px) { .tel-socle { grid-column: 1 / -1; margin-top: 24px; } }
+/* L'écran du téléphone est de nuit dans une section de jour : ses notifications gardent le verre sombre (teinte et ombre
+   de nuit, lueur discrète), pas le liseré blanc des pièces posées sur fond clair. */
+.traduction .tel-ecran [data-verre] { box-shadow: 0 18px 48px -22px var(--av-verre-ombre), 0 1px 2px -1px var(--av-verre-ombre); --verre-lueur: rgb(255 255 255 / 0.045); }
+
+.tel { position: relative; z-index: 1; width: min(340px, 100%); height: 712px; padding: 11px; border-radius: var(--av-radius-tel); background: linear-gradient(145deg, #2a3446, #0d131d 40%, #1d2533 70%, #3a4558); box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.14), inset 0 0 0 3px #05080d, 0 40px 80px -40px rgb(6 21 40 / 0.55), 0 2px 6px rgb(6 21 40 / 0.12); }
+.tel-ecran {
+  position: relative; height: 100%; border-radius: 43px; overflow: hidden;
+  background:
+    radial-gradient(80% 50% at 70% 100%, rgb(64 112 181 / 0.85), transparent 70%),
+    linear-gradient(180deg, #030b16 0%, #071a35 45%, #12366a 78%, #3b67a8 100%);
+  color: var(--av-brume-50);
+  isolation: isolate;
+}
+.tel-ecran::before { /* le fond d'écran : le front, en lignes fines (ce que les notifications réfractent) */
+  content: ''; position: absolute; inset: 0; z-index: -1; opacity: 0.55;
+  background: var(--fond-tel, none) center / cover no-repeat;
+}
+.tel-ile { position: absolute; z-index: 5; left: 50%; top: 11px; width: 108px; height: 32px; margin-left: -54px; border-radius: 20px; background: #000; }
+.notif-place { display: flex; flex-direction: column; }
+.tel-statut { display: flex; justify-content: space-between; align-items: center; padding: 16px 30px 0 34px; font-size: 15px; font-weight: 600; height: 46px; }
+.tel-icones { display: flex; gap: 6px; align-items: center; }
+.tel-icones svg { height: 11px; width: auto; fill: currentColor; stroke: currentColor; }
+.tel-date { margin-top: 28px; text-align: center; font-size: 17px; font-weight: 500; color: rgb(242 245 250 / 0.85); }
+.tel-horloge { text-align: center; font-size: 92px; line-height: 0.95; font-weight: 500; letter-spacing: -0.04em; color: rgb(242 245 250 / 0.92); font-variant-numeric: tabular-nums; }
+.tel-notifs { position: absolute; left: 10px; right: 10px; bottom: 54px; display: flex; flex-direction: column; gap: 8px; }
+.notif { padding: 13px 14px 13px; border-radius: 22px; color: var(--av-brume-50); transform-origin: 50% 0; }
+.notif-tete { display: flex; align-items: center; gap: 8px; font-size: 15px; color: rgb(242 245 250 / 0.72); }
+.notif-app { width: 22px; height: 22px; border-radius: 6px; background: var(--av-lait-0) var(--icone-app, none) center / 100% no-repeat; flex: none; }
+.notif-nom { font-weight: 500; color: rgb(242 245 250 / 0.9); }
+.notif-quand { margin-left: auto; }
+.notif-titre { margin-top: 6px; font-weight: 600; font-size: 16px; }
+.notif-texte { font-size: 15px; line-height: 1.38; color: rgb(242 245 250 / 0.92); }
+.notif-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+.notif-action { min-height: 44px; padding: 7px 8px; line-height: 1.25; border: 0; border-radius: 8px; background: rgb(242 245 250 / 0.14); color: var(--av-brume-50); font-size: 15px; font-weight: 500; cursor: pointer; }
+.notif-action:hover { background: rgb(242 245 250 / 0.22); }
+.notif-action[aria-pressed="true"] { background: var(--av-brume-50); color: var(--av-encre-900); }
+.notif--veille .notif-titre { font-weight: 500; }
+.tel-retour { position: absolute; left: 22px; right: 22px; top: 200px; text-align: center; font-size: 15px; color: var(--av-brume-200); opacity: 0; transition: opacity 300ms var(--av-ease-standard); }
+.tel-retour.visible { opacity: 1; }
+.tel-barre { position: absolute; left: 50%; bottom: 9px; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: rgb(242 245 250 / 0.85); }
+
+@media (max-width: 400px) {
+  .tel { width: min(300px, 100%); height: 628px; }
+  .tel-horloge { font-size: 80px; }
+}
+
+/* ---------- 7 · Fin de page, de nuit : le tarif et l'essai côte à côte, puis les questions ----------
+   Rendu final (2026-10-23) : la page ne repasse plus au jour après les limites. Les limites finissent sur ciel-800 ;
+   le tarif le garde à plat, le pied descend ensuite vers ciel-950 (un seul passage nuit → jour → nuit sur la page). */
+.tarif { position: relative; padding-block: clamp(24px, 3vw, 48px) clamp(72px, 7vw, 112px); background: var(--grain), linear-gradient(180deg, var(--av-ciel-950), rgb(2 10 18 / 0)) top / 100% clamp(200px, 22vw, 320px) no-repeat, var(--av-fondu-seuils) top / 100% clamp(360px, 40vw, 600px) no-repeat, var(--av-ciel-800); }
+.tarif { --av-text-muted: var(--av-brume-200); }   /* 9,3:1 sur ciel-800 */
+.tarif-grille { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--colonne-gap); row-gap: clamp(56px, 6vw, 88px); align-items: start; }
+.prix { grid-column: 1 / span 5; display: flex; flex-direction: column; gap: 28px; align-items: flex-start; }
+.prix-montant { display: flex; flex-direction: column; gap: 10px; font-size: var(--av-text-lead); line-height: var(--av-leading-lead); letter-spacing: var(--av-tracking-lead); }
+.prix-v { font-size: clamp(64px, 5vw, 76px); line-height: 0.88; letter-spacing: -0.05em; font-weight: 300; font-variant-numeric: tabular-nums; }
+.prix-u { color: var(--av-text-muted); }
+.prix-liste { display: flex; flex-direction: column; border-top: 1px solid var(--av-line); width: 100%; }
+.prix-liste li { padding-block: 13px; border-bottom: 1px solid var(--av-line); }
+
+/* L'essai : une pièce de verre de la couche des commandes (un formulaire), posée à droite du prix, à sa hauteur */
+.essai { grid-column: 7 / span 6; display: flex; flex-direction: column; gap: 20px; padding: clamp(20px, 2.2vw, 30px); border-radius: var(--av-radius-l); scroll-margin-top: calc(var(--tete-h) + 32px); }
+.essai-titre { font-size: var(--av-text-h3); line-height: var(--av-leading-h3); letter-spacing: var(--av-tracking-h3); font-weight: 400; text-wrap: balance; }
+.essai-champs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.champ { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.champ-libelle { font-size: 15px; color: var(--av-text-muted); }
+.essai .choix { width: 100%; height: 48px; border-radius: 12px; background: rgb(242 245 250 / 0.08); box-shadow: inset 0 0 0 1px rgb(242 245 250 / 0.2); transition: box-shadow var(--av-duration-moyen) var(--av-ease-standard), background-color var(--av-duration-moyen) var(--av-ease-standard); }
+.essai .choix:hover { box-shadow: inset 0 0 0 1px rgb(242 245 250 / 0.36); }
+.essai .choix select { width: 100%; }
+.essai-envoi { align-self: flex-start; }
+.essai-envoi .bouton-texte { min-width: 9.4em; justify-content: center; }
+.essai-retour { font-size: 15px; line-height: 1.45; color: var(--av-text); max-width: 34em; }
+.essai-retour:empty { display: none; }
+
+/* Champ de saisie : repos, survol, focus, invalide (hachure de pluie, le code de « bloqué » dans toute la marque),
+   désactivé. Le texte d'exemple reste à 4,9:1 et n'imite pas une valeur saisie (plus clair, jamais en graisse 500). */
+.saisie {
+  width: 100%; height: 48px; padding: 0 14px; border: 0; border-radius: 12px;
+  font-size: 17px; font-weight: 500; color: var(--av-text);
+  background: rgb(242 245 250 / 0.08); box-shadow: inset 0 0 0 1px rgb(242 245 250 / 0.2);
+  transition: box-shadow var(--av-duration-moyen) var(--av-ease-standard), background-color var(--av-duration-moyen) var(--av-ease-standard);
+}
+.saisie::placeholder { color: var(--av-brume-300, #8FA2C2); font-weight: 400; opacity: 1; }
+.saisie:hover { box-shadow: inset 0 0 0 1px rgb(242 245 250 / 0.36); }
+.saisie:focus { outline: none; }
+.saisie:focus-visible { outline: 2px solid var(--av-focus); outline-offset: 2px; background: rgb(242 245 250 / 0.11); }
+.saisie[aria-invalid="true"] {
+  box-shadow: inset 0 0 0 1.5px var(--av-brume-50);
+  background:
+    repeating-linear-gradient(70.5deg, transparent 0 5px, rgb(169 193 255 / 0.55) 5px 6.25px) left bottom / 100% 5px no-repeat,
+    rgb(242 245 250 / 0.08);
+}
+.saisie:disabled, .essai .choix:has(select:disabled) { opacity: 0.55; cursor: not-allowed; }
+.essai-retour.erreur { color: var(--av-brume-50); }
+
+/* Bouton : désactivé, occupé (pendant l'envoi : la pluie passe dans le carré de la flèche, à 19,5°) et fait (après
+   l'envoi : la flèche devient une coche, le bouton garde ses couleurs ; il reste focalisable, en aria-disabled) */
+.bouton:disabled, .bouton[aria-disabled="true"] { cursor: default; transform: none; }
+.bouton:disabled .bouton-texte, .bouton[aria-disabled="true"] .bouton-texte { background: rgb(242 245 250 / 0.14); color: var(--av-brume-200); }
+.bouton:disabled .bouton-fleche, .bouton[aria-disabled="true"] .bouton-fleche { background: rgb(242 245 250 / 0.1); color: var(--av-brume-200); }
+.bouton.fait, .bouton.fait[aria-disabled="true"] { cursor: default; }
+.bouton.fait[aria-disabled="true"] .bouton-texte { background: var(--av-brume-50); color: var(--av-encre-900); }
+.bouton.fait[aria-disabled="true"] .bouton-fleche { background: var(--av-signal-500); color: var(--av-lait-0); }
+.bouton.fait .bouton-fleche svg { transform: none !important; }
+.bouton[aria-busy="true"] { cursor: progress; }
+.bouton[aria-busy="true"] .bouton-fleche { position: relative; }
+.bouton[aria-busy="true"] .bouton-fleche svg { opacity: 0; }
+.bouton[aria-busy="true"] .bouton-fleche::after {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(70.5deg, transparent 0 6px, rgb(255 255 255 / 0.7) 6px 7.5px);
+  background-size: 200% 200%;
+  animation: averse-bouton 900ms linear infinite;
+}
+@keyframes averse-bouton { from { background-position: 0 0; } to { background-position: -16px 45px; } }
+@media (prefers-reduced-motion: reduce) { .bouton[aria-busy="true"] .bouton-fleche::after { animation: none; } }
+
+.questions { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--colonne-gap); padding-top: clamp(40px, 4vw, 56px); border-top: 1px solid var(--av-line); }
+.questions-titre { grid-column: 1 / span 5; font-size: var(--av-text-h3); line-height: var(--av-leading-h3); letter-spacing: var(--av-tracking-h3); }
+/* Les questions sont du contenu : une liste à filets, sans verre. L'ouverture est celle du navigateur
+   (::details-content, interpolate-size) : interruptible par construction, sur le ressort « cordeau ». */
+.faq { grid-column: 7 / span 6; display: flex; flex-direction: column; }
+.faq-item:first-child summary { padding-top: 0; }   /* la première question s'aligne sur le titre, sous le filet de la rangée */
+.faq-item { border-bottom: 1px solid var(--av-line-strong); interpolate-size: allow-keywords; }
+.faq-item::details-content { height: 0; overflow: clip; transition: height 560ms var(--av-ease-cordeau), content-visibility 560ms allow-discrete; }
+.faq-item[open]::details-content { height: auto; }
+.faq-item summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 0; cursor: pointer; font-size: var(--av-text-lead); line-height: 1.3; letter-spacing: -0.01em; border-radius: 4px; transition: color var(--av-duration-moyen) var(--av-ease-standard); }
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary:focus-visible { outline: 2px solid var(--av-focus); outline-offset: 6px; border-radius: 8px; }
+/* le signe : deux traits fins dans un carré au liseré (plus de carré plein, qui pesait plus que la question) */
+.faq-plus { position: relative; flex: none; width: 32px; height: 32px; border-radius: 9px; box-shadow: inset 0 0 0 1px rgb(242 245 250 / 0.26); transition: box-shadow var(--av-duration-moyen) var(--av-ease-standard), background-color var(--av-duration-moyen) var(--av-ease-standard); }
+.faq-plus::before, .faq-plus::after { content: ''; position: absolute; left: 50%; top: 50%; width: 12px; height: 1.5px; margin: -0.75px 0 0 -6px; background: var(--av-text); border-radius: 1px; transition: transform var(--av-duration-moyen) var(--av-ease-cordeau); }
+.faq-plus::after { transform: rotate(90deg); }
+.faq-item[open] .faq-plus::after { transform: rotate(0deg); }
+.faq-item summary:hover .faq-plus { background: rgb(242 245 250 / 0.1); box-shadow: inset 0 0 0 1px rgb(242 245 250 / 0.42); }
+.faq-item[open] .faq-plus { background: var(--av-brume-50); box-shadow: none; }
+.faq-item[open] .faq-plus::before, .faq-item[open] .faq-plus::after { background: var(--av-encre-900); }
+.faq-item p { padding: 0 60px 24px 0; color: var(--av-text-muted); max-width: 40em; }
+@media (max-width: 899px) {
+  .prix, .essai { grid-column: 1 / -1; }
+  .questions-titre, .faq { grid-column: 1 / -1; }
+  .faq { margin-top: 24px; }
+  .faq-item p { padding-right: 0; }
+  .tarif-grille { row-gap: 48px; }
+}
+@media (max-width: 1099px) and (min-width: 900px) {
+  .prix { grid-column: 1 / span 5; }
+  .essai { grid-column: 6 / span 7; }
+}
+@media (max-width: 599px) { .essai-champs { grid-template-columns: 1fr; } }
+
+/* ---------- 8 · Pied ---------- */
+.pied {
+  position: relative; overflow: hidden;
+  background: var(--grain), var(--av-fondu-pied-nuit);
+}
+.pied { --av-text-muted: var(--av-brume-200); }
+.pied-grille { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 1fr; column-gap: var(--colonne-gap); row-gap: 40px; padding-top: clamp(40px, 4vw, 56px); }
+.pied-grille::before { content: ''; position: absolute; left: var(--gouttiere); right: var(--gouttiere); top: 0; height: 1px; background: var(--av-line); }
+.pied-grille { position: relative; }
+.pied-h { margin-bottom: 14px; font-size: 15px; font-weight: 500; color: var(--av-text-muted); }
+.pied-col ul { display: flex; flex-direction: column; gap: 6px; }
+/* Lien de pied : repos, survol (filet qui se pose sous le mot), focus visible, appui ; jamais de soulignement d'origine */
+.pied-col a {
+  display: inline-flex; align-items: center; min-height: 32px; padding-block: 2px;
+  color: var(--av-text); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 5px;
+  text-decoration-color: transparent;
+  transition: text-decoration-color var(--av-duration-moyen) var(--av-ease-standard), color var(--av-duration-moyen) var(--av-ease-standard);
+}
+.pied-col a:hover { text-decoration-color: rgb(242 245 250 / 0.5); }
+.pied-col a:active { color: var(--av-brume-200); }
+.pied-col a:focus-visible { outline: 2px solid var(--av-focus); outline-offset: 3px; border-radius: 4px; }
+.pied-ligne { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 12px 32px; margin-top: clamp(48px, 5vw, 72px); font-size: 15px; color: var(--av-text-muted); }
+.pied-note { color: var(--av-text); opacity: 0; transition: opacity var(--av-duration-moyen) var(--av-ease-standard); }
+.pied-note.visible { opacity: 1; }
+.pied-mot { position: relative; z-index: 0; margin-top: clamp(24px, 3vw, 48px); max-width: 1512px; margin-inline: auto; padding-inline: var(--gouttiere); height: clamp(110px, 22vw, 340px); overflow: hidden; }
+.logo--geant { height: clamp(150px, 30vw, 460px); max-height: calc((min(100vw, 1512px) - 2 * var(--gouttiere)) * 0.3); color: transparent; }
+.logo--geant svg { width: 100%; height: auto; }
+@media (max-width: 799px) {
+  .pied-grille { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- Mouvements réduits : rien ne bouge, tout est là ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+}
+
+/* ---------- Compléments : cotes, météogramme, front ---------- */
+
+.releve-graphe .g-tick { stroke: rgb(242 245 250 / 0.4); stroke-width: 1; shape-rendering: crispEdges; }
+/* barres : un dégradé de la pluie (plus dense en haut) ; les heures bloquées passent au bleu du signal, hachées */
+.releve-graphe .b-pluie { fill: url(#barre-pluie); transform-box: fill-box; transform-origin: 50% 100%; }
+.releve-graphe .b-pluie--depasse { fill: rgb(127 166 255 / 0.22); }
+.releve-graphe .b-depasse { fill: url(#barre-bloquee); }
+.releve-graphe .g-seuil { stroke: var(--av-signal-300); stroke-width: 1.25; stroke-dasharray: 5 4; }
+.releve-graphe .g-seuil-txt, .releve-graphe .g-heure, .releve-graphe .g-fenetre-txt, .releve-graphe .g-accolade-txt { font-family: var(--av-font); font-size: 15px; fill: var(--av-brume-50); font-variant-numeric: tabular-nums; }
+.releve-graphe .g-heure { fill: var(--av-brume-200); }
+.releve-graphe .g-limite { clip-path: inset(-4px 0 -4px 0); }
+.releve-graphe .g-seuil-txt { fill: var(--av-signal-300); font-weight: 500; }
+.releve-graphe .g-accolade path { fill: none; stroke: var(--av-brume-50); stroke-width: 1.25; stroke-linejoin: round; }
+.releve-graphe .g-accolade-txt { font-weight: 500; }
+.releve-graphe .g-base { stroke: rgb(242 245 250 / 0.35); shape-rendering: crispEdges; }
+/* le créneau : une bande, pas une boîte (la v12 le cernait d'un trait qui se lisait comme un cadre de plus) */
+.releve-graphe .g-fenetre { fill: rgb(242 245 250 / 0.055); }
+.releve-graphe .g-fenetre-txt { fill: var(--av-brume-200); }
+.releve-graphe .g-limite, .releve-graphe .g-accolade { transform-box: view-box; }
+
+
+/* Planning sur écran étroit : quatre onglets collés à l'application, le texte de l'étape dessous */
+.onglets, .onglet-texte { display: none; }
+@media (max-width: 1099px) {
+  .plan-texte { display: contents; }
+  .plan-texte h2 { order: 1; grid-column: 1 / -1; }
+  .plan-chapeau { order: 2; grid-column: 1 / -1; }
+  .plan-scene { order: 3; }
+  .etapes { display: none; }
+  .onglets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin-bottom: 10px; padding: 4px; border-radius: 12px; background: rgb(10 18 32 / 0.06); width: min(100%, 460px); }
+  .onglet { min-width: 0; height: 40px; padding: 0 6px; border: 0; border-radius: 9px; background: transparent; font-size: 15px; font-weight: 500; color: var(--av-text-muted); cursor: pointer; }
+  .onglet[aria-pressed="true"] { background: var(--av-lait-0); color: var(--av-text); box-shadow: 0 1px 2px rgb(10 18 32 / 0.12); }
+  .plan-scene { display: flex; flex-direction: column; }
+  .onglets { order: 0; }
+  .onglet-texte { order: 1; display: block; margin: 4px 0 18px; color: var(--av-text-muted); max-width: 34em; min-height: calc(var(--av-leading-h3) * var(--av-text-h3) + 3em); }
+  .app { order: 2; }
+  .onglet-texte b { display: block; font-weight: 500; color: var(--av-text); font-size: var(--av-text-h3); line-height: var(--av-leading-h3); letter-spacing: var(--av-tracking-h3); margin-bottom: 6px; }
+}
+
+/* ---------- v11 (revue UI/UX du 2026-10-09) ---------- */
+
+/* Héros : le verdict se rejoue quand on change de ville */
+@media (prefers-reduced-motion: no-preference) {
+  .js .heros-verdict.rejoue > * { animation: monte-doux 700ms var(--av-ease-reveal) both; }
+}
+
+/* Sélecteurs : sur pointeur fin, la liste ouverte est une pièce de verre (appearance: base-select, Chromium). Le
+   sélecteur reste un vrai <select> : clavier (flèches, Début, Fin, lettres, Échap) et annonce du lecteur d'écran sont ceux
+   du navigateur ; la liste vit dans la couche supérieure (aucun décalage de la page) et se retourne près d'un bord. Sur
+   écran tactile, le sélecteur du système (roue d'iOS, feuille d'Android) est meilleur : on le garde, comme Safari et
+   Firefox, qui ignorent base-select. */
+@media (hover: hover) and (pointer: fine) {
+  @supports (appearance: base-select) {
+    .choix select, .choix select::picker(select) { appearance: base-select; }
+    .choix select { display: inline-flex; align-items: center; border: 0; background: transparent; color: inherit; }
+    .choix select::picker-icon { display: none; }
+    .choix select::picker(select) {
+      /* la liste s'ouvre du côté où il y a le plus de place et n'en dépasse jamais : la page ne défile pas pour montrer
+         l'option choisie (la liste de 22 villes faisait défiler la page de 489 px à 1 440 px) */
+      position-area: block-end span-inline-end; position-try-order: most-block-size;
+      box-sizing: border-box; min-width: anchor-size(width); max-height: min(100%, 476px); overflow-y: auto; overscroll-behavior: contain;
+      margin-block: 8px; padding: 6px; border: 0; border-radius: 16px;
+      color: var(--av-brume-50); background: rgb(6 21 40 / 0.78);
+      -webkit-backdrop-filter: blur(18px) saturate(1.8); backdrop-filter: blur(18px) saturate(1.8);
+      box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.16), 0 28px 60px -28px rgb(0 0 0 / 0.7);
+      position-try-fallbacks: flip-block;
+      opacity: 0; transform: translateY(-6px) scale(0.97); transform-origin: 50% 0;
+      transition: opacity 180ms var(--av-ease-standard), transform 520ms var(--av-ease-verre), overlay 520ms allow-discrete, display 520ms allow-discrete;
+    }
+    .choix select:open::picker(select) { opacity: 1; transform: none; }
+    @starting-style { .choix select:open::picker(select) { opacity: 0; transform: translateY(-6px) scale(0.97); } }
+    /* rayon concentrique : 16 − 6 = 10 ; cibles de 44 px */
+    .choix select option { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-radius: 10px; font-size: 17px; font-weight: 400; color: var(--av-brume-50); background: transparent; cursor: pointer; }
+    .choix select option:hover, .choix select option:focus-visible { background: rgb(242 245 250 / 0.12); outline: none; }
+    .choix select option:checked { font-weight: 500; }
+    .choix select option::checkmark { order: 1; margin-inline-start: auto; color: var(--av-signal-300); }
+  }
+}
+@media (prefers-reduced-motion: reduce) { .choix select::picker(select) { transition: none; } }
+
+
+/* Couleurs forcées : chaque commande garde un contour ; ni fond d'écran ni pluie sous le texte */
+@media (forced-colors: active) {
+  .bouton-texte, .bouton-fleche, .bouton-icone, .notif-action, .onglet, .faq-plus, .essai .choix, .heros-entree .choix, .saisie { border: 1px solid ButtonBorder; }
+  .tel-ecran::before, .heros-pluie { display: none; }
+  .tete-curseur { border: 1px solid Highlight; }
+  /* les lignes de rappel et de lecture du héros sont des fonds : on leur rend une couleur du système */
+  .heros-entree::after, .heros-sortie::before { forced-color-adjust: none; background: CanvasText; }
+  .heros-mesure { color: CanvasText; }
+  /* traits du menu et signes des questions : des fonds, que le mode forcé efface ; on leur donne la couleur du texte */
+  .tete-menu { border: 1px solid ButtonBorder; }
+  .tete-menu-traits i, .faq-plus::before, .faq-plus::after { forced-color-adjust: none; background: ButtonText; }
+  .tete-feuille { border: 1px solid CanvasText; }
+  /* la trame est une vraie image : Chromium garderait alors tous les calques de fond, dégradés sombres compris */
+  .heros, .traduction, .planning, .tarif, .pied, .releve-carte, .tel-ecran { background: Canvas; }
+  /* le graphique est en SVG : ses couleurs ne sont pas forcées, on lui donne celles du système */
+  .releve-carte { border: 1px solid CanvasText; }
+  .releve-graphe .g-heure, .releve-graphe .g-seuil-txt, .releve-graphe .g-fenetre-txt, .releve-graphe .g-accolade-txt { fill: CanvasText; }
+  .releve-graphe .g-accolade path { stroke: CanvasText; }
+  .releve-graphe .b-pluie, .releve-graphe .b-pluie--depasse { fill: GrayText; }
+  .releve-graphe .b-depasse { fill: Highlight; stroke: Highlight; }
+  .releve-graphe .g-seuil { stroke: Highlight; }
+  .releve-graphe .g-base, .releve-graphe .g-tick { stroke: CanvasText; }
+  .releve-graphe .g-fenetre { fill: none; stroke: CanvasText; }
+}
+
+/* ---------- Téléphone : moins de vide entre les sections (passe mobile, 2026-10-27) ----------
+   Les fondus gardent leur rôle (l'aube sous le héros, la nuit sous le planning) mais sur une hauteur à l'échelle d'un
+   écran de téléphone : le fondu du planning faisait 324 px de dégradé vide avant les limites. */
+@media (max-width: 599px) {
+  :root { --section-pad: 64px; }
+  .planning { --aube: 220px; }
+  .planning { --plan-fondu: 200px; }
+  .tarif { padding-bottom: 48px; }
+}

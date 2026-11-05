@@ -1,0 +1,77 @@
+/* Topiary v4 : l'en-tête. La pastille de survol qui glisse d'un lien à l'autre, puis l'en-tête flottant qui se resserre
+   au défilement (header.js). Tailles des liens et du bouton : v4.css. */
+
+/* ---------- Pastille de survol ----------
+   Une seule pastille par menu, en trois pièces (deux bouts arrondis, un milieu étiré) pour qu'elle change de largeur
+   par transform seulement : le glissement tourne sur le compositeur, même quand le relief du hero occupe le processeur.
+   Les calques existent dès le chargement (will-change), le premier survol ne les crée pas. */
+.nav { position: relative; isolation: isolate; }
+.chip {
+  --glide: cubic-bezier(.22, 1, .36, 1);
+  position: absolute; left: 0; top: 0; z-index: -1;
+  width: 100%; height: 38px;
+  pointer-events: none;
+  opacity: 0; transform: scale(.97);
+  transition: opacity .38s cubic-bezier(.4, 0, .2, 1), transform .38s var(--glide);
+  will-change: opacity, transform;
+}
+.chip.is-on { opacity: 1; transform: none; transition-duration: .22s, .42s; }
+.chip > span {
+  position: absolute; left: 0; top: 0; height: 100%;
+  background: var(--chip);
+  transition: transform .44s var(--glide);
+  will-change: transform;
+}
+.chip__l, .chip__r { width: var(--r-btn); }
+.chip__l { border-radius: var(--r-btn) 0 0 var(--r-btn); }
+.chip__r { border-radius: 0 var(--r-btn) var(--r-btn) 0; }
+.chip__m { width: 100px; transform-origin: 0 0; }
+.chip.is-snap, .chip.is-snap > span { transition: none; }
+.nav.has-chip a[aria-current="page"] { background: none; } /* la pastille s'y pose */
+
+/* ---------- En-tête flottant ----------
+   Toute la largeur du haut de l'écran, transparent aux clics ; la capsule est dessinée par .float__bg, que header.js
+   déforme de la rangée du hero jusqu'à la capsule centrée, au fil des 180 premiers pixels de défilement. */
+.float {
+  position: fixed; z-index: 40; left: 0; right: 0; top: 0;
+  padding-top: env(safe-area-inset-top, 0px);
+  pointer-events: none;
+  visibility: hidden;
+}
+.float.is-on { visibility: visible; }
+.ds-docked .float { right: 356px; } /* le panneau de revue rangé à droite : on centre sur la page, pas sur l'écran */
+/* Le menu entier reçoit le pointeur : passer d'un lien à l'autre ne traverse pas un vide qui éteindrait la pastille */
+.float a, .float button, .float .nav { pointer-events: auto; }
+.float :is(.logo, .nav, .menu-btn) { transform-origin: 0 0; }
+.float .logo { font-size: 25px; } /* réduit à 22 px par header.js (transform) */
+.float__bar {
+  position: relative;
+  display: flex; align-items: center; justify-content: space-between; gap: 28px;
+  width: max-content; margin: 12px auto 0;
+}
+.float__brand { display: flex; padding: 7px 0 7px 20px; }
+.float__links { display: flex; align-items: center; padding: 7px; }
+.float__bg {
+  position: absolute; left: 0; top: 0;
+  box-sizing: border-box;
+  background: var(--ground); border: 1px solid var(--line); border-radius: 12px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* L'en-tête du hero laisse la place à sa copie flottante, identique au pixel près, dès le haut de page */
+.head-float .top > * { visibility: hidden; }
+
+@media (max-width: 960px) {
+  .float__bar {
+    width: auto;
+    margin-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+  }
+}
+
+/* Contrastes élevés : les fonds sont imposés par le système, la pastille disparaîtrait ; on souligne à la place */
+@media (forced-colors: active) {
+  .chip { display: none; }
+  .nav a:not(.btn):hover { text-decoration: underline; text-underline-offset: 4px; }
+  .float__bg { border-color: CanvasText; }
+}

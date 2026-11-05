@@ -1,0 +1,512 @@
+/* Iris v3 : architecture de la v1, films à l'arrivée, verre liquide sur les commandes, fonds à grain.
+   Contrastes calculés (_outils/palette.json) : light 17,6:1, mist 9,8:1, ash 6,2:1 sur night ; encre 16,7:1 sur papier. */
+
+@font-face { font-family: "Archivo Iris"; src: url("fonts/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; font-display: swap; }
+@font-face { font-family: "Atkinson Mono Iris"; src: url("fonts/atkinson-mono.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+
+@property --hl { syntax: "<number>"; inherits: false; initial-value: 0; }
+
+:root {
+  --night: #0a0a0b;
+  --deep: #050506;
+  --rule: #26262b;
+  --steel: #6c6c72;
+  --ash: #909096;
+  --mist: #b6b6ba;
+  --light: #f2f2ee;
+  --paper: #ecebe6;
+  --ink: #0a0a0b;
+  --ink-2: #4b4b50;
+
+  --glass-tint: rgb(16 16 19 / 0.34);
+  --glass-tint-dense: rgb(14 14 17 / 0.7);
+  --glass-light: 300;
+
+  --f-sans: "Archivo Iris", "Arial Narrow", Arial, sans-serif;
+  --f-mono: "Atkinson Mono Iris", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --ease: cubic-bezier(.22, .7, .18, 1);
+  --in: 450ms;
+  --out: 700ms;
+  --m: clamp(18px, 4.4vw, 64px);
+  --hdr: 88px;
+
+  /* grain : bruit fractal fin, blanc à faible opacité, peint une fois par tuile */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--grain) repeat, #080809;
+  color: var(--mist);
+  font: 400 18px/1.5 var(--f-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+img, svg, canvas { display: block; }
+h1, h2, p, figure, pre, fieldset { margin: 0; }
+fieldset { border: 0; padding: 0; min-width: 0; }
+a { color: inherit; }
+code, pre { font-family: var(--f-mono); }
+.vh { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--light); outline-offset: 4px; border-radius: 6px; }
+.paper :focus-visible, .top.on-paper :focus-visible { outline-color: var(--ink); }
+
+.display { font-family: var(--f-sans); font-weight: 300; font-stretch: 74%; color: var(--light); letter-spacing: -0.014em; line-height: 0.98; text-wrap: balance; }
+.h1 { font-size: clamp(50px, 6.7vw, 106px); }
+.h2 { font-size: clamp(40px, 4.6vw, 72px); }
+.lead { color: var(--mist); max-width: 30rem; text-wrap: pretty; }
+/* la clé des couleurs dite par les mots eux-mêmes, aux teintes des bandes (≥ 7:1 sur la nuit, calculé) */
+.k-model { color: #9db6ff; }
+.k-read { color: #8fdca4; }
+.k-write { color: #f1b765; }
+
+::selection { background: rgb(124 150 255 / 0.34); color: var(--light); }
+.paper ::selection { background: rgb(53 87 214 / 0.2); color: var(--ink); }
+/* une section atteinte par un lien interne reçoit le focus sans anneau autour d'elle */
+[tabindex="-1"]:focus-visible { outline: none; }
+
+.skip { position: fixed; z-index: 40; left: 12px; top: 12px; transform: translateY(-160%); background: var(--light); color: var(--night); padding: 12px 16px; border-radius: 10px; font-size: 16px; text-decoration: none; }
+.skip:focus-visible { transform: none; }
+
+/* ---------- Le verre : couche des commandes seulement ---------- */
+[data-glass] {
+  position: relative;
+  isolation: isolate;
+  background: var(--glass-tint);
+  -webkit-backdrop-filter: blur(16px) saturate(1.35);
+  backdrop-filter: blur(16px) saturate(1.35);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.07), 0 1px 2px rgb(0 0 0 / 0.5), 0 22px 44px -26px rgb(0 0 0 / 0.9);
+}
+/* le liseré : ombres intérieures vectorielles, plus franches face à la lumière, nettes à toutes les densités.
+   La signature : le bord du verre disperse la lumière comme un prisme, bleu à gauche, ambre à droite, en filet net
+   doublé d'un lavis qui entre de quelques pixels dans le biseau. Tout en ombres peintes : ni masque ni calque (un
+   anneau masqué coûtait une image de 21 ms à la première arrivée de chaque pièce). Au survol et au focus, il
+   s'éclaire lentement (propriété enregistrée, héritée par le liseré). */
+@property --edge { syntax: "<number>"; inherits: true; initial-value: 0; }
+[data-glass]::before {
+  content: "";
+  position: absolute; inset: 0; z-index: -1;
+  border-radius: inherit; pointer-events: none;
+  --lx: cos(calc(var(--glass-light) * 1deg));
+  --ly: calc(-1 * sin(calc(var(--glass-light) * 1deg)));
+  --b: calc(var(--glass-edge, 12) * 1px);
+  box-shadow:
+    inset calc(var(--lx) * 1.1px) calc(var(--ly) * 1.1px) 0.5px -0.7px rgb(255 255 255 / 0.62),
+    inset calc(var(--lx) * 1.9px) calc(var(--ly) * 1.9px) 2.4px -1.3px rgb(255 255 255 / 0.32),
+    inset calc(var(--lx) * -1px) calc(var(--ly) * -1px) 0.5px -0.8px rgb(255 255 255 / 0.22),
+    inset calc(var(--lx) * -2px) calc(var(--ly) * -2px) 2.8px -1.9px rgb(255 255 255 / 0.28),
+    inset calc(var(--lx) * var(--b) * 0.66) calc(var(--ly) * var(--b) * 0.66) calc(var(--b) * 0.58) calc(var(--b) * -0.24) rgb(255 255 255 / 0.06),
+    inset calc(var(--lx) * var(--b) * -0.5) calc(var(--ly) * var(--b) * -0.5) calc(var(--b) * 0.9) calc(var(--b) * -0.5) rgb(0 0 0 / 0.22),
+    inset 1.25px 0 0.5px -0.2px rgb(124 150 255 / calc(0.5 + var(--edge) * 0.3)),
+    inset -1.25px 0 0.5px -0.2px rgb(255 166 84 / calc(0.46 + var(--edge) * 0.3)),
+    inset 10px 0 14px -11px rgb(124 150 255 / calc(0.1 + var(--edge) * 0.12)),
+    inset -10px 0 14px -11px rgb(255 166 84 / calc(0.08 + var(--edge) * 0.11));
+  transition: --edge var(--out) var(--ease);
+}
+@media (hover: hover) { [data-glass]:hover { --edge: 1; } [data-glass]:hover::before { transition-duration: var(--in); } }
+[data-glass]:focus-within { --edge: 1; }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  [data-glass] { background: #141416 !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; box-shadow: 0 0 0 1px var(--steel) !important; }
+  [data-glass]::before { display: none; }
+  /* au-dessus du papier, la barre opaque reste claire : ses liens sont à l'encre */
+  .top.on-paper .bar { background: #fafaf6 !important; box-shadow: 0 0 0 1px var(--ink-2) !important; }
+}
+@media (forced-colors: active) {
+  [data-glass] { background: Canvas !important; backdrop-filter: none !important; border: 1px solid CanvasText; }
+  [data-glass]::before, .seg-thumb { display: none; }
+  .seg label:has(input:checked) { outline: 2px solid Highlight; outline-offset: -2px; }
+}
+
+/* ---------- Boutons : une lumière bombée, et une clarté qui suit le pointeur puis s'éteint lentement ---------- */
+.btn {
+  position: relative; isolation: isolate;
+  display: inline-flex; align-items: center; gap: 12px;
+  height: 52px; padding: 0 22px 0 24px;
+  border: 0; border-radius: 14px;
+  font: 500 17px/1 var(--f-sans); letter-spacing: 0.004em;
+  text-decoration: none; white-space: nowrap; cursor: pointer;
+  --hl: 0;
+  transition: --hl var(--out) var(--ease), box-shadow var(--out) var(--ease);
+}
+.btn svg { width: 16px; height: 16px; flex: none; transition: transform var(--out) var(--ease); }
+/* v12 : la matière du bouton clair en couleurs enregistrées, pour que celui de l'en-tête passe en fondu au-dessus du
+   papier (il basculait net : dégradés et couleur sans transition) */
+@property --b0 { syntax: "<color>"; inherits: false; initial-value: #f7f7f3; }
+@property --b1 { syntax: "<color>"; inherits: false; initial-value: #dedfd8; }
+@property --sheen { syntax: "<number>"; inherits: false; initial-value: 1; }
+.btn--light {
+  color: var(--night);
+  background:
+    radial-gradient(140% 120% at 50% -30%, rgb(255 255 255 / calc(var(--sheen) * 0.9)) 0%, rgb(255 255 255 / 0) 62%),
+    linear-gradient(180deg, var(--b0) 0%, var(--b1) 100%);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 1),
+    inset 0 -1px 0 rgb(0 0 0 / 0.16),
+    inset 0 -14px 22px -16px rgb(0 0 0 / 0.26),
+    0 0 0 1px rgb(255 255 255 / 0.12),
+    0 1px 1.5px rgb(0 0 0 / 0.55),
+    0 14px 28px -18px rgb(0 0 0 / 0.95),
+    inset 1px 0 0.5px -0.2px rgb(80 118 255 / calc(0.32 + var(--hl) * 0.3)),
+    inset -1px 0 0.5px -0.2px rgb(255 150 54 / calc(0.3 + var(--hl) * 0.3)),
+    inset 8px 0 10px -9px rgb(80 118 255 / calc(0.06 + var(--hl) * 0.08)),
+    inset -8px 0 10px -9px rgb(255 150 54 / calc(0.05 + var(--hl) * 0.08));
+}
+.btn--light::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
+  /* la clarté qui suit le pointeur : un plateau doux (paliers multiples), jamais une tache */
+  background: radial-gradient(170px 120px at var(--mx, 50%) var(--my, 0%), rgb(255 255 255 / calc(var(--hl) * 0.95)) 0%, rgb(255 255 255 / calc(var(--hl) * 0.7)) 30%, rgb(255 255 255 / calc(var(--hl) * 0.25)) 58%, rgb(255 255 255 / 0) 80%);
+}
+.btn--light > * { position: relative; z-index: 1; }
+/* le bouton secondaire : une pièce de verre posée sur la lumière du héros, le même liseré prismatique que l'en-tête */
+.btn--glass { color: var(--light); --glass-edge: 14; transition: --hl var(--out) var(--ease), background-color var(--out) var(--ease); }
+@media (hover: hover) {
+  .btn--light:hover { --hl: 1; transition-duration: var(--in); }
+  .btn:hover svg { transform: translateX(3px); transition-duration: var(--in); }
+  .btn--glass:hover { background-color: rgb(30 30 36 / 0.46); transition-duration: var(--in); }
+  .btn--glass:hover svg { transform: translateY(3px); }
+}
+.btn--light:active { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), inset 0 2px 6px rgb(0 0 0 / 0.18), 0 0 0 1px rgb(255 255 255 / 0.1), 0 1px 1px rgb(0 0 0 / 0.5); transition-duration: 90ms; }
+.btn--sm { height: 40px; padding: 0 14px 0 16px; border-radius: 11px; font-size: 16px; gap: 10px; }
+.btn--sm svg { width: 14px; height: 14px; }
+
+/* ---------- En-tête : une barre de verre qui flotte ---------- */
+.top { position: fixed; z-index: 30; left: var(--m); right: var(--m); top: 14px; pointer-events: none; }
+/* la teinte est dense au milieu (derrière les liens) et claire dans le biseau : la lentille du bord se voit sur la
+   photo sans rien ôter à la lecture. Couleurs enregistrées, donc le passage d'un état à l'autre reste un fondu. */
+@property --c-mid { syntax: "<color>"; inherits: false; initial-value: rgb(16 16 19 / 0.34); }
+@property --c-rim { syntax: "<color>"; inherits: false; initial-value: rgb(16 16 19 / 0.16); }
+.bar {
+  pointer-events: auto;
+  /* le cadre sur la colonne des sections (mêmes marges, même largeur) à toutes les largeurs */
+  max-width: calc(1360px - 2 * var(--m)); margin: 0 auto;
+  height: 60px; padding: 0 10px 0 22px;
+  display: flex; align-items: center; gap: 30px;
+  border-radius: 18px;
+  --c-mid: rgb(16 16 19 / 0.34); --c-rim: rgb(16 16 19 / 0.16);
+  background: linear-gradient(180deg, var(--c-rim) 0, var(--c-mid) 19px, var(--c-mid) calc(100% - 19px), var(--c-rim) 100%);
+  /* v12 : l'ombre suit le fondu (elle basculait net sur le papier) */
+  transition: --c-mid var(--out) var(--ease), --c-rim var(--out) var(--ease), box-shadow var(--out) var(--ease);
+}
+.top.is-scrolled .bar { --c-mid: rgb(14 14 17 / 0.9); --c-rim: rgb(14 14 17 / 0.34); -webkit-backdrop-filter: blur(22px) saturate(1.15) !important; backdrop-filter: blur(22px) saturate(1.15) !important;
+  /* v12 : la lentille (filtre SVG) ne se fond pas dans le flou ; en descendant, elle cède sa place une fois la teinte
+     dense (380 ms), en remontant elle revient tout de suite, sous une teinte encore dense qui s'éclaircit */
+  transition: --c-mid var(--out) var(--ease), --c-rim var(--out) var(--ease), box-shadow var(--out) var(--ease), backdrop-filter 0s linear 380ms allow-discrete, -webkit-backdrop-filter 0s linear 380ms allow-discrete; }
+/* au-dessus du papier, le verre devient clair et l'encre prend le relais */
+.top.on-paper .bar { --c-mid: rgb(250 250 246 / 0.92); --c-rim: rgb(250 250 246 / 0.84); box-shadow: 0 0 0 1px rgb(10 10 11 / 0.08), 0 1px 2px rgb(0 0 0 / 0.12), 0 22px 44px -28px rgb(0 0 0 / 0.35); }
+.top.on-paper .brand, .top.on-paper .nav a { color: var(--ink); }
+/* v12 : même liste d'ombres que le bouton clair (mêmes rangs, intérieures ou non) : elles se fondent au lieu de basculer */
+.top .btn--light { transition: --hl var(--out) var(--ease), box-shadow var(--out) var(--ease), color var(--out) var(--ease), --b0 var(--out) var(--ease), --b1 var(--out) var(--ease), --sheen var(--out) var(--ease); }
+@media (hover: hover) { .top .btn--light:hover { transition-duration: var(--in); } }
+.top.on-paper .btn--light { color: var(--light); --b0: #2a2a2e; --b1: #0e0e10; --sheen: 0;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    inset 0 0 0 transparent,
+    inset 0 0 0 transparent,
+    0 0 0 0 transparent,
+    0 1px 2px rgb(0 0 0 / 0.3),
+    0 0 0 0 transparent,
+    inset 1.5px 0 0.5px -0.3px rgb(80 118 255 / 0.6),
+    inset -1.5px 0 0.5px -0.3px rgb(255 150 54 / 0.6),
+    inset 0 0 0 transparent,
+    inset 0 0 0 transparent; }
+.brand, .nav a { transition: color var(--out) var(--ease); }
+.brand { display: block; color: var(--light); text-decoration: none; margin-right: auto; border-radius: 6px; }
+.brand svg { height: 25px; width: auto; fill: currentColor; }
+.nav { position: relative; display: flex; gap: 26px; }
+.nav a { color: var(--mist); font-size: 16px; text-decoration: none; padding: 8px 2px; transition: color var(--out) var(--ease); }
+.nav a[aria-current] { color: var(--light); }
+@media (hover: hover) { .nav a:hover { color: var(--light); transition-duration: var(--in); } }
+/* la section en cours : un filet de lumière décomposée sous son lien, qui glisse d'un lien à l'autre sur deux
+   ressorts amortis (iris.js). Deux couches en fondu : prisme clair sur la nuit, prisme à l'encre sur le papier. */
+.nav-mark { position: absolute; left: 0; bottom: 1px; width: 100px; height: 2px; transform-origin: 0 50%; opacity: 0; pointer-events: none; transition: opacity var(--out) var(--ease); }
+.nav-mark.is-on { opacity: 1; }
+.nav-mark::before, .nav-mark::after { content: ""; position: absolute; inset: 0; transition: opacity var(--out) var(--ease); }
+.nav-mark::before { background: linear-gradient(90deg, #7c96ff, #f2f2ee 50%, #ffa654); }
+.nav-mark::after { background: linear-gradient(90deg, #3557d6, #0a0a0b 50%, #a8650a); opacity: 0; }
+.top.on-paper .nav-mark::before { opacity: 0; }
+.top.on-paper .nav-mark::after { opacity: 1; }
+
+/* ---------- Héros : la photo, l'éventail, la plaque courbe ---------- */
+/* v11 : la lumière du héros irradie toute la page. Un seul canvas fixe sous le contenu (fonds/lumiere.js, monté par
+   iris.js) : z-index -1 dans le contexte racine, donc au-dessus du fond du body et sous tout le contenu ; le héros et les
+   sections sombres sont transparents, la planche et le pied opaques. Hauteur de la grande vue (lvh) : la barre d'adresse
+   d'un téléphone ne redimensionne pas le canvas. Le grain de la page repasse par-dessus la lumière. */
+.lumiere { position: fixed; z-index: -1; left: 0; top: 0; width: 100%; height: 100vh; height: 100lvh; pointer-events: none; overflow: hidden; }
+.lumiere::after { content: ""; position: absolute; inset: 0; background: var(--grain); }
+/* sans WebGL2, pas de canvas : le fond du body (grain et nuit) suffit, pas de second grain */
+.lumiere:empty { display: none; }
+.lumiere > canvas, .ft-bg > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hero { position: relative; height: 100vh; height: 100svh; min-height: 560px; }
+.hero-labels { position: absolute; inset: 0; pointer-events: none; }.hl { position: absolute; left: 0; top: 0; font: 400 15px/1 var(--f-mono); color: var(--mist); white-space: nowrap; }
+.hl b { color: var(--light); font-weight: 500; }
+.hl-let { font: 500 18px/1 var(--f-sans); color: var(--light); }
+/* v11 : la baseline au centre, vers le tiers inférieur ; la lumière tient le haut et les côtés et tombe sur elle */
+.hero-in { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; text-align: center; padding: calc(var(--hdr) + 6vh) var(--m) clamp(44px, 10vh, 104px); }
+/* « Le bloc justifié » : au-dessus de 1180 px, la phrase et le bouton forment une seule ligne exactement aussi large que
+   le titre (sa ligne la plus longue mesure 5,66 em, coupure équilibrée identique à toutes les tailles), la phrase calée
+   sur le « s » de « split », le bouton sur le point final. En dessous, une colonne centrée. */
+.hero .h1 { --th: clamp(50px, 7.4vw, 118px); font-size: var(--th); max-width: 9.6em; }
+.hero-foot { display: grid; gap: 30px; justify-items: center; margin-top: clamp(26px, 3.6vh, 38px); }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.hero-foot p { max-width: 29rem; color: var(--mist); text-wrap: balance; }
+@media (min-width: 1180px) {
+  .hero-foot { width: calc(clamp(50px, 7.4vw, 118px) * 5.66); grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 36px; text-align: left; }
+  .hero-foot p { max-width: none; text-wrap: balance; }
+}
+.fonts-wait .hero-in, .fonts-wait .bar { visibility: hidden; }
+
+/* ---------- Sections sombres ---------- */
+.sec { position: relative; max-width: 1360px; margin: 0 auto; padding: clamp(110px, 16vh, 200px) var(--m) 0; }
+.sec-head { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 32px 48px; align-items: end; }
+.sec-head .lead { justify-self: end; }
+
+/* ---------- Les démos : diagrammes de trace (v6) ----------
+   Un cadre par démo, le même pour la lecture et le rejeu : la cascade, la phrase (lecture), puis les commandes. Une ligne
+   par étape : nom, type écrit dans sa teinte, barre en aplat à sa place dans le temps, durée et coût. Textes en mono
+   15 px, aucun pictogramme, aucune pastille. Contrastes sur --deep : light 17,6:1, mist 9,8:1, ash 6,2:1, corail 8,9:1. */
+.film {
+  position: relative; margin-top: clamp(36px, 5vh, 56px); padding-bottom: 18px;
+  border-radius: 24px;
+  background: radial-gradient(120% 90% at 18% -10%, rgb(255 255 255 / 0.035), transparent 60%), var(--deep);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.07), inset 0 1px 0 rgb(255 255 255 / 0.05), 0 40px 80px -60px rgb(0 0 0 / 1);
+}
+.film-stage { position: relative; overflow: hidden; height: 560px; border-radius: 24px 24px 0 0; }
+.film-bar { position: relative; z-index: 2; margin: 0 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+
+.tr { position: absolute; left: 0; top: 0; height: 100%; font: 360 15px/18px var(--f-mono); color: var(--mist); font-variant-numeric: tabular-nums; }
+.tr > *, .tr-row > *, .tr-ev > *, .tr-wait > * { position: absolute; left: 0; top: 0; white-space: nowrap; }
+/* en-tête : deux styles, le nom en sans, l'identifiant, l'état et le coût en mono */
+.tr-head { display: flex; align-items: baseline; gap: 14px; }
+.tr-title { font: 400 19px/18px var(--f-sans); color: var(--light); letter-spacing: 0.005em; }
+.tr-id { color: var(--ash); }
+.tr-state { color: var(--light); }
+.tr-state.is-bad { color: #ff8b78; }
+.tr-state.is-good { color: var(--light); }
+.tr-head .tr-state + .tr-state { position: absolute; top: 0; }
+.tr-cost { margin-left: auto; color: var(--mist); }
+.tr-ax { color: var(--ash); }
+.tr-row { box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.045); }
+.tr-name { color: var(--light); }
+.tr-bar {
+  /* tracée par sa largeur, pas par une découpe : une découpe arrondie animée fait compiler un shader au départ du film
+     (63 à 83 ms sur une image, profil neuf, `_outils/coldtrace.py`) */
+  display: block; border-radius: 3px; width: calc(var(--bw, 0px) * var(--p, 1));
+  /* le contour reste quand l'aplat se vide : l'appel a eu lieu, il n'a rien écrit */
+  box-shadow: inset 0 0 0 1.5px var(--c);
+}
+.tr-bar::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0) 55%), var(--c); opacity: var(--fill, 1); }
+.tb-model { --c: #7b96ff; }
+.tb-read { --c: #4fc77d; }
+.tb-write { --c: #eeaa4e; }
+.tr-dur { color: var(--mist); }
+.tr-c { color: var(--ash); }
+/* un événement : un filet vertical qui traverse la barre, son mot au bout */
+.tr-ev i { display: block; left: -1px; width: 2px; background: var(--light); border-radius: 1px; transform-origin: 50% 0; transform: scaleY(var(--m, 1)); }
+.tr-ev span { color: var(--light); }
+.tr-ev.is-f i { background: #ff8b78; }
+.tr-ev.is-f span { color: #ff8b78; }
+.tr-ev.is-ok span { color: var(--light); }
+/* l'attente entre deux appels : un trait à la hauteur des barres, sa durée à côté */
+.tr-wait i { display: block; height: 2px; background: rgb(182 182 186 / 0.42); border-radius: 1px; transform: translateY(-1px); width: calc(var(--bw, 0px) * var(--p, 1)); }
+.tr-wait span { color: var(--ash); }
+/* l'inspecteur d'un span : ce que l'appel a envoyé et reçu, posé au-dessus de son événement, le bord gauche sur le filet */
+/* v8 : une surface opaque, un cran au-dessus du cadre, pour que les filets des lignes ne traversent plus le texte */
+.tr-insp { display: grid; gap: 4px; padding: 10px 14px 11px; min-width: 248px; border-radius: 10px; background: linear-gradient(180deg, #16161a, #111114); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.11), inset 0 1px 0 rgb(255 255 255 / 0.06), 0 12px 28px -14px rgb(0 0 0 / 0.9); line-height: 18px; }
+.tr-insp[hidden], .tr-insp-lead[hidden] { display: none; }
+.tr-insp { z-index: 2; }
+.tr-insp-lead { z-index: 1; border-left: 1px solid rgb(255 255 255 / 0.32); border-top: 1px solid rgb(255 255 255 / 0.32); border-top-left-radius: 4px; pointer-events: none; }
+.tr-row.is-insp { background: rgb(255 255 255 / calc(var(--hl, 0) * 0.04)); }
+.tr-insp-t { color: var(--light); }
+.tr-insp-r { display: flex; gap: 18px; justify-content: space-between; }
+.tr-insp-k { color: var(--ash); }
+.tr-insp-v { color: var(--mist); }
+.tr-insp-v.is-f { color: #ff8b78; }
+.tr-link { overflow: visible; pointer-events: none; }
+/* rejeu : un filet de bord à bord entre le run d'origine et sa reprise */
+.tr-sep { position: absolute; left: 0; right: 0; height: 1px; background: rgb(255 255 255 / 0.1); opacity: 0; }
+.tr-link path { fill: none; stroke: var(--mist); stroke-width: 1.25; stroke-linecap: round; stroke-dasharray: 1 1; }
+
+/* le sélecteur : une rainure de verre et un pouce de lumière qui s'étire vers l'option choisie */
+.seg { display: inline-flex; padding: 5px; border-radius: 16px; }
+.seg label { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; padding: 11px 16px 12px; border-radius: 11px; cursor: pointer; color: var(--mist); font-size: 17px; white-space: nowrap; transition: color 320ms var(--ease); }
+.seg label small { font: 400 15px/1 var(--f-mono); color: var(--ash); transition: color 320ms var(--ease); }
+.seg .ss { display: none; }
+.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.seg label:has(input:checked) { color: var(--night); }
+.seg label:has(input:checked) small { color: #3a3a3f; }
+@media (hover: hover) { .seg label:not(:has(input:checked)):hover { color: var(--light); } }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--light); outline-offset: 3px; }
+.seg-thumb {
+  position: absolute; z-index: 0; top: 5px; bottom: 5px; left: 0; width: 0;
+  border-radius: 11px;
+  background: radial-gradient(140% 120% at 50% -30%, rgb(255 255 255 / 0.9) 0%, rgb(255 255 255 / 0) 62%), linear-gradient(180deg, #f7f7f3, #dedfd8);
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgb(0 0 0 / 0.16), inset 0 -10px 18px -14px rgb(0 0 0 / 0.26), 0 1px 1.5px rgb(0 0 0 / 0.5), 0 10px 22px -14px rgb(0 0 0 / 0.95),
+    inset 1px 0 0.5px -0.2px rgb(80 118 255 / 0.4), inset -1px 0 0.5px -0.2px rgb(255 150 54 / 0.38);
+  will-change: transform, width;
+}
+
+/* bouton de lecture : petite pièce de verre */
+.ctl { width: 50px; height: 50px; flex: none; border: 0; border-radius: 15px; color: var(--light); cursor: pointer; display: grid; place-items: center; transition: background-color var(--out) var(--ease); }
+.ctl svg { width: 17px; height: 17px; }
+.ctl[hidden] { display: none; }
+@media (hover: hover) { .ctl:hover { background: rgb(34 34 40 / 0.55); transition-duration: var(--in); } }
+
+/* la phrase de verdict, dans le cadre, sous la cascade : visible en même temps que la faute qu'elle explique */
+.answer {
+  margin: 22px clamp(18px, 3.4vw, 44px) 26px; max-width: 46rem;
+  font-size: clamp(20px, 1.8vw, 25px); line-height: 1.38; color: var(--light);
+}
+.answer .as { opacity: var(--k, 1); }
+.answer code { font-size: 0.86em; }
+.answer--probe { position: absolute; left: 0; right: 0; top: 0; visibility: hidden; pointer-events: none; }
+
+@media (max-height: 759px) and (min-width: 701px) { .answer { margin-top: 12px; font-size: 20px; } .film { padding-bottom: 14px; } }
+
+/* le compte du rejeu : à l'échelle du titre, dans le cadre */
+.film-bar .tally { margin: 10px 0 0 clamp(0px, 1.6vw, 26px); }
+.tally { display: flex; gap: clamp(20px, 4vw, 56px); align-items: baseline; }
+.tally p { display: flex; align-items: baseline; gap: 14px; clip-path: inset(calc((1 - var(--k, 1)) * 100%) 0 0 0); }
+.tally .n { display: inline-block; min-width: 0.62em; font: 300 clamp(56px, 6.4vw, 100px)/0.9 var(--f-sans); font-stretch: 74%; font-variant-numeric: tabular-nums; color: var(--light); letter-spacing: -0.02em; }
+.tally .t { font: 400 16px/1.3 var(--f-mono); color: var(--mist); }
+.tally b { color: var(--light); font-weight: 500; }
+
+/* ---------- Papier : la planche imprimée ---------- */
+/* v10 : « La lentille », choisie par l'utilisateur (banc coutures.html). La planche a deux bords en arc très ouvert,
+   bombés vers la nuit en haut comme en bas : une lentille biconvexe à l'échelle de la page (Iris est l'iris d'un
+   objectif). Bord net tracé en vecteur (masque SVG étiré sur la seule bande de l'arc) et le liseré du verre le long de
+   l'arc, bleu à gauche, blanc au sommet, ambre à droite (SVG dans index.html, trait de 1,5 px qui ne s'étire pas).
+   Flèche : 4,2 % de la largeur, de 18 à 64 px. Plus de fondu gris, plus d'accroc au premier passage.
+   --fade = la flèche : l'en-tête bascule à mi-flèche (header()). */
+@property --fade { syntax: "<length>"; inherits: false; initial-value: 0px; }
+.paper {
+  --sag: clamp(18px, 4.2vw, 64px);
+  --fade: var(--sag);
+  --pad: calc(clamp(96px, 15vh, 168px) + var(--sag));
+  max-width: none; margin-top: clamp(96px, 14vh, 180px);
+  padding: var(--pad) var(--m);
+  isolation: isolate;
+  color: var(--ink);
+}
+/* v11 : la lumière passe au-dessus de l'arc haut. Le papier n'est plus peint par la section entière (la nuit le
+   recouvrait au-dessus de l'arc) : un aplat commence sous la bande de l'arc, et la bande haute peint le papier sous
+   l'arc seulement ; au-dessus, transparent. Même texture, même origine (positions décalées de la bande). */
+.paper::before, .paper .cx-t:not(.cx-l) { background: var(--grain), url("img/paper.webp") 0 0 / 420px 420px repeat, var(--paper); }
+.paper::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: calc(var(--sag) - 1px); bottom: 0; background-position: 0 calc(1px - var(--sag)), 0 calc(1px - var(--sag)); }
+.paper .cx { position: absolute; left: 0; right: 0; height: var(--sag); pointer-events: none; background: var(--grain), #080809; }
+.paper .cx svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.paper .cx-t { top: 0; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 100' preserveAspectRatio='none'%3E%3Cpath d='M0 100Q500-100 1000 100Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 100' preserveAspectRatio='none'%3E%3Cpath d='M0 100Q500-100 1000 100Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
+.paper .cx-b { bottom: -1px; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 100' preserveAspectRatio='none'%3E%3Cpath d='M0 0Q500 200 1000 0V100H0Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 100' preserveAspectRatio='none'%3E%3Cpath d='M0 0Q500 200 1000 0V100H0Z'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat; }
+/* le liseré : hors du masque, au même endroit que la bande de l'arc */
+.paper .cx.cx-l { background: none; -webkit-mask: none; mask: none; }
+@media (forced-colors: active) { .paper .cx-l { display: none; } }
+.paper-in { max-width: 1232px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 48px 64px; align-items: end; }
+.paper-head { display: grid; gap: 22px; }
+.paper .display { color: var(--ink); }
+.paper .lead { color: var(--ink-2); justify-self: start; }
+/* le code : un puits à peine creusé dans le papier, la commande « Copy » dans son coin */
+.code-plate { position: relative; padding: clamp(22px, 2.6vw, 34px) clamp(22px, 2.8vw, 38px); border-radius: 20px; background: rgb(10 10 11 / 0.035); box-shadow: inset 0 0 0 1px rgb(10 10 11 / 0.09), inset 0 1px 2px rgb(10 10 11 / 0.05); }
+/* pas de conteneur de défilement : le code tient de 320 à 1920 px (mesuré), et un `overflow-x: auto` rendait l'axe
+   vertical défilable, d'où une barre inutile sous Windows (jambages de la mono qui dépassent de la ligne) */
+.paper .code { font: 400 clamp(22px, 3vw, 44px)/1.18 var(--f-mono); color: var(--ink); white-space: pre; overflow: visible; letter-spacing: -0.02em; border-radius: 6px; }
+.paper .code .k { color: #6b6b70; }
+.copy {
+  position: absolute; top: 14px; right: 14px;
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 12px;
+  border: 0; border-radius: 11px; cursor: pointer;
+  font: 500 16px/1 var(--f-sans); color: var(--ink);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.85), rgb(255 255 255 / 0.55));
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 1px rgb(10 10 11 / 0.1), 0 1px 2px rgb(10 10 11 / 0.08),
+    inset 1.25px 0 0.5px -0.2px rgb(53 87 214 / 0.45), inset -1.25px 0 0.5px -0.2px rgb(168 101 10 / 0.45);
+  transition: background-color var(--out) var(--ease), box-shadow var(--out) var(--ease);
+}
+.copy svg { width: 16px; height: 16px; }
+@media (hover: hover) { .copy:hover { box-shadow: inset 0 1px 0 #fff, 0 0 0 1px rgb(10 10 11 / 0.18), 0 1px 2px rgb(10 10 11 / 0.1), inset 1.25px 0 0.5px -0.2px rgb(53 87 214 / 0.8), inset -1.25px 0 0.5px -0.2px rgb(168 101 10 / 0.8); transition-duration: var(--in); } }
+.copy:active { transform: translateY(0.5px); }
+/* le schéma de flux, à l'encre sur le papier : traits fins, noms en mono, barres aux couleurs des types */
+.flow { grid-column: 1 / -1; margin: clamp(16px, 3vh, 40px) 0 0; }
+.flow canvas { display: block; width: 100%; height: auto; }
+/* v12 : peint dans un canvas (iris.js, flowPlate) : noms en mono 15 px à --ink-2, OpenTelemetry et le tronc à --ink,
+   traits de 1,25 px à 46 % (convergence) et 32 % (éventail) de l'encre, extrémités rondes */
+
+/* ---------- Formulaire ---------- */
+.signup { position: relative; margin-top: 40px; max-width: 34rem; }
+.signup-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 10px; padding: 0 2px; font-size: 16px; color: var(--mist); }
+.signup label { display: block; }
+.field { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 18px; border-radius: 18px; }
+/* un champ de saisie a besoin d'un fond calme : teinte dense au centre, la lumière ne se voit que dans le biseau */
+.field[data-glass] { background: radial-gradient(120% 140% at 50% 50%, rgb(13 13 16 / 0.9) 55%, rgb(13 13 16 / 0.62) 100%); }
+.field input { flex: 1 1 auto; min-width: 0; height: 52px; padding: 0; border: 0; background: none; color: var(--light); font: 400 17px/1 var(--f-sans); }
+.field input::placeholder { color: #a9a9ae; opacity: 1; }
+.field input:focus-visible { outline: none; }
+.field:focus-within { box-shadow: 0 0 0 2px var(--light), 0 22px 44px -26px rgb(0 0 0 / 0.9); }
+.field:has(.btn:focus-visible) { box-shadow: 0 0 0 1px rgb(255 255 255 / 0.07), 0 22px 44px -26px rgb(0 0 0 / 0.9); }
+.field .btn { height: 52px; }
+.form-msg { min-height: 1.5em; margin-top: 14px; font-size: 16px; color: var(--light); }
+
+/* ---------- Pied : le prix, l'inscription et la fin, sur une ligne de lumière ----------
+   v9 : « L'horizon » (fonds/f-horizon.js), choisi par l'utilisateur. Un seul bloc compact et centré : la ligne entre
+   par la gauche à la hauteur du champ, traverse le verre et ressort après le bouton en trois raies. */
+.ft { position: relative; isolation: isolate; overflow: clip; padding-top: clamp(84px, 13vh, 140px); }
+.ft-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; }
+.ft::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: var(--grain); }
+.ft-in { position: relative; z-index: 2; max-width: 1360px; margin: 0 auto; padding: 0 var(--m); display: grid; gap: clamp(64px, 10vh, 112px); }
+.ft-cta { max-width: 760px; margin: 0 auto; text-align: center; }
+.ft .lead { margin: 22px auto 0; }
+.ft .signup { margin: 36px auto 0; text-align: left; }
+.ft-bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 0 0 30px; }
+.ft-bar .brand { margin: 0; }
+.ft-bar .brand svg { height: 24px; }
+.ft-bar p { font-size: 15px; color: var(--mist); }
+
+/* ---------- Tailles ---------- */
+@media (max-width: 1080px) {
+  .nav { display: none; }
+}
+@media (max-width: 1000px) {
+  .paper-in { grid-template-columns: 1fr; gap: 36px; }
+  .code-plate { justify-self: stretch; }
+}
+@media (max-width: 860px) {
+  .sec-head { grid-template-columns: 1fr; gap: 20px; }
+  .sec-head .lead { justify-self: start; }
+}
+@media (max-width: 480px) {
+  .code-plate { padding: 20px 18px 18px; border-radius: 16px; }
+  .copy { position: static; margin-top: 16px; }
+}
+@media (max-width: 700px) {
+  :root { --hdr: 76px; }
+  .top { top: 10px; left: 12px; right: 12px; }
+  .bar { height: 54px; padding: 0 7px 0 16px; border-radius: 16px; }
+  .brand svg { height: 22px; }
+  .film { border-radius: 18px; padding-bottom: 12px; }
+  .film-stage { border-radius: 18px 18px 0 0; }
+  .film-bar { margin: 0 12px; gap: 8px; }
+  /* on choisit en haut, on lit en dessous */
+  .film[data-film="read"] { display: flex; flex-direction: column; padding: 12px 0 0; }
+  .film[data-film="read"] .film-bar { order: -1; margin-bottom: 4px; }
+  .film[data-film="read"] .film-stage { border-radius: 0; }
+  /* le sélecteur et le bouton sur une seule rangée ; des libellés courts, l'identifiant est dans la scène */
+  .seg { display: flex; flex: 1 1 auto; min-width: 0; }
+  .seg label { flex: 1 1 0; justify-content: center; text-align: center; padding: 11px 4px 12px; font-size: 16px; }
+  .seg label small { display: none; }
+  .seg .sl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .seg .ss { display: inline; }
+  .tally { gap: 6px 18px; }
+  .tally p { gap: 8px; }
+  .tally .t { font: 400 16px/1.3 var(--f-sans); }
+  .answer { margin-top: 16px; font-size: 18px; }
+  .hero-in { padding-top: calc(var(--hdr) + 3vh); }
+  .field { flex-direction: column; align-items: stretch; padding: 6px; }
+  .field input { padding: 0 12px; }
+  .field .btn { justify-content: center; }
+  .ft-bar { flex-direction: column; align-items: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 1ms !important; animation-duration: 1ms !important; animation-iteration-count: 1 !important; }
+}

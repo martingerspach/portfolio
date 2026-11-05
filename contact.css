@@ -1,0 +1,137 @@
+/* The portfolio's Contact page, built by outils/contact-build.py from contact-pistes/p-empreinte.css. */
+/* Piste C « L’empreinte »: the page is a sheet of cotton paper (WebGL, decorative) with the address debossed across
+   its first screen; the same address printed in ink at reading size under it; the impression is the Copy button.
+   Calm text below, printed on the same sheet: on white cotton the text multiplies with the paper, so it takes the
+   room's light like ink (and keeps its contrast in the lamp's shade). */
+.p-empreinte {
+  --pe-paper: #F4F2EF;              /* white cotton: Lin, so the sheet meets the page under the header */
+  --pe-ink: #E4E2DC;                /* the opaque white ink of the dark theme (unused on white cotton) */
+  --pe-deboss: #EAE8E3;             /* fallback: the hollow's tone */
+  --pe-hi: rgba(255, 255, 255, .95);
+  --pe-lo: rgba(31, 32, 30, .16);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .p-empreinte {
+    --pe-paper: #121311;            /* black cotton: lit, it meets the page's own black */
+    --pe-ink: #E4E2DC;
+    --pe-deboss: #D9D7D1;
+    --pe-hi: rgba(0, 0, 0, .55);
+    --pe-lo: rgba(0, 0, 0, .7);
+  }
+}
+:root[data-theme="dark"] .p-empreinte {
+  --pe-paper: #121311;
+  --pe-ink: #E4E2DC;
+  --pe-deboss: #D9D7D1;
+  --pe-hi: rgba(0, 0, 0, .55);
+  --pe-lo: rgba(0, 0, 0, .7);
+}
+
+.p-empreinte .pe { position: relative; isolation: isolate; min-height: var(--screen); padding-bottom: clamp(64px, 10vh, 120px); }
+.p-empreinte .pe-gl { position: absolute; inset: 0; z-index: -1; display: block; width: 100%; height: 100%; pointer-events: none; }
+.p-empreinte.is-nogl .pe-gl { display: none; }
+
+/* Printed on the sheet: the ink multiplies with the lit paper (white cotton only). */
+.p-empreinte:not(.is-nogl) .pe-ink,
+.p-empreinte:not(.is-nogl) .pe-cap,
+.p-empreinte:not(.is-nogl) .pe-lead,
+.p-empreinte:not(.is-nogl) .pe-facts,
+.p-empreinte:not(.is-nogl) .pe-links { mix-blend-mode: multiply; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .p-empreinte .pe-ink,
+  :root:not([data-theme="light"]) .p-empreinte .pe-cap,
+  :root:not([data-theme="light"]) .p-empreinte .pe-lead,
+  :root:not([data-theme="light"]) .p-empreinte .pe-facts,
+  :root:not([data-theme="light"]) .p-empreinte .pe-links { mix-blend-mode: normal; }
+}
+:root[data-theme="dark"] .p-empreinte .pe-ink,
+:root[data-theme="dark"] .p-empreinte .pe-cap,
+:root[data-theme="dark"] .p-empreinte .pe-lead,
+:root[data-theme="dark"] .p-empreinte .pe-facts,
+:root[data-theme="dark"] .p-empreinte .pe-links { mix-blend-mode: normal; }
+
+/* ---------- The impression: the zone above the ink line ---------- */
+.p-empreinte .pe-zone {
+  position: relative; box-sizing: border-box;
+  height: clamp(240px, calc(var(--screen) * .62), 720px);
+  padding-top: clamp(8px, 2vh, 24px); padding-bottom: clamp(12px, 2.2vh, 24px);
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+@media (max-width: 760px) {
+  .p-empreinte .pe-zone { height: clamp(220px, calc(var(--screen) * .5), 460px); }
+}
+
+/* The address in ink, at reading size: real text, selectable. */
+.p-empreinte .pe-ink {
+  z-index: 2; margin: 0;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 4px 28px;
+  font-size: var(--t-body); line-height: 1.4;
+}
+.p-empreinte .pe-addr { z-index: 1; font-weight: 500; color: var(--ink); cursor: text; user-select: text; overflow-wrap: anywhere; }
+
+/* The impression is the button: its hit area is the whole zone (the ::after), its words sit on the ink line. */
+.p-empreinte .pe-copy {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 32px;
+  font-size: var(--t-small); color: var(--ink-2); transition: color .6s var(--ease-soft);
+}
+.p-empreinte .pe-copy::after { content: ""; position: absolute; inset: 16px 0 0; cursor: pointer; }
+.p-empreinte .pe-copy .ico { width: 16px; height: 16px; }
+.p-empreinte .pe-copy [data-label] {
+  padding-bottom: 2px;
+  background: linear-gradient(currentColor, currentColor) 0 100% / 0 1px no-repeat;
+  transition: background-size .7s var(--ease);
+}
+@media (hover: hover) {
+  .p-empreinte .pe-copy:hover { color: var(--ink); }
+  .p-empreinte .pe-copy:hover [data-label] { background-size: 100% 1px; }
+}
+.p-empreinte .pe-copy:focus-visible { outline: none; }
+.p-empreinte .pe-copy:focus-visible::after { outline: 2px solid var(--ink); outline-offset: 4px; border-radius: 2px; }
+
+/* Without WebGL: the address debossed by inner shadows on the page. */
+.p-empreinte .pe-css { display: none; }
+.p-empreinte.is-nogl .pe-css {
+  display: block; position: absolute; margin: 0; white-space: nowrap;
+  font-weight: 600; line-height: 1.12; letter-spacing: .004em;
+  color: var(--pe-deboss);
+  text-shadow: 0 1px 0 var(--pe-hi), 0 -1px 0 var(--pe-lo);
+}
+.p-empreinte.is-nogl .pe-css > span { display: block; }
+.p-empreinte.is-nogl .pe-css.is-one > span { display: inline; }
+.p-empreinte.is-nogl .pe-css b { font-weight: 600; color: var(--accent); text-shadow: 0 -1px 0 var(--pe-lo); }
+
+/* ---------- Below the impression ---------- */
+.p-empreinte .pe-below { display: grid; gap: clamp(32px, 6vh, 64px); padding-top: clamp(16px, 2.4vh, 28px); }
+.p-empreinte .pe-cap { margin: 0; max-width: 72ch; font-size: var(--t-small); line-height: 1.5; color: var(--ink-2); }
+.p-empreinte .pe-foot {
+  display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 3fr) minmax(0, 3fr); gap: 24px 32px; align-items: start;
+}
+.p-empreinte .pe-lead { margin: 0 0 24px; max-width: 32ch; font-size: var(--t-lead); line-height: 1.38; letter-spacing: -0.012em; }
+.p-empreinte .pe-facts p { margin: 0; max-width: 34ch; color: var(--ink-2); }
+.p-empreinte .pe-facts p + p { margin-top: 10px; }
+.p-empreinte .pe-links { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; justify-items: start; }
+/* Under 1180 px three columns get tight: the ask keeps the left half, the facts and the links stack on the right. */
+@media (max-width: 1180px) {
+  .p-empreinte .pe-foot { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px 40px; }
+  .p-empreinte .pe-ask { grid-row: 1 / span 2; }
+  .p-empreinte .pe-facts { grid-column: 2; }
+  .p-empreinte .pe-links { grid-column: 2; }
+}
+@media (max-width: 600px) {
+  .p-empreinte .pe-foot { grid-template-columns: minmax(0, 1fr); gap: 32px; }
+  .p-empreinte .pe-ask { grid-row: auto; }
+  .p-empreinte .pe-facts, .p-empreinte .pe-links { grid-column: 1; }
+  .p-empreinte .pe-below { gap: 28px; }
+}
+
+/* ---------- On the portfolio: the sheet runs under the fixed chrome, the page's gutters ---------- */
+.page-contact { --screen: 100svh; }
+.page-contact .pe { padding-top: var(--top); }
+.page-contact .wrap { padding-left: max(var(--pad), env(safe-area-inset-left, 0px)); padding-right: max(var(--pad), env(safe-area-inset-right, 0px)); }
+.page-contact .pe-zone { height: clamp(240px, calc((100svh - var(--top)) * .62), 720px); }
+@media (max-width: 760px) {
+  .page-contact .pe-zone { height: clamp(220px, calc((100svh - var(--top)) * .5), 460px); }
+}
+/* The page change « Les volets » (transitions.js « contact »): the room's shade, multiplied over everything, chrome
+   included, lifted as the page's light comes in. */
+.tr-shade { position: fixed; inset: 0; z-index: 60; pointer-events: none; mix-blend-mode: multiply; opacity: 0; }

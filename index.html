@@ -13,12 +13,22 @@
 <link rel="stylesheet" href="about.css">
 <link rel="stylesheet" href="transitions.css">
 <link rel="stylesheet" href="contact.css">
+<link rel="stylesheet" href="opening.css">
 <script>
   /* Theme before first paint: light by default; dark only when the visitor chose it with the theme button. */
   (function () {
     var t = '';
     try { t = localStorage.getItem('mg-theme') || ''; } catch (e) {}
     document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');
+  })();
+  /* The opening types the name in the header: when it will play (first visit of the session, on Work, motion
+     allowed), the static name is hidden from the first paint (opening.css), or it would show, vanish, then be typed. */
+  (function () {
+    try {
+      var h = location.hash.replace('#', '');
+      if ((h === '' || h === 'work') && sessionStorage.getItem('mg-intro') !== '1'
+          && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('op-boot');
+    } catch (e) {}
   })();
 </script>
 <meta name="theme-color" content="#F4F2EF">
@@ -84,6 +94,7 @@
 <script src="logos.js"></script>
 <script src="about.js"></script>
 <script src="contact.js"></script>
+<script src="opening.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

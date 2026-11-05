@@ -54,18 +54,6 @@
   };
   const ico = (n, cls = 'ico') => `<svg class="${cls}${n === 'arrow' ? ' go' : ''}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n]}</svg>`;
 
-  /* Slot-machine letters (see .reel in the stylesheet). */
-  const ABC_U = 'ABCDEFGHIKLMNORSTUVWXZBDEH', ABC_L = 'abcdefhiklmnorstuvwxzacemn';
-  function reels(text, delay = 0) {
-    let i = 0;
-    const words = String(text).split(' ').map((w) => `<span class="reels__word">${[...w].map((c) => {
-      const n = 4 + (i % 3);
-      const pool = c !== c.toLowerCase() ? ABC_U : ABC_L;
-      const spin = Array.from({ length: n }, () => `<span>${pool[(Math.random() * 26) | 0]}</span>`).join('');
-      return `<span class="reel" style="--i:${i++};--n:${n}"><span class="reel__in">${spin}<span>${esc(c)}</span></span></span>`;
-    }).join('')}</span>`).join('');
-    return `<span class="reels" aria-hidden="true" style="--d:${delay}s">${words}</span>`;
-  }
   function toast(msg) {
     const t = $('#toast');
     t.textContent = msg;
@@ -315,6 +303,7 @@
   }
   let themeNow = null;
   const W = { rest: 0, eased: 0, vel: 0, target: 0, first: true };   // reel state, kept between visits
+  let entranceInit = null;                 // the reel's entrance as the opening wants it (__APP.setEntrance)
   const HELD = { reel: false, e: null };   // a page change draws the reel itself (e: its position, for the texts)
   const wrapP = (i) => ((i % NP) + NP) % NP;
   const shortestP = (v) => { const m = ((v % NP) + NP) % NP; return m >= NP / 2 ? m - NP : m; };
@@ -642,7 +631,7 @@
       if (entrance) {
         const t = clamp((now - entrance.t0) / entrance.dur, 0, 1);
         e -= entrance.from * (1 - EASE_OUT(t));
-        if (R) R.morph.others = now < entrance.t0 ? 0 : smooth(0, 0.3, t);
+        if (R) R.morph.others = Math.max(entrance.o0 || 0, now < entrance.t0 ? 0 : smooth(0, 0.3, t));
         if (t >= 1) { entrance = null; if (R) R.morph.others = 1; }
       }
       // speed of the strip as drawn (spring, entrance, drag alike), lightly smoothed: it drives the motion blur
@@ -762,10 +751,13 @@
     if (W.first && opts.via !== 'tr') W.eased = W.target;
     const doEntrance = !REDUCE && R && (opts.entrance || (W.first && !opts.via));
     if (opts.via === 'tr' || opts.via === 'pop') W.eased = W.target;
+    const init = entranceInit;               // the opening's waiting state (__APP.setEntrance), for this mount only
+    entranceInit = null;
     if (doEntrance) {
-      entrance = { t0: performance.now() + 9e9, dur: 2100, from: 1.6 };
+      entrance = Object.assign({ t0: performance.now() + 9e9, dur: 2100, from: 1.6, o0: 0 }, init || {});
       if (R) R.morph.others = 0;
-      const go = () => { if (entrance) entrance.t0 = performance.now(); };
+      // the opening's promise may resolve with the entrance it hands over to: { from, dur, o0 }
+      const go = (o) => { if (entrance) { if (o && typeof o === 'object') Object.assign(entrance, o); entrance.t0 = performance.now(); } };
       if (opts.entrance) opts.entrance.then(go); else go();
     }
     updateList(W.eased, 1, entrance ? 0 : 1);
@@ -1127,73 +1119,31 @@
     return window.ContactPage.mount(main);
   }
 
-  /* ---------- Intro ---------- */
-  function playIntro() {
+  /* ---------- Opening: « L’équipe » (opening.js, built from opening-pistes/p-equipe.js by outils/opening-build.py;
+     the intro before 2026-11-05 is in archive/intro-v1/). Martin and four agents finish the Work page live. Once per
+     visit, only when the visit starts on Work (a link to another page goes straight there); the brand replays it.
+     It returns a promise: the reel's entrance starts when it resolves, with the parameters it resolves with. ---------- */
+  function playIntro(r) {
     let seen = true;
     try { seen = sessionStorage.getItem('mg-intro') === '1'; sessionStorage.setItem('mg-intro', '1'); } catch (e) { seen = true; }
-    if (seen || REDUCE) return null;
-    const DUR = 3800;
-    const el = document.createElement('div');
-    el.className = 'loader';
-    el.setAttribute('role', 'dialog');
-    el.setAttribute('aria-label', 'Introduction. Press any key to enter.');
-    const bio = SITE.intro.split(' ').map((w, i) => `<span style="--i:${i}">${esc(w)}</span>`).join(' ');
-    el.innerHTML = `
-      <div class="intro">
-        <h1 class="intro__name"><span class="sr">${esc(SITE.name)}</span>${reels(SITE.name, 0.25)}</h1>
-        <p class="intro__bio">${bio}</p>
-      </div>
-      <p class="intro__skip">Click to enter. Hold to pause.</p>
-      <span class="intro__bar" style="--dur:${DUR}ms"></span>
-      <span class="loader__cap"></span>`;
-    document.body.appendChild(el);
-    return new Promise((resolve) => {
-      let left = DUR, started = performance.now(), downAt = 0;
-      let timer = setTimeout(done, left);
-      function done() {
-        clearTimeout(timer);
-        el.removeEventListener('pointerdown', dn);
-        removeEventListener('pointerup', up);
-        removeEventListener('keydown', done);
-        el.classList.add('is-out');
-        setTimeout(() => el.remove(), 950);
-        resolve();
-      }
-      function dn() {
-        if (downAt) return;
-        downAt = performance.now();
-        clearTimeout(timer);
-        left -= downAt - started;
-        el.classList.add('is-held');
-      }
-      function up() {
-        if (!downAt) return;
-        const quick = performance.now() - downAt < 260;
-        downAt = 0;
-        el.classList.remove('is-held');
-        if (quick) return done();
-        started = performance.now();
-        timer = setTimeout(done, Math.max(0, left));
-      }
-      el.addEventListener('pointerdown', dn);
-      addEventListener('pointerup', up);
-      addEventListener('keydown', done);
-      el.addEventListener('contextmenu', (e) => e.preventDefault());
-    });
+    if (seen || !r || r.name !== 'work' || !W.first || !window.Opening) return null;
+    try { return window.Opening.play() || null; } catch (e) { console.warn('Opening unavailable:', e.message); return null; }
   }
   function replayIntro() {
     try { sessionStorage.removeItem('mg-intro'); } catch (e) { /* nothing to reset */ }
-    const p = playIntro();
-    if (!p) return;
     W.first = true;
+    const p = playIntro(routeOf('work'));
+    if (!p) return;
     mount(routeOf('work'), { entrance: p, focus: false });
   }
 
-  /* ---------- What the page changes (transitions.js) may use ---------- */
+  /* ---------- What the page changes (transitions.js) and the opening (opening.js) may use ---------- */
   window.__APP = {
     F, GATE, W, HOLD: HELD, SHUTTER,
     getReel, reelGeom, readTheme, esc,
     viewer: () => viewer,
+    // the reel's entrance as the next Work page will start it (it waits under the opening): { from, dur, o0 }
+    setEntrance: (o) => { entranceInit = Object.assign({}, entranceInit || {}, o); },
   };
 
   /* ---------- Boot ---------- */
@@ -1212,7 +1162,8 @@
     setHash('work', true);
     first = routeOf('work');
   }
-  const intro = playIntro();
+  const intro = playIntro(first);
+  html.classList.remove('op-boot');        // the head's script hid the static name for the opening, which has it now
   if (intro) { main.classList.add('is-waiting'); intro.then(() => main.classList.remove('is-waiting')); }
   mount(first, { entrance: first.name === 'work' ? (intro || null) : undefined, focus: false });
   // arriving on another page: the reel (its WebGL program, its covers) is made while the page is idle, so the

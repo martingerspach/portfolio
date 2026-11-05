@@ -287,44 +287,14 @@ html.work-touch.on-work #reel, html.work-touch.on-work .stage { touch-action: no
   .w-hint { display: none; }
 }
 
-/* Slot-machine letters: each letter is a short column of random letters that rolls up to the real one. */
-.reels { display: inline-flex; flex-wrap: wrap; justify-content: center; column-gap: .22em; }
-.reels__word { display: inline-flex; white-space: nowrap; }
-/* Each cell is 1.32em tall so ascenders, accents and descenders never reach the next cell; the negative
-   margins give the line back its own height. */
-.reel { display: inline-block; height: 1.32em; margin-block: -.21em; line-height: 1.32em; overflow: hidden; vertical-align: top; }
-.reel__in { display: flex; flex-direction: column; animation: reel-spin calc(.5s + min(var(--i), 12) * 14ms) cubic-bezier(.3, 0, 0, 1) calc(var(--d, 0s) + min(var(--i), 12) * 22ms) both; }
-.reel__in > span { display: block; height: 1.32em; }
-.reel__in > span:not(:last-child) { width: 0; align-self: center; display: flex; justify-content: center; }
-@keyframes reel-spin { from { transform: translateY(0); } to { transform: translateY(calc(var(--n) * -1.32em)); } }
-
-/* ---------- Intro ---------- */
-.loader {
-  position: fixed; inset: 0; z-index: 85; background: var(--bg); color: var(--ink);
-  display: grid; place-items: center; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none;
-}
-.loader.is-out { animation: loader-out .9s var(--ease-io) forwards; pointer-events: none; }
-@keyframes loader-out { to { transform: translateY(-100%); } }
-.loader__cap { position: absolute; left: -5%; right: -5%; top: calc(100% - 7vh); height: 14vh; border-radius: 50%; background: var(--bg); transform: scaleY(0); transform-origin: 50% 0; }
-.loader.is-out .loader__cap { animation: cap-swell .9s var(--ease-io) forwards; }
-@keyframes cap-swell { 0% { transform: scaleY(0); } 45% { transform: scaleY(1); } 100% { transform: scaleY(.15); } }
-.intro { display: grid; justify-items: center; gap: 28px; padding: 0 var(--pad); text-align: center; }
-.intro__name { margin: 0; font-weight: 600; font-size: clamp(48px, 9vw, 150px); line-height: .9; letter-spacing: -0.055em; display: grid; justify-items: center; }
-.intro__name .reel__in { --d: .25s; }
-.intro__bio { margin: 0; max-width: 34ch; font-size: var(--t-lead); line-height: 1.4; color: var(--ink-2); text-wrap: balance; }
-.intro__bio span { opacity: 0; filter: blur(4px); animation: word-in .6s var(--ease) forwards; animation-delay: calc(.9s + var(--i) * 45ms); }
-@keyframes word-in { to { opacity: 1; filter: none; } }
-.intro__skip { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 40px); transform: translateX(-50%); margin: 0; font-size: var(--t-small); color: var(--ink-2); white-space: nowrap; opacity: 0; animation: fade-in .6s var(--ease-soft) 1.4s forwards; }
-.intro__bar { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; animation: bar var(--dur, 3800ms) linear forwards; }
-.loader.is-held .intro__bar { animation-play-state: paused; }
-@keyframes bar { to { transform: scaleX(1); } }
+/* The old intro (slot-machine letters, loader) is in archive/intro-v1/intro.css; the opening is opening.css. */
 @keyframes fade-in { to { opacity: 1; } }
 
 /* ---------- Page shell ---------- */
 main { position: relative; z-index: 3; }
 main:focus { outline: none; }
 html.on-work main { pointer-events: none; }
-main.is-waiting .rise, main.is-waiting .reel__in { animation-play-state: paused; }
+main.is-waiting .rise { animation-play-state: paused; }
 .page { padding: var(--top) max(var(--pad), env(safe-area-inset-right, 0px)) 0 max(var(--pad), env(safe-area-inset-left, 0px)); }
 .rise { opacity: 0; transform: translateY(14px); animation: rise .9s var(--ease) forwards; animation-delay: calc(var(--k, 0) * 70ms + var(--d0, 0ms)); }
 @keyframes rise { to { opacity: 1; transform: none; } }
@@ -461,8 +431,6 @@ html.on-play { scrollbar-gutter: stable; }
 /* ---------- Without motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   .rise { animation: none; opacity: 1; transform: none; }
-  .reel__in { animation: none; transform: translateY(calc(var(--n) * -1.32em)); }
-  .intro__bio span { animation: none; opacity: 1; filter: none; }
   .w-hint i::after { animation: none; top: 30%; }
   .w-item, .w-meta, .btn, .lnk, .nav__line, .call::before, .call span, .pv-tabs button::after { transition: none; }
 }

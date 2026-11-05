@@ -470,11 +470,12 @@
   function drawHero(host, intro) {
     const W = host.clientWidth, H = host.clientHeight;
     if (!W || !H) return;
-    // Téléphone : la planche est cadrée plus grande que l'hôte et rognée à droite (la cote n'y figure pas).
+    // Téléphone : la planche entière tient dans la largeur, sans la cote (rognée à droite, elle coupait la troisième
+    // machine : retour de l'utilisateur, 2026-11-05).
     const crop = matchMedia('(max-width: 640px)').matches;
     const side = !crop && matchMedia('(min-width: 1024px)').matches; // texte et planche côte à côte
     const lim = heroLimits(host);
-    const right = crop ? Math.round(W * 1.55) : Math.min(W, lim.maxX);
+    const right = crop ? W : Math.min(W, lim.maxX);
     const M = 2, Z0 = -0.4;
     const pts = [[0, 0, Z0], [12, 0, Z0], [12, 8, Z0], [0, 8, Z0], [1.5, 1.2, M], [-1.2, 1, 2.6]];
     if (!crop) pts.push([13.5, 8, Z0], [13.5, 0, Z0]);
@@ -482,7 +483,7 @@
     // La planche peut s'étendre à gauche, sous les boutons, tant que la dalle et la machine de verre restent à 28 px
     // du chapeau et des boutons : elle grandit dans le vide au lieu de le laisser.
     const project = (extra, dy) => {
-      const pad = crop ? { l: 4, r: 4, t: 6, b: 6 } : { l: 8, r: Math.max(4, W - right), t: 8, b: 8 };
+      const pad = crop ? { l: 4, r: 22, t: 6, b: 6 } : { l: 8, r: Math.max(4, W - right), t: 8, b: 8 };
       const pr = projector(pts, (crop ? right : W) + extra, H, { ...pad, ax: crop ? 0.5 : 1, dy });
       return { s: pr.s, k: pr.k, P: (x, y, z = 0) => { const p = pr.P(x, y, z); return [p[0] - extra, p[1]]; } };
     };

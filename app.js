@@ -213,12 +213,32 @@
     if (opts.focus !== false) main.focus({ preventScroll: true });
   }
 
+  /* Phones: a project opens as its own page. Inside the portfolio (a live landing in a frame, over a fixed page that
+     keeps the reel's WebGL), Safari on iPhone dropped the layers and showed a white screen while the landing
+     scrolled. As a page of its own the landing scrolls natively; the phone's Back returns to Work, on the same
+     project of the reel (sessionStorage mg-reel). Larger screens keep the project view. */
+  const PHONE_PAGES = matchMedia('(max-width: 760px) and (pointer: coarse)');
+  function openAsPage(r) {
+    try { sessionStorage.setItem('mg-reel', String(P.indexOf(r.p))); } catch (e) { /* the reel starts on the first project */ }
+    const url = new URL(r.tab === 'film' ? 'topiary/methode.html' : r.p.site, location.href).href;
+    busy = true;
+    [main, $('#reel')].forEach((el) => { el.style.transition = 'opacity .2s linear'; el.style.opacity = 0; });
+    setTimeout(() => location.assign(url), REDUCE ? 0 : 200);
+  }
+  // back from the landing, the browser may show this page as it was left (back-forward cache): show it again
+  addEventListener('pageshow', (e) => {
+    if (!e.persisted) return;
+    [main, $('#reel')].forEach((el) => { el.style.transition = ''; el.style.opacity = ''; });
+    busy = false;
+  });
+
   let pendingPop = false;
   async function navigate(token, opts = {}) {
     const r = routeOf(token);
     // the browser's back and forward during a page change are played once it ends (the address already moved)
     if (busy) { if (opts.pop) pendingPop = true; return; }
     setMenu(false);
+    if (r.name === 'project' && PHONE_PAGES.matches) { openAsPage(r); return; }
     // Topiary's two tabs (its site, its film) are one project: switch in place
     if (viewer && r.name === 'project' && r.p === viewer.p) {
       if (!opts.pop) setHash(r.token, opts.replace);
@@ -1172,7 +1192,20 @@
 
   /* ---------- Boot ---------- */
   try { history.scrollRestoration = 'manual'; } catch (e) { /* older browsers */ }
-  const first = routeOf(location.hash);
+  let first = routeOf(location.hash);
+  // back from a project opened as a page (phones): the reel shows that project again
+  try {
+    const k = sessionStorage.getItem('mg-reel');
+    sessionStorage.removeItem('mg-reel');
+    if (k !== null && P[+k]) { W.rest = W.target = W.eased = +k; W.first = false; }
+  } catch (e) { /* the reel starts on the first project */ }
+  // a project's address opened on a phone (a shared link): Work, with the reel on that project (opening the landing
+  // by itself would be a redirect, and the phone's Back would skip the portfolio)
+  if (first.name === 'project' && PHONE_PAGES.matches) {
+    W.rest = W.target = W.eased = P.indexOf(first.p); W.first = false;
+    setHash('work', true);
+    first = routeOf('work');
+  }
   const intro = playIntro();
   if (intro) { main.classList.add('is-waiting'); intro.then(() => main.classList.remove('is-waiting')); }
   mount(first, { entrance: first.name === 'work' ? (intro || null) : undefined, focus: false });

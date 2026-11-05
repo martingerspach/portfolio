@@ -1138,8 +1138,9 @@ void main() {
       if (arriving) { anims.delete(arriving); arriving = null; }
       if (striking) anims.delete(striking);
       const from = Math.max(press, 1);
-      const z0 = 0.5 * z0Of(LU);
-      striking = animate(640, (k) => stroke(k, z0, 1.3, from, 0.36), () => { striking = null; press = 1; platenW = 0; platenZ = 0; });
+      // no platen over the sheet (its rectangular shadow read as a box popping up): the type bites once more, at once,
+      // and the cotton settles back
+      striking = animate(480, (k) => { stroke(k, 0, 1.3, from, 0.001); platenW = 0; platenZ = 0; }, () => { striking = null; press = 1; platenW = 0; platenZ = 0; });
     }
     function setLabel(text, icon) {
       label.textContent = text;
@@ -1156,7 +1157,7 @@ void main() {
         clearTimeout(labelT);
         labelT = later(() => { setLabel('Copy the address', 'copy'); live.textContent = ''; }, 2600);
       };
-      if (reduce() || !gl) show(); else later(show, 230);
+      if (reduce() || !gl) show(); else later(show, 60);
     }
     btn.addEventListener('click', onCopy);
 

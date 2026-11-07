@@ -13,7 +13,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..600;1,6..96,400..500&family=Karla:ital,wght@0,400..700;1,400..500&display=swap">
 <link rel="preload" as="image" href="img/colline.webp" type="image/webp" fetchpriority="high">
-<link rel="preload" as="image" href="img/commode-lum.webp" type="image/webp">
 <link rel="stylesheet" href="tiroir.css">
 <script>(function(d){d.classList.remove('no-js');d.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&!/[?&]apparitions=0/.test(location.search)){d.classList.add('rv');setTimeout(function(){d.classList.add('rv-open')},2600);}})(document.documentElement);</script>
 </head>
@@ -60,7 +59,6 @@
 
 <main>
   <section class="hero" id="haut" aria-labelledby="titre">
-    <canvas class="trame" aria-hidden="true"></canvas>
     <div class="hero-in wrap">
       <h1 id="titre">La réponse est déjà <span class="nw">dans vos dossiers.</span></h1>
       <div class="hero-row">
@@ -99,18 +97,28 @@
 
     <div class="wrap">
       <div class="stage" aria-hidden="true">
-        <canvas class="stage-dots"></canvas>
-        <p class="stage-reply"></p>
-        <div class="fiche-shadow"></div>
-        <div class="sheet fiche">
-          <div class="fiche-top">
-            <svg class="i"><use href="#i-file"/></svg>
-            <div class="fiche-id"><p class="fiche-name"></p><p class="fiche-path"></p></div>
-            <p class="fiche-page"></p>
+        <div class="stage-say">
+          <p class="stage-reply"></p>
+          <p class="stage-src"><svg class="i"><use href="#i-file"/></svg><span class="stage-src-t"></span></p>
+        </div>
+        <div class="desk">
+          <canvas class="desk-cards desk-cards--back"></canvas>
+          <div class="desk-slot">
+            <div class="sheet fiche">
+              <div class="fiche-top">
+                <svg class="i"><use href="#i-file"/></svg>
+                <div class="fiche-id"><p class="fiche-name"></p><p class="fiche-path"></p></div>
+                <p class="fiche-page"></p>
+              </div>
+              <p class="fiche-h"></p>
+              <p class="fiche-body ruled"></p>
+              <p class="fiche-h fiche-h--next"></p>
+              <p class="fiche-next ruled"></p>
+              <canvas class="fiche-ink"></canvas>
+            </div>
           </div>
-          <p class="fiche-h"></p>
-          <p class="fiche-body ruled"></p>
-          <canvas class="fiche-ink"></canvas>
+          <canvas class="desk-cards desk-cards--front"></canvas>
+          <div class="drawer"><span class="drawer-plaque">Baux</span><svg class="drawer-poignee"><use href="#i-poignee"/></svg></div>
         </div>
       </div>
     </div>
@@ -119,6 +127,10 @@
 
   <section class="keys" id="dossiers" aria-labelledby="cles-titre">
     <div class="wrap">
+      <div class="keys-in">
+        <h2 id="cles-titre"><span class="cite" id="p-acces">Tiroir ne lit que les dossiers que vous lui ouvrez.</span></h2>
+        <p><span class="cite" id="p-sources">Vous les choisissez dans Google Drive, SharePoint ou Dropbox.</span> <span class="cite" id="p-preuve">Chaque réponse cite son passage.</span></p>
+      </div>
       <div class="keys-grid">
       <div class="nope" aria-hidden="true">
         <p class="sheet nope-q"><svg class="i"><use href="#i-search"/></svg><span>Quel est le code du portail de l’entrepôt&nbsp;?</span></p>
@@ -138,10 +150,6 @@
         </div>
         <div class="meuble-socle"></div>
       </figure>
-      </div>
-      <div class="keys-in">
-        <h2 id="cles-titre"><span class="cite" id="p-acces">Tiroir ne lit que les dossiers que vous lui ouvrez.</span></h2>
-        <p><span class="cite" id="p-sources">Vous les choisissez dans Google Drive, SharePoint ou Dropbox.</span> <span class="cite" id="p-preuve">Chaque réponse cite son passage.</span></p>
       </div>
       <p class="sr-only">Exemple&nbsp;: à une question dont la réponse n’est dans aucun dossier ouvert, Tiroir répond qu’il ne trouve pas l’information.</p>
     </div>
@@ -238,7 +246,6 @@
   </div>
 </footer>
 
-<script src="perso.js"></script>
 <script src="tiroir.js"></script>
 </body>
 </html>

@@ -10,6 +10,7 @@
   --white: #ffffff;
   --ink: #12161c;          /* texte, aplats */
   --ink-2: #3f4954;        /* texte secondaire (8,9:1 sur le papier) */
+  --ink-3: #66707c;        /* une réponse écartée, en grand (4,73:1 sur le papier) */
   --shark: #4e6276;        /* l'accent : le bleu-gris du requin */
   --shark-ink: #2c3f52;    /* renvoi actif, texte sur case */
   --tile: #e0e6eb;         /* la case */
@@ -38,6 +39,7 @@
   --t-display: clamp(42px, 7.3vw, 136px);   /* la question : titre du hero et de la fin */
   --t-section: clamp(38px, 5.2vw, 84px);    /* titre de section */
   --t-answer: clamp(26px, 2.75vw, 42px);    /* une réponse de Banc, en grand */
+  --t-claim: clamp(96px, min(22vw, 30vh), 280px);   /* deux réponses qui se contredisent, en affiche */
   --t-lead: clamp(19px, 1.4vw, 22px);       /* chapeau */
   --t-body: 18px;                           /* texte courant */
   --t-ui: 16px;                             /* boutons, navigation */
@@ -459,6 +461,67 @@ h2 { margin: 0; font: 250 var(--t-section)/1.02 var(--sans-thin); letter-spacing
 .extract-text mark.is-reading .c.on { background: var(--tile); }
 .extract figcaption { margin-top: var(--s-4); font-size: 16px; color: var(--ink-2); }
 
+/* ---------- Le recoupement : quand les sources se contredisent ----------
+   Le banc se partage en deux autour des deux réponses que donne le web, puis Banc tranche :
+   le banc de la réponse périmée pâlit, celui du texte en vigueur se resserre (banc-split.js). */
+.split {
+  position: relative; isolation: isolate; overflow: hidden;
+  min-height: max(100svh, 700px);
+  display: flex; flex-direction: column;
+  /* en bas : la place du bouton pause, sous les légendes */
+  padding: calc(var(--top-h) + clamp(28px, 5vh, 64px)) var(--gutter) clamp(88px, 11vh, 120px);
+}
+.split-school {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  z-index: -1; pointer-events: none;
+  /* le banc entre et sort de la section en fondu, sans bord dur */
+  -webkit-mask-image: linear-gradient(transparent 0, #000 96px, #000 calc(100% - 96px), transparent 100%);
+  mask-image: linear-gradient(transparent 0, #000 96px, #000 calc(100% - 96px), transparent 100%);
+}
+.split-head { display: grid; justify-items: center; text-align: center; }
+.split-note { margin-top: var(--s-4); max-width: 31em; font-size: var(--t-lead); line-height: 1.5; text-wrap: balance; }
+.split-stage { flex: 1; display: flex; flex-direction: column; margin-top: clamp(28px, 5.5vh, 64px); }
+.split-q { text-align: center; font-size: var(--t-lead); color: var(--ink-2); text-wrap: balance; }
+.claims {
+  flex: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: clamp(24px, 6vw, 120px);
+  margin-top: clamp(16px, 3vh, 32px);
+  /* au grand écran, les deux réponses restent à portée d'œil l'une de l'autre */
+  width: 100%; max-width: 1200px; margin-inline: auto;
+}
+.claim { display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; }
+/* la réponse en grand : l'anneau du banc tourne autour (son rayon se mesure sur cette boîte) */
+.claim-fig { align-self: center; display: grid; justify-items: center; padding-block: clamp(20px, 5vh, 56px); }
+.claim-n {
+  font: 250 var(--t-claim)/0.84 var(--sans-thin); letter-spacing: -0.04em;
+  font-variant-numeric: lining-nums;
+  transition: color 1100ms var(--ease), opacity var(--d-out) var(--ease);
+}
+.claim-u { margin-top: var(--s-3); font-size: var(--t-lead); color: var(--ink-2); white-space: nowrap; transition: opacity var(--d-out) var(--ease); }
+.claim-cap {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--s-3); align-items: start;
+  max-width: min(100%, 30em); font-size: var(--t-body); line-height: 1.5; text-wrap: pretty;
+}
+.claim-cap .ref { margin-top: 2px; }
+/* la légende : le statut (au verdict), puis les faits (écrits pendant le partage), chacun sur sa ligne */
+.claim-v, .claim-f { display: block; }
+.claim-v { font-weight: 600; transition: opacity var(--d-in) var(--ease); }
+.claim--on .claim-v { transition-delay: 260ms; }
+.claim--on .claim-cap .ref { transition: opacity var(--d-in) var(--ease) 260ms, background-color var(--d-out) var(--ease), color var(--d-out) var(--ease); }
+/* le verdict : la réponse périmée passe en gris */
+.split.is-verdict .claim--off .claim-n { color: var(--ink-3); }
+/* le film : la classe « js » est posée en tête de page, avant le premier rendu ; rien ne s'affiche puis ne disparaît.
+   Les chiffres s'écrivent quand le banc se partage, les faits juste après, le statut et le renvoi au verdict. */
+.js .split:not(.is-split) .claim-n, .js .split:not(.is-split) .claim-u, .js .split:not(.is-split) .claim-f,
+.js .split:not(.is-verdict) .claim-v, .js .split:not(.is-verdict) .claim-cap .ref { opacity: 0; }
+.split.is-split .claim-n { transition-duration: 1100ms, 900ms; }
+.split.is-split .claim--off .claim-n { transition-delay: 0ms, 520ms; }
+.split.is-split .claim--off .claim-u { transition-delay: 780ms; }
+.split.is-split .claim--on .claim-n { transition-delay: 0ms, 900ms; }
+.split.is-split .claim--on .claim-u { transition-delay: 1160ms; }
+.claim-f .c { opacity: 0; transition: opacity 160ms var(--ease-out); }
+.claim-f .c.on { opacity: 1; }
+
 /* ---------- Fin : la question du prix, et sa réponse ---------- */
 .end {
   padding: var(--section) var(--gutter) var(--s-9);
@@ -577,6 +640,38 @@ h2 { margin: 0; font: 250 var(--t-section)/1.02 var(--sans-thin); letter-spacing
   .foot-note:empty { display: none; }
   .examples button { min-height: 44px; }
 }
+/* le recoupement sur un écran bas (portables de 720 à 800 px) : la section tient dans un écran */
+@media (min-width: 601px) and (max-height: 800px) {
+  :root { --t-claim: clamp(96px, min(22vw, 25vh), 280px); }
+  .split { padding-top: calc(var(--top-h) + 16px); padding-bottom: 80px; }
+  .split-stage { margin-top: 20px; }
+  .split-note { margin-top: var(--s-3); }
+  .claims { margin-top: 8px; }
+  .claim-fig { padding-block: 16px; }
+}
+/* tablette en portrait : de plus grands chiffres, l'affiche reste pleine */
+@media (min-width: 601px) and (orientation: portrait) {
+  :root { --t-claim: clamp(96px, min(26vw, 30vh), 280px); }
+}
+/* le recoupement au téléphone : les deux réponses restent côte à côte ; leurs légendes passent dessous, en pleine largeur */
+@media (max-width: 600px) {
+  .split { min-height: 100svh; padding: var(--s-8) var(--gutter) calc(96px + env(safe-area-inset-bottom, 0px)); }
+  .split-head { justify-items: start; text-align: left; }
+  .split h2 { max-width: 8em; }
+  .split-q { text-align: left; }
+  .claims { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr) auto auto; column-gap: var(--s-4); }
+  .claim { display: contents; }
+  .claim--off .claim-fig { grid-area: 1 / 1; }
+  .claim--on .claim-fig { grid-area: 1 / 2; }
+  .claim-cap { grid-column: 1 / -1; max-width: none; padding-top: var(--s-3); }
+  .claim--off .claim-cap { grid-row: 2; }
+  .claim--on .claim-cap { grid-row: 3; border-top: 1px solid var(--rule); margin-top: var(--s-3); transition: border-color var(--d-in) var(--ease); }
+  .js .split:not(.is-split) .claim--on .claim-cap { border-top-color: transparent; }
+  .claim-u { font-size: 17px; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .split { min-height: 0; }
+}
 /* au doigt (téléphone, et téléphone couché ou petite tablette) : 44 px pour chaque commande ;
    les renvois gardent leur dessin, leur zone de toucher déborde */
 @media (max-width: 600px), (pointer: coarse) and (max-width: 899px) {
@@ -619,5 +714,5 @@ h2 { margin: 0; font: 250 var(--t-section)/1.02 var(--sans-thin); letter-spacing
   .ref, .btn, .send, .examples button { border: 1px solid CanvasText; }
   [data-verre] { background: Canvas !important; backdrop-filter: none !important; border: 1px solid CanvasText; }
   [data-verre]::before, .nav-plate { display: none; }
-  .school, .foot-word { display: none; }
+  .school, .foot-word, .split-school { display: none; }
 }

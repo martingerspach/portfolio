@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Weft</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Weft plans each recurring job, splits it between agents that work in your tools, and asks before anything it can’t undo.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fragment+Mono&family=Host+Grotesk:wght@300..800&display=swap">
+<link rel="stylesheet" href="weft.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <clipPath id="wm-l"><rect width="16" height="32"/></clipPath>
+    <clipPath id="wm-r"><rect x="16" width="16" height="32"/></clipPath>
+    <mask id="wm-a" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32"><rect width="32" height="32" fill="#fff"/><path d="M4.00 23.00C4.33 22.84 5.33 22.65 6.00 22.06C6.67 21.48 7.33 20.51 8.00 19.50C8.67 18.49 9.33 17.17 10.00 16.00C10.67 14.83 11.33 13.51 12.00 12.50C12.67 11.49 13.33 10.52 14.00 9.94C14.67 9.35 15.33 9.00 16.00 9.00C16.67 9.00 17.33 9.35 18.00 9.94C18.67 10.52 19.33 11.49 20.00 12.50C20.67 13.51 21.33 14.83 22.00 16.00C22.67 17.17 23.33 18.49 24.00 19.50C24.67 20.51 25.33 21.48 26.00 22.06C26.67 22.65 27.67 22.84 28.00 23.00" fill="none" stroke="#000" stroke-width="7.6" clip-path="url(#wm-l)"/></mask>
+    <mask id="wm-s" maskUnits="userSpaceOnUse" x="0" y="0" width="32" height="32"><rect width="32" height="32" fill="#fff"/><path d="M4.00 9.00C4.33 9.16 5.33 9.35 6.00 9.94C6.67 10.52 7.33 11.49 8.00 12.50C8.67 13.51 9.33 14.83 10.00 16.00C10.67 17.17 11.33 18.49 12.00 19.50C12.67 20.51 13.33 21.48 14.00 22.06C14.67 22.65 15.33 23.00 16.00 23.00C16.67 23.00 17.33 22.65 18.00 22.06C18.67 21.48 19.33 20.51 20.00 19.50C20.67 18.49 21.33 17.17 22.00 16.00C22.67 14.83 23.33 13.51 24.00 12.50C24.67 11.49 25.33 10.52 26.00 9.94C26.67 9.35 27.67 9.16 28.00 9.00" fill="none" stroke="#000" stroke-width="7.6" clip-path="url(#wm-r)"/></mask>
+  </defs>
+  <symbol id="mark" viewBox="0 0 32 32">
+    <path d="M4.00 23.00C4.33 22.84 5.33 22.65 6.00 22.06C6.67 21.48 7.33 20.51 8.00 19.50C8.67 18.49 9.33 17.17 10.00 16.00C10.67 14.83 11.33 13.51 12.00 12.50C12.67 11.49 13.33 10.52 14.00 9.94C14.67 9.35 15.33 9.00 16.00 9.00C16.67 9.00 17.33 9.35 18.00 9.94C18.67 10.52 19.33 11.49 20.00 12.50C20.67 13.51 21.33 14.83 22.00 16.00C22.67 17.17 23.33 18.49 24.00 19.50C24.67 20.51 25.33 21.48 26.00 22.06C26.67 22.65 27.67 22.84 28.00 23.00" fill="none" stroke="var(--sage)" stroke-width="3.2" stroke-linecap="round" mask="url(#wm-s)"/>
+    <path d="M4.00 9.00C4.33 9.16 5.33 9.35 6.00 9.94C6.67 10.52 7.33 11.49 8.00 12.50C8.67 13.51 9.33 14.83 10.00 16.00C10.67 17.17 11.33 18.49 12.00 19.50C12.67 20.51 13.33 21.48 14.00 22.06C14.67 22.65 15.33 23.00 16.00 23.00C16.67 23.00 17.33 22.65 18.00 22.06C18.67 21.48 19.33 20.51 20.00 19.50C20.67 18.49 21.33 17.17 22.00 16.00C22.67 14.83 23.33 13.51 24.00 12.50C24.67 11.49 25.33 10.52 26.00 9.94C26.67 9.35 27.67 9.16 28.00 9.00" fill="none" stroke="var(--apricot)" stroke-width="3.2" stroke-linecap="round" mask="url(#wm-a)"/>
+  </symbol>
+  <symbol id="arrow" viewBox="0 0 20 20"><path d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="chev" viewBox="0 0 20 20"><path d="M5.5 8l4.5 4.5L14.5 8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="close" viewBox="0 0 20 20"><path d="M5 5l10 10M15 5L5 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="pause" viewBox="0 0 20 20"><path d="M7 5v10M13 5v10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="play" viewBox="0 0 20 20"><path d="M7 5.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L7.9 4.7a.6.6 0 0 0-.9.5z" fill="currentColor"/></symbol>
+  <symbol id="link" viewBox="0 0 20 20"><path d="M8.5 11.5l3-3M7 9.5L5.6 10.9a2.6 2.6 0 0 0 3.6 3.6L10.6 13M13 10.5l1.4-1.4a2.6 2.6 0 0 0-3.6-3.6L9.4 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="cursor" viewBox="0 0 24 24"><path d="M5 3.5l13.5 8.2-6.1 1.3-3.3 5.6z" fill="#f4f1ea" stroke="#0e1110" stroke-width="1.4" stroke-linejoin="round"/></symbol>
+  <symbol id="i-airtable" viewBox="0 0 24 24"><path d="M11.992 1.966c-.434 0-.87.086-1.28.257L1.779 5.917c-.503.208-.49.908.012 1.116l8.982 3.558a3.266 3.266 0 0 0 2.454 0l8.982-3.558c.503-.196.503-.908.012-1.116l-8.957-3.694a3.255 3.255 0 0 0-1.272-.257zM23.4 8.056a.589.589 0 0 0-.222.045l-10.012 3.877a.612.612 0 0 0-.38.564v8.896a.6.6 0 0 0 .821.552L23.62 18.1a.583.583 0 0 0 .38-.551V8.653a.6.6 0 0 0-.6-.596zM.676 8.095a.644.644 0 0 0-.48.19C.086 8.396 0 8.53 0 8.69v8.355c0 .442.515.737.908.54l6.27-3.006.307-.147 2.969-1.436c.466-.22.43-.908-.061-1.092L.883 8.138a.57.57 0 0 0-.207-.044z"/></symbol>
+  <symbol id="i-github" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></symbol>
+  <symbol id="i-gmail" viewBox="0 0 24 24"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></symbol>
+  <symbol id="i-googlesheets" viewBox="0 0 24 24"><path d="M11.318 12.545H7.91v-1.909h3.41v1.91zM14.728 0v6h6l-6-6zm1.363 10.636h-3.41v1.91h3.41v-1.91zm0 3.273h-3.41v1.91h3.41v-1.91zM20.727 6.5v15.864c0 .904-.732 1.636-1.636 1.636H4.909a1.636 1.636 0 0 1-1.636-1.636V1.636C3.273.732 4.005 0 4.909 0h9.318v6.5h6.5zm-3.273 2.773H6.545v7.909h10.91v-7.91zm-6.136 4.636H7.91v1.91h3.41v-1.91z"/></symbol>
+  <symbol id="i-hubspot" viewBox="0 0 24 24"><path d="M18.164 7.93V5.084a2.198 2.198 0 001.267-1.978v-.067A2.2 2.2 0 0017.238.845h-.067a2.2 2.2 0 00-2.193 2.193v.067a2.196 2.196 0 001.252 1.973l.013.006v2.852a6.22 6.22 0 00-2.969 1.31l.012-.01-7.828-6.095A2.497 2.497 0 104.3 4.656l-.012.006 7.697 5.991a6.176 6.176 0 00-1.038 3.446c0 1.343.425 2.588 1.147 3.607l-.013-.02-2.342 2.343a1.968 1.968 0 00-.58-.095h-.002a2.033 2.033 0 102.033 2.033 1.978 1.978 0 00-.1-.595l.005.014 2.317-2.317a6.247 6.247 0 104.782-11.134l-.036-.005zm-.964 9.378a3.206 3.206 0 113.215-3.207v.002a3.206 3.206 0 01-3.207 3.207z"/></symbol>
+  <symbol id="i-intercom" viewBox="0 0 24 24"><path d="M21 0H3C1.343 0 0 1.343 0 3v18c0 1.658 1.343 3 3 3h18c1.658 0 3-1.342 3-3V3c0-1.657-1.342-3-3-3zm-5.801 4.399c0-.44.36-.8.802-.8.44 0 .8.36.8.8v10.688c0 .442-.36.801-.8.801-.443 0-.802-.359-.802-.801V4.399zM11.2 3.994c0-.44.357-.799.8-.799s.8.359.8.799v11.602c0 .44-.357.8-.8.8s-.8-.36-.8-.8V3.994zm-4 .405c0-.44.359-.8.799-.8.443 0 .802.36.802.8v10.688c0 .442-.36.801-.802.801-.44 0-.799-.359-.799-.801V4.399zM3.199 6c0-.442.36-.8.802-.8.44 0 .799.358.799.8v7.195c0 .441-.359.8-.799.8-.443 0-.802-.36-.802-.8V6zM20.52 18.202c-.123.105-3.086 2.593-8.52 2.593-5.433 0-8.397-2.486-8.521-2.593-.335-.288-.375-.792-.086-1.128.285-.334.79-.375 1.125-.09.047.041 2.693 2.211 7.481 2.211 4.848 0 7.456-2.186 7.479-2.207.334-.289.839-.25 1.128.086.289.336.25.84-.086 1.128zm.281-5.007c0 .441-.36.8-.801.8-.441 0-.801-.36-.801-.8V6c0-.442.361-.8.801-.8.441 0 .801.357.801.8v7.195z"/></symbol>
+  <symbol id="i-jira" viewBox="0 0 24 24"><path d="M11.571 11.513H0a5.218 5.218 0 0 0 5.232 5.215h2.13v2.057A5.215 5.215 0 0 0 12.575 24V12.518a1.005 1.005 0 0 0-1.005-1.005zm5.723-5.756H5.736a5.215 5.215 0 0 0 5.215 5.214h2.129v2.058a5.218 5.218 0 0 0 5.215 5.214V6.758a1.001 1.001 0 0 0-1.001-1.001zM23.013 0H11.455a5.215 5.215 0 0 0 5.215 5.215h2.129v2.057A5.215 5.215 0 0 0 24 12.483V1.005A1.001 1.001 0 0 0 23.013 0Z"/></symbol>
+  <symbol id="i-linear" viewBox="0 0 24 24"><path d="M2.886 4.18A11.982 11.982 0 0 1 11.99 0C18.624 0 24 5.376 24 12.009c0 3.64-1.62 6.903-4.18 9.105L2.887 4.18ZM1.817 5.626l16.556 16.556c-.524.33-1.075.62-1.65.866L.951 7.277c.247-.575.537-1.126.866-1.65ZM.322 9.163l14.515 14.515c-.71.172-1.443.282-2.195.322L0 11.358a12 12 0 0 1 .322-2.195Zm-.17 4.862 9.823 9.824a12.02 12.02 0 0 1-9.824-9.824Z"/></symbol>
+  <symbol id="i-notion" viewBox="0 0 24 24"><path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.981-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.374.466zm.793 3.08v13.904c0 .747.373 1.027 1.214.98l14.523-.84c.841-.046.935-.56.935-1.167V6.354c0-.606-.233-.933-.748-.887l-15.177.887c-.56.047-.747.327-.747.933zm14.337.745c.093.42 0 .84-.42.888l-.7.14v10.264c-.608.327-1.168.514-1.635.514-.748 0-.935-.234-1.495-.933l-4.577-7.186v6.952L12.21 19s0 .84-1.168.84l-3.222.186c-.093-.186 0-.653.327-.746l.84-.233V9.854L7.822 9.76c-.094-.42.14-1.026.793-1.073l3.456-.233 4.764 7.279v-6.44l-1.215-.139c-.093-.514.28-.887.747-.933zM1.936 1.035l13.31-.98c1.634-.14 2.055-.047 3.082.7l4.249 2.986c.7.513.934.653.934 1.213v16.378c0 1.026-.373 1.634-1.68 1.726l-15.458.934c-.98.047-1.448-.093-1.962-.747l-3.129-4.06c-.56-.747-.793-1.306-.793-1.96V2.667c0-.839.374-1.54 1.447-1.632z"/></symbol>
+  <symbol id="i-quickbooks" viewBox="0 0 24 24"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm.642 4.1335c.9554 0 1.7296.776 1.7296 1.7332v9.0667h1.6c1.614 0 2.9275-1.3156 2.9275-2.933 0-1.6173-1.3136-2.9333-2.9276-2.9333h-.6654V7.3334h.6654c2.5722 0 4.6577 2.0897 4.6577 4.667 0 2.5774-2.0855 4.6666-4.6577 4.6666H12.642zM7.9837 7.333h3.3291v12.533c-.9555 0-1.73-.7759-1.73-1.7332V9.0662H7.9837c-1.6146 0-2.9277 1.316-2.9277 2.9334 0 1.6175 1.3131 2.9333 2.9277 2.9333h.6654v1.7332h-.6654c-2.5725 0-4.6577-2.0892-4.6577-4.6665 0-2.5771 2.0852-4.6666 4.6577-4.6666Z"/></symbol>
+  <symbol id="i-salesforce" viewBox="0 0 24 24"><path d="M10.006 5.415a4.195 4.195 0 013.045-1.306c1.56 0 2.954.9 3.69 2.205.63-.3 1.35-.45 2.1-.45 2.85 0 5.159 2.34 5.159 5.22s-2.31 5.22-5.176 5.22c-.345 0-.69-.044-1.02-.104a3.75 3.75 0 01-3.3 1.95c-.6 0-1.155-.15-1.65-.375A4.314 4.314 0 018.88 20.4a4.302 4.302 0 01-4.05-2.82c-.27.062-.54.076-.825.076-2.204 0-4.005-1.8-4.005-4.05 0-1.5.811-2.805 2.01-3.51-.255-.57-.39-1.2-.39-1.846 0-2.58 2.1-4.65 4.65-4.65 1.53 0 2.85.705 3.72 1.8"/></symbol>
+  <symbol id="i-shopify" viewBox="0 0 24 24"><path d="M15.337 23.979l7.216-1.561s-2.604-17.613-2.625-17.73c-.018-.116-.114-.192-.211-.192s-1.929-.136-1.929-.136-1.275-1.274-1.439-1.411c-.045-.037-.075-.057-.121-.074l-.914 21.104h.023zM11.71 11.305s-.81-.424-1.774-.424c-1.447 0-1.504.906-1.504 1.141 0 1.232 3.24 1.715 3.24 4.629 0 2.295-1.44 3.76-3.406 3.76-2.354 0-3.54-1.465-3.54-1.465l.646-2.086s1.245 1.066 2.28 1.066c.675 0 .975-.545.975-.932 0-1.619-2.654-1.694-2.654-4.359-.034-2.237 1.571-4.416 4.827-4.416 1.257 0 1.875.361 1.875.361l-.945 2.715-.02.01zM11.17.83c.136 0 .271.038.405.135-.984.465-2.064 1.639-2.508 3.992-.656.213-1.293.405-1.889.578C7.697 3.75 8.951.84 11.17.84V.83zm1.235 2.949v.135c-.754.232-1.583.484-2.394.736.466-1.777 1.333-2.645 2.085-2.971.193.501.309 1.176.309 2.1zm.539-2.234c.694.074 1.141.867 1.429 1.755-.349.114-.735.231-1.158.366v-.252c0-.752-.096-1.371-.271-1.871v.002zm2.992 1.289c-.02 0-.06.021-.078.021s-.289.075-.714.21c-.423-1.233-1.176-2.37-2.508-2.37h-.115C12.135.209 11.669 0 11.265 0 8.159 0 6.675 3.877 6.21 5.846c-1.194.365-2.063.636-2.16.674-.675.213-.694.232-.772.87-.075.462-1.83 14.063-1.83 14.063L15.009 24l.927-21.166z"/></symbol>
+  <symbol id="i-slack" viewBox="0 0 24 24"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></symbol>
+  <symbol id="i-stripe" viewBox="0 0 24 24"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.594-7.305h.003z"/></symbol>
+  <symbol id="i-zendesk" viewBox="0 0 24 24"><path d="M12.914 2.904V16.29L24 2.905H12.914zM0 2.906C0 5.966 2.483 8.45 5.543 8.45s5.542-2.484 5.543-5.544H0zm11.086 4.807L0 21.096h11.086V7.713zm7.37 7.84c-3.063 0-5.542 2.48-5.542 5.543H24c0-3.06-2.48-5.543-5.543-5.543z"/></symbol>
+</svg>
+
+<a class="skip" href="#main">Skip to content</a>
+
+
+<header class="top" id="top">
+  <div class="wrap top__in">
+    <a class="logo" href="#main" aria-label="Weft, back to top">
+      <svg aria-hidden="true"><use href="#mark"/></svg><span>weft</span>
+    </a>
+    <nav class="top__nav" aria-label="Main">
+      <a href="#product">Product</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <button class="weave weave--sm weave--inverse top__cta" type="button" data-demo><span>Book a demo</span><span class="weave__eye" aria-hidden="true"><svg><use href="#arrow"/></svg><svg><use href="#arrow"/></svg></span></button>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" aria-labelledby="hero-title" data-loom-host>
+  <canvas class="loom hero__loom" data-loom="hero" aria-hidden="true"></canvas>
+  <div class="wrap hero__grid">
+    <div class="hero__text">
+      <h1 id="hero-title" class="display"><span>Describe a job once.</span> <span class="tone">Weft runs it weekly.</span></h1>
+      <p class="lede">Agents that work in your tools, ask before anything they can’t undo, and learn from every fix.</p>
+      <button class="weave hero__cta" type="button" data-demo><span>Book a 30-minute demo</span><span class="weave__eye" aria-hidden="true"><svg><use href="#arrow"/></svg><svg><use href="#arrow"/></svg></span></button>
+    </div>
+    <div class="hero__stage" id="run">
+      <div class="stage">
+        <div class="stack">
+          <div class="dock">
+            <div class="sheet-clip sheet-clip--up">
+              <div class="sheet sheet--skill" data-skill>
+                <svg aria-hidden="true"><use href="#mark"/></svg>
+                <p>Saved skill <b data-skill-name>Invoice matching, version 8</b></p>
+              </div>
+            </div>
+            <div class="card board">
+              <div class="seg" role="tablist" aria-label="Run board">
+                <button role="tab" id="bt-today" aria-selected="true" aria-controls="bp-today">Today</button>
+                <button role="tab" id="bt-wait" aria-selected="false" aria-controls="bp-wait" tabindex="-1">Needs you</button>
+                <button role="tab" id="bt-skills" aria-selected="false" aria-controls="bp-skills" tabindex="-1">Skills</button>
+                <span class="seg__thumb" aria-hidden="true"></span>
+              </div>
+              <div class="board__head"><span>Thursday</span><span class="board__sync"><svg aria-hidden="true"><use href="#link"/></svg>Connected to 9 tools</span></div>
+              <div class="board__panel" role="tabpanel" id="bp-today" aria-labelledby="bt-today">
+                <ol class="runs" data-runs>
+                  <li class="run"><time>08:30</time><div><b>Invoice matching</b><span>38 of 41 matched, 3 flagged</span></div><em>Done</em></li>
+                  <li class="run"><time>08:05</time><div><b>Lead routing</b><span>18 sign-ups assigned in HubSpot</span></div><em>Done</em></li>
+                  <li class="run"><time>07:40</time><div><b>Refund requests</b><span>11 tickets closed in Zendesk</span></div><em>Done</em></li>
+                </ol>
+              </div>
+              <div class="board__panel" role="tabpanel" id="bp-wait" aria-labelledby="bt-wait" hidden>
+                <ol class="runs">
+                  <li class="run"><time>09:02</time><div><b>Release $3,200 to Brightline</b><span>Above your $2,500 limit</span></div><em class="warm">Review</em></li>
+                  <li class="run"><time>08:47</time><div><b>Send 2 renewal emails</b><span>Drafts ready in Gmail</span></div><em class="warm">Review</em></li>
+                  <li class="run"><time>08:12</time><div><b>Close 4 duplicate leads</b><span>Merges can’t be undone</span></div><em class="warm">Review</em></li>
+                </ol>
+              </div>
+              <div class="board__panel" role="tabpanel" id="bp-skills" aria-labelledby="bt-skills" hidden>
+                <ol class="runs">
+                  <li class="run"><time>v8</time><div><b>Invoice matching</b><span>Used 212 times, last fix on Tuesday</span></div><em>Active</em></li>
+                  <li class="run"><time>v5</time><div><b>Refund requests</b><span>Used 640 times</span></div><em>Active</em></li>
+                  <li class="run"><time>v4</time><div><b>Weekly churn review</b><span>Used 31 times</span></div><em>Active</em></li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          <div class="dock">
+            <div class="card now" aria-live="off">
+              <div class="now__top"><span class="now__label">Now running</span><span class="now__end"><span class="now__step" data-step>Step 4 of 4</span><button class="btn-icon btn-icon--sm frame__pause" type="button" data-pause aria-label="Pause the animation" aria-pressed="false"><svg aria-hidden="true"><use href="#pause"/></svg></button></span></div>
+              <p class="now__job"><b data-job>Weekly churn review</b> <span data-doing>Waiting for your approval</span></p>
+              <div class="track" aria-hidden="true"><span data-bar style="transform: scaleX(.875)"></span></div>
+            </div>
+            <div class="sheet-clip sheet-clip--down">
+              <div class="sheet sheet--ask" data-ask>
+                <div class="sheet__text">
+                  <p class="sheet__q" data-ask-q>Send win-back offers to 4&nbsp;accounts?</p>
+                  <p class="sheet__who" data-ask-who>Asked Jo at 9:31</p>
+                </div>
+                <span class="mini mini--apricot" data-ask-btn>Approve</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <svg class="pointer" data-pointer aria-hidden="true"><use href="#cursor"/></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="tools" aria-label="Works with" data-rv>
+  <p class="tools__lead">Weft’s agents work inside the tools you already pay for</p>
+  <div class="marquee" data-marquee>
+    <ul class="marquee__row">
+      <li><svg aria-hidden="true"><use href="#i-slack"/></svg>Slack</li>
+      <li><svg aria-hidden="true"><use href="#i-gmail"/></svg>Gmail</li>
+      <li><svg aria-hidden="true"><use href="#i-hubspot"/></svg>HubSpot</li>
+      <li><svg aria-hidden="true"><use href="#i-salesforce"/></svg>Salesforce</li>
+      <li><svg aria-hidden="true"><use href="#i-stripe"/></svg>Stripe</li>
+      <li><svg aria-hidden="true"><use href="#i-quickbooks"/></svg>QuickBooks</li>
+      <li><svg aria-hidden="true"><use href="#i-zendesk"/></svg>Zendesk</li>
+      <li>and any MCP server</li>
+    </ul>
+  </div>
+</section>
+
+<section class="block product" id="product" aria-labelledby="product-title">
+  <div class="wrap">
+    <header class="head" data-rv>
+      <div class="head__text">
+        <h2 id="product-title" class="h2">One agent team <span class="tone">for the work that repeats</span></h2>
+        <p class="sub">Pick a team to see how Weft handles one of its weekly jobs.</p>
+      </div>
+      <div class="seg seg--big" role="tablist" aria-label="Team" data-teams>
+        <button role="tab" id="tt-finance" aria-selected="true" aria-controls="bento" data-team="finance">Finance</button>
+        <button role="tab" id="tt-support" aria-selected="false" aria-controls="bento" data-team="support" tabindex="-1">Support</button>
+        <button role="tab" id="tt-revenue" aria-selected="false" aria-controls="bento" data-team="revenue" tabindex="-1">Revenue</button>
+        <span class="seg__thumb" aria-hidden="true"></span>
+      </div>
+    </header>
+
+    <div class="bento" id="bento" role="tabpanel" aria-labelledby="tt-finance" data-rv>
+      <article class="cell cell--plan" id="how-plan" data-lit>
+        <div class="cell__text">
+          <h3>Plans the job, then splits it</h3>
+          <p>You write the job the way you would brief a colleague. Weft turns it into steps and gives each step to an agent that works in the right tool.</p>
+        </div>
+        <div class="flow" data-flow>
+          <svg class="flow__wires" aria-hidden="true"></svg>
+          <div class="flow__msg node" data-node="msg"><svg class="ico" aria-hidden="true"><use href="#i-slack"/></svg><p><b data-k="who">Dana</b> <span data-k="ask">Match this week’s invoices to their purchase orders. Flag anything off by more than 2%.</span></p></div>
+          <div class="flow__plan node" data-node="plan"><svg class="ico" aria-hidden="true"><use href="#mark"/></svg><span data-k="plan">Plan ready: 3 agents, 1 approval</span></div>
+          <div class="flow__agents">
+            <div class="flow__agent node" data-node="a1"><svg class="ico" aria-hidden="true"><use data-ki="i1" href="#i-gmail"/></svg><span data-k="a1">Reads 41 invoices</span><em data-state>Done</em></div>
+            <div class="flow__agent node" data-node="a2"><svg class="ico" aria-hidden="true"><use data-ki="i2" href="#i-quickbooks"/></svg><span data-k="a2">Finds each purchase order</span><em data-state>Done</em></div>
+            <div class="flow__agent node" data-node="a3"><svg class="ico" aria-hidden="true"><use data-ki="i3" href="#i-googlesheets"/></svg><span data-k="a3">Compares the totals</span><em data-state>Done</em></div>
+          </div>
+          <div class="flow__out node" data-node="out"><svg class="ico" aria-hidden="true"><use href="#i-slack"/></svg><span data-k="out">Report posted in #finance</span></div>
+        </div>
+      </article>
+
+      <article class="cell cell--ask" id="how-ask" data-lit>
+        <div class="cell__text">
+          <h3>Asks before anything it can’t undo</h3>
+          <p>Payments, refunds, emails to customers. You set the limits per tool, and Weft waits for a person above them.</p>
+        </div>
+        <div class="approve lift is-done" data-approve>
+          <div class="approve__head"><span><svg aria-hidden="true"><use href="#mark"/></svg>Weft needs your approval</span><time data-k="atime">9:12</time></div>
+          <p class="approve__act" data-k="act">Release a payment batch of $18,420</p>
+          <dl class="approve__facts">
+            <div><dt>For</dt><dd data-k="to">6 suppliers, 41 invoices</dd></div>
+            <div><dt>Why it asks</dt><dd data-k="why">Above your $5,000 limit</dd></div>
+          </dl>
+          <div class="approve__end">
+            <div class="approve__btns"><span class="mini">Change</span><span class="mini mini--apricot" data-approve-btn>Approve</span></div>
+            <p class="approve__done" data-k="done">Approved by Dana at 9:14. Sent to the bank file.</p>
+          </div>
+          <svg class="pointer" data-pointer aria-hidden="true"><use href="#cursor"/></svg>
+        </div>
+      </article>
+
+      <article class="cell cell--skill" id="how-skill" data-lit>
+        <div class="cell__text">
+          <h3>Keeps every finished job as a skill</h3>
+          <p>When you correct a run, Weft adds the fix to the job’s skill. The next run starts from it.</p>
+        </div>
+        <div class="skill lift" data-skillcard>
+          <div class="skill__head"><code data-k="skill">invoice-matching</code><span>version <b data-k="ver">7</b></span></div>
+          <ol class="skill__steps">
+            <li data-k="s1">Read new invoices sent to finance@</li>
+            <li data-k="s2">Find each purchase order in QuickBooks</li>
+            <li class="skill__new" data-new><span data-k="s3">Skip card payments under $50</span></li>
+            <li data-k="s4">Compare totals with a 2% tolerance</li>
+            <li data-k="s5">Post exceptions in #finance</li>
+          </ol>
+          <p class="skill__note" data-k="note">Added after Dana’s correction on Tuesday.</p>
+        </div>
+      </article>
+
+      <article class="cell cell--report" id="how-report" data-lit>
+        <div class="cell__text">
+          <h3>Runs on schedule, reports where you work</h3>
+          <p>Each job runs at the time you set and posts its result in Slack, Teams or email, with the run one click away.</p>
+        </div>
+        <div class="report">
+          <p class="report__when">Runs <b data-k="when">every weekday at 7:00</b></p>
+          <div class="msg lift">
+            <div class="msg__head"><svg aria-hidden="true"><use href="#mark"/></svg><b>Weft</b><time data-k="rtime">7:04 AM</time><span data-k="chan">#finance</span></div>
+            <p data-k="r1">Matched 38 of 41 invoices. Three need a look.</p>
+            <ul class="msg__list">
+              <li><span data-k="l1a">Northwind Supply</span><span data-k="l1b">4.1% over</span></li>
+              <li><span data-k="l2a">Halden &amp; Co</span><span data-k="l2b">No purchase order</span></li>
+              <li><span data-k="l3a">Brightline</span><span data-k="l3b">2.6% over</span></li>
+            </ul>
+            <span class="mini">Open the run</span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+
+
+<section class="block pricing" id="pricing" aria-labelledby="pricing-title">
+  <div class="wrap">
+    <header class="head" data-rv>
+      <h2 id="pricing-title" class="h2">Priced by the work, <span class="tone">not by the seat</span></h2>
+      <p class="sub">Every plan starts with 14 days on your own tools. A run is one job from start to finish, however many agents it uses.</p>
+    </header>
+    <div class="plans" data-rv>
+      <article class="plan">
+        <h3>Team</h3>
+        <p class="price"><b>$390</b><span>a month</span></p>
+        <p class="plan__for">For one team handing off its first jobs.</p>
+        <ul>
+          <li>Up to 10 scheduled jobs</li>
+          <li>2,000 runs a month</li>
+          <li>Approvals in Slack or by email</li>
+          <li>All 40 connectors</li>
+        </ul>
+        <button class="weave weave--sm weave--dark weave--block" type="button" data-demo="trial"><span>Start a 14-day trial</span><span class="weave__eye" aria-hidden="true"><svg><use href="#arrow"/></svg><svg><use href="#arrow"/></svg></span></button>
+      </article>
+      <article class="plan plan--pick" data-lit>
+        <h3>Business</h3>
+        <p class="price"><b>$1,190</b><span>a month</span></p>
+        <p class="plan__for">For several teams that share skills.</p>
+        <ul>
+          <li>Unlimited jobs</li>
+          <li>15,000 runs a month, then $0.04 a run</li>
+          <li>Shared skills with roles and reviews</li>
+          <li>SSO and a full audit log</li>
+        </ul>
+        <button class="weave weave--sm weave--block" type="button" data-demo><span>Book a demo</span><span class="weave__eye" aria-hidden="true"><svg><use href="#arrow"/></svg><svg><use href="#arrow"/></svg></span></button>
+      </article>
+      <article class="plan">
+        <h3>Enterprise</h3>
+        <p class="price price--custom"><b>Custom</b></p>
+        <p class="plan__for">For companies that keep data in their own cloud.</p>
+        <ul>
+          <li>Agents run inside your VPC</li>
+          <li>Your own models and API keys</li>
+          <li>SOC 2 Type II report and DPA</li>
+          <li>A setup engineer for 90 days</li>
+        </ul>
+        <button class="weave weave--sm weave--dark weave--block" type="button" data-demo="sales"><span>Talk to sales</span><span class="weave__eye" aria-hidden="true"><svg><use href="#arrow"/></svg><svg><use href="#arrow"/></svg></span></button>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="block qa" id="faq" aria-labelledby="faq-title">
+  <div class="wrap">
+    <header class="head" data-rv>
+      <h2 id="faq-title" class="h2">Questions <span class="tone">teams ask first</span></h2>
+    </header>
+    <dl class="faq__list" data-rv>
+      <div><dt>How is this different from Zapier or n8n?</dt><dd>Those tools run the fixed steps you draw. Weft writes the steps from your description, adjusts them when an input changes and asks when it is unsure. You can still lock any step.</dd></div>
+      <div><dt>Which AI models does it use?</dt><dd>You choose per job: Claude, GPT or Gemini through us, or your own keys and open models. Changing the model keeps the job, its approvals and its skills.</dd></div>
+      <div id="faq-data"><dt>Where does our data go?</dt><dd>Weft runs in our EU or US region, or inside your own cloud on Enterprise. Your data never trains a model, and every action stays in a log you can export.</dd></div>
+      <div><dt>What happens when a run fails?</dt><dd>It retries the steps that are safe to retry. If that fails too, it stops and posts what it tried and where it stopped, so a person can pick it up.</dd></div>
+    </dl>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="close" data-rv>
+      <div class="close__text">
+        <h2 class="foot__say">Your Monday report, <span class="tone">done before you sit&nbsp;down.</span></h2>
+        <p class="foot__sub">Bring one job your team repeats every week. We set it up with you during the call.</p>
+      </div>
+      <div class="foot__ctas">
+        <button class="weave" type="button" data-demo><span>Book a 30-minute demo</span><span class="weave__eye" aria-hidden="true"><svg><use href="#arrow"/></svg><svg><use href="#arrow"/></svg></span></button>
+        <button class="weave weave--dark" type="button" data-demo="trial"><span>Start a 14-day trial</span><span class="weave__eye" aria-hidden="true"><svg><use href="#arrow"/></svg><svg><use href="#arrow"/></svg></span></button>
+      </div>
+    </div>
+    <div class="foot__in">
+      <nav class="foot__cols" aria-label="Footer">
+        <div><h3>Product</h3><a href="#how-plan">Plans and agents</a><a href="#how-ask">Approvals</a><a href="#how-skill">Skills</a><a href="#pricing">Pricing</a></div>
+        <div><h3>Teams</h3><a href="#product" data-goteam="finance">Finance</a><a href="#product" data-goteam="support">Support</a><a href="#product" data-goteam="revenue">Revenue</a></div>
+        <div><h3>Company</h3><a href="#faq">Questions</a><a href="#faq-data">Data and security</a><button class="link" type="button" data-demo>Book a demo</button></div>
+      </nav>
+      <form class="news" id="news" novalidate>
+        <label for="news-mail">Product updates, once a month</label>
+        <div class="news__row">
+          <input id="news-mail" name="email" type="email" autocomplete="email" placeholder="you@company.com" required>
+          <button class="weave weave--sm weave--dark weave--plain" type="submit">Subscribe</button>
+        </div>
+        <p class="news__msg" id="news-msg" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+  <div class="wrap foot__base"><p>© 2026 Weft Labs, Inc.</p><a href="#main">Back to top</a></div>
+  <div class="wrap">
+    <div class="label" data-loom-host>
+      <canvas class="loom" data-loom="label" aria-hidden="true"></canvas>
+    </div>
+  </div>
+</footer>
+
+<dialog class="demo" id="demo" aria-labelledby="demo-title">
+  <form class="demo__form" id="demo-form" novalidate>
+    <div class="demo__head">
+      <h2 id="demo-title">Book a 30-minute demo</h2>
+      <button class="btn-icon" type="button" data-close aria-label="Close"><svg aria-hidden="true"><use href="#close"/></svg></button>
+    </div>
+    <p class="demo__intro" data-intro>Bring one job you repeat every week. We set it up with you during the call.</p>
+    <ol class="stepper" aria-label="Steps">
+      <li aria-current="step"><span>1</span>About you</li>
+      <li><span>2</span>Your tools</li>
+      <li><span>3</span>A time</li>
+    </ol>
+
+    <fieldset class="demo__step" data-dstep="0">
+      <legend class="sr">About you</legend>
+      <div class="field"><label for="d-name">Full name</label><input id="d-name" name="name" autocomplete="name" placeholder="Dana Reyes" required><p class="field__err" id="d-name-err"></p></div>
+      <div class="field"><label for="d-mail">Work email</label><input id="d-mail" name="email" type="email" autocomplete="email" placeholder="dana@northwind.com" required><p class="field__err" id="d-mail-err"></p></div>
+      <div class="field"><label for="d-co">Company</label><input id="d-co" name="company" autocomplete="organization" placeholder="Northwind" required><p class="field__err" id="d-co-err"></p></div>
+    </fieldset>
+
+    <fieldset class="demo__step" data-dstep="1" hidden>
+      <legend>Which tools should Weft work in?</legend>
+      <div class="picks">
+        <label class="pick"><input type="checkbox" name="tools" value="Slack" checked><svg aria-hidden="true"><use href="#i-slack"/></svg>Slack</label>
+        <label class="pick"><input type="checkbox" name="tools" value="Gmail"><svg aria-hidden="true"><use href="#i-gmail"/></svg>Gmail</label>
+        <label class="pick"><input type="checkbox" name="tools" value="HubSpot"><svg aria-hidden="true"><use href="#i-hubspot"/></svg>HubSpot</label>
+        <label class="pick"><input type="checkbox" name="tools" value="Salesforce"><svg aria-hidden="true"><use href="#i-salesforce"/></svg>Salesforce</label>
+        <label class="pick"><input type="checkbox" name="tools" value="Stripe"><svg aria-hidden="true"><use href="#i-stripe"/></svg>Stripe</label>
+        <label class="pick"><input type="checkbox" name="tools" value="QuickBooks"><svg aria-hidden="true"><use href="#i-quickbooks"/></svg>QuickBooks</label>
+        <label class="pick"><input type="checkbox" name="tools" value="Zendesk"><svg aria-hidden="true"><use href="#i-zendesk"/></svg>Zendesk</label>
+        <label class="pick"><input type="checkbox" name="tools" value="Notion"><svg aria-hidden="true"><use href="#i-notion"/></svg>Notion</label>
+      </div>
+      <div class="field"><label for="d-job">A job you would hand off first <span class="opt">(optional)</span></label><textarea id="d-job" name="job" rows="2" placeholder="Every Monday, list last week’s cancellations and why they left"></textarea></div>
+    </fieldset>
+
+    <fieldset class="demo__step" data-dstep="2" hidden>
+      <legend data-when>Pick a time, in your time zone</legend>
+      <div class="slots">
+        <label class="slot"><input type="radio" name="slot" value="Tuesday at 10:00" checked><b>Tuesday</b><span>10:00</span></label>
+        <label class="slot"><input type="radio" name="slot" value="Tuesday at 14:30"><b>Tuesday</b><span>14:30</span></label>
+        <label class="slot"><input type="radio" name="slot" value="Wednesday at 11:00"><b>Wednesday</b><span>11:00</span></label>
+        <label class="slot"><input type="radio" name="slot" value="Thursday at 16:00"><b>Thursday</b><span>16:00</span></label>
+      </div>
+    </fieldset>
+
+    <div class="demo__done" data-done hidden tabindex="-1">
+      <svg aria-hidden="true"><use href="#mark"/></svg>
+      <p class="demo__ok" data-done-text>Thanks. We’ll confirm by email.</p>
+      <p class="demo__fine">This page is a design study, so nothing left your browser.</p>
+    </div>
+
+    <div class="demo__foot">
+      <button class="weave weave--sm weave--dark weave--plain" type="button" data-back hidden>Back</button>
+      <button class="weave weave--sm weave--plain" type="submit" data-next>Next step<svg aria-hidden="true"><use href="#arrow"/></svg></button>
+    </div>
+  </form>
+</dialog>
+
+<script src="loom.js"></script>
+<script src="weft.js"></script>
+</body>
+</html>

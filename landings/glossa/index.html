@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en" class="preload">
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glossa</title>
+<meta name="description" content="Glossa drafts every new string of your product in all your languages, has native speakers approve them on the real screen, and merges them back before you release.">
+<meta name="theme-color" content="#ce0f3d">
+<link rel="preload" href="fonts/glossa-pixel.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/geist-mono.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="img/hero-tone.webp" as="image">
+<link rel="stylesheet" href="glossa.css">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script>
+  (function () {
+    var d = document.documentElement;
+    d.classList.add('js');
+    try { if (window.WebGLRenderingContext) d.classList.add('has-gl'); } catch (e) {}
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) d.classList.add('reduced');
+    requestAnimationFrame(function () { requestAnimationFrame(function () { d.classList.remove('preload'); }); });
+  })();
+</script>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="mark" viewBox="0 0 9 9">
+      <path d="M2 0h5v1H2zM1 1h2v1H1zM6 1h2v1H6zM0 2h2v1H0zM0 3h2v1H0zM0 4h2v1H0zM5 4h4v1H5zM0 5h2v1H0zM7 5h2v1H7zM0 6h2v1H0zM7 6h2v1H7zM1 7h2v1H1zM6 7h2v1H6zM2 8h5v1H2z"/>
+    </symbol>
+    <symbol id="yes" viewBox="0 0 7 6">
+      <path d="M6 0h1v2H6zM5 1h1v2H5zM4 2h1v2H4zM0 2h1v2H0zM1 3h1v2H1zM3 3h1v2H3zM2 4h1v2H2z"/>
+    </symbol>
+    <symbol id="arrow" viewBox="0 0 16 16">
+      <path d="M3 8h9.2M8.6 4.2 12.4 8l-3.8 3.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+    </symbol>
+  </defs>
+</svg>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="mast" data-tone="dark">
+  <div class="wrap mast__row">
+    <a class="brand" href="#top" aria-label="Glossa, back to top">
+      <span class="brand__tile"><svg class="brand__mark" viewBox="0 0 9 9" aria-hidden="true"><use href="#mark"/></svg></span>
+      <span class="brand__word">Glossa</span>
+    </a>
+    <nav class="nav" aria-label="Main">
+      <a href="#product">Product</a>
+      <a href="#workflow">Workflow</a>
+      <a href="#compare">Compare</a>
+      <a href="#pricing">Pricing</a>
+    </nav>
+    <div class="mast__cta">
+      <a class="btn btn--light btn--sm" href="#demo">Start for free</a>
+      <a class="btn btn--dark btn--sm" href="#demo">Book a demo</a>
+    </div>
+    <button class="mast__menu" type="button" aria-expanded="false" aria-controls="sheet">
+      <span class="mast__menu-label" data-menu-label>Menu</span>
+      <span class="mast__menu-bars" aria-hidden="true"><i></i><i></i></span>
+    </button>
+  </div>
+  <div class="sheet" id="sheet" hidden>
+    <div class="wrap sheet__inner">
+      <nav class="sheet__nav" aria-label="Main, mobile">
+        <a href="#product">Product</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#compare">Compare</a>
+        <a href="#pricing">Pricing</a>
+      </nav>
+      <div class="sheet__cta">
+        <a class="btn btn--light" href="#demo">Start for free</a>
+        <a class="btn btn--dark" href="#demo">Book a demo</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- 1. Hero ------------------------------------------------------------------------------------------------- -->
+  <section class="hero" id="top" aria-labelledby="hero-title">
+    <div class="plate plate--hero" data-screen="hero" aria-hidden="true">
+      <canvas></canvas>
+      <img class="plate__fallback" alt="" data-src="img/hero.webp" data-srcset="img/hero-1x.webp 1600w, img/hero.webp 3200w" sizes="100vw">
+      <noscript><img class="plate__fallback" src="img/hero-1x.webp" srcset="img/hero-1x.webp 1600w, img/hero.webp 3200w" sizes="100vw" alt=""></noscript>
+    </div>
+
+    <div class="wrap hero__strip">
+      <a class="strip__news" href="#card-review">
+        <span class="strip__news-key">Just shipped</span>
+        <span>Review strings on the live screen</span>
+        <svg class="ico" aria-hidden="true"><use href="#arrow"/></svg>
+      </a>
+      <p class="strip__langs"><span class="sr">Glossa works in 24 languages, including French, German, Japanese, Spanish, Portuguese, Korean, Arabic, Italian, Dutch, Polish, Turkish, Hindi and Swedish.</span><span class="strip__langs-row" aria-hidden="true"><span lang="fr">Français</span><span lang="de">Deutsch</span><span lang="ja">日本語</span><span lang="es">Español</span><span lang="pt">Português</span><span lang="ko">한국어</span><span lang="ar">العربية</span><span lang="it">Italiano</span><span lang="nl">Nederlands</span><span lang="pl">Polski</span><span lang="tr">Türkçe</span><span lang="hi">हिन्दी</span><span lang="sv">Svenska</span></span></p>
+    </div>
+
+    <div class="wrap hero__body">
+      <h1 class="hero__title pixel" id="hero-title">Ship every release in every language.</h1>
+      <p class="hero__lede">Glossa drafts each new string in all your languages, has native speakers approve it on the real screen, and merges it back before you release.</p>
+      <div class="hero__cta">
+        <a class="btn btn--light" href="#demo">Start for free</a>
+        <a class="btn btn--dark" href="#workflow">See how it works</a>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    /* Hero plate: it keeps the engraving's own shape, hangs from the right edge and sits low enough that its
+       horizon (63.2 % down, haze included) stays under the buttons at every width; the hero grows to hold it whole.
+       Runs here, before the first paint, so nothing moves afterwards. */
+    window.glossaHero = function () {
+      var hero = document.querySelector('.hero'), plate = document.querySelector('.plate--hero'), cta = document.querySelector('.hero__cta');
+      if (!hero || !plate || !cta) return;
+      var AR = 2048 / 1607, CLEAR = 0.565;
+      var W = hero.clientWidth, zoom = W < 600 ? 1.55 : W < 1024 ? 1.08 : 1;
+      var pw = Math.ceil(W * zoom), ph = Math.ceil(pw / AR);
+      hero.style.minHeight = '';
+      var hMin = hero.offsetHeight;
+      var ctaB = cta.getBoundingClientRect().bottom - hero.getBoundingClientRect().top;
+      var top = Math.max(Math.round(ctaB + 32 - CLEAR * ph), hMin - ph);
+      plate.classList.add('is-placed');
+      plate.style.cssText = 'width:' + pw + 'px;height:' + ph + 'px;left:' + (W - pw) + 'px;top:' + top + 'px';
+      hero.style.minHeight = (top + ph) + 'px';
+    };
+    window.glossaHero();
+  </script>
+
+  <!-- 2. Product ---------------------------------------------------------------------------------------------- -->
+  <section class="sec sec--paper" id="product" aria-labelledby="product-title">
+    <div class="wrap sec__inner">
+      <div class="intro intro--bento">
+        <h2 class="intro__title pixel" id="product-title">Translation that ships with your code</h2>
+        <p class="intro__text">Glossa reads every pull request, finds the text people will see, and prepares it in each language with your glossary and tone. Nothing waits for a spreadsheet.</p>
+      </div>
+
+      <div class="bento">
+
+        <article class="card card--wide" id="card-drafts">
+          <div class="card__plate"><img src="img/card-drafts.webp" srcset="img/card-drafts-1x.webp 820w, img/card-drafts.webp 1640w" sizes="(min-width: 1101px) 820px, 100vw" alt="" width="1640" height="1120" decoding="async"></div>
+          <div class="card__stage" aria-hidden="true">
+            <div class="ui ui--drafts" data-demo="drafts">
+              <div class="ui__head">
+                <span class="ui__key">cart.add</span>
+                <span class="ui__src"><span class="ui__lang">EN</span>Add to cart</span>
+                <span class="tag tag--violet ui__state" data-state>6 of 6 drafted</span>
+              </div>
+              <ol class="drafts">
+                <li><span class="ui__lang">FR</span><span class="drafts__text" data-type>Ajouter au <u>panier</u></span><span class="tag drafts__tag">Draft</span></li>
+                <li><span class="ui__lang">DE</span><span class="drafts__text" data-type>In den <u>Warenkorb</u></span><span class="tag drafts__tag">Draft</span></li>
+                <li><span class="ui__lang">JA</span><span class="drafts__text" lang="ja" data-type><u>カート</u>に追加</span><span class="tag drafts__tag">Draft</span></li>
+                <li><span class="ui__lang">AR</span><span class="drafts__text" lang="ar" dir="rtl" data-type>أضف إلى <u>السلة</u></span><span class="tag drafts__tag">Draft</span></li>
+                <li><span class="ui__lang">PT</span><span class="drafts__text" data-type>Adicionar ao <u>carrinho</u></span><span class="tag drafts__tag">Draft</span></li>
+                <li><span class="ui__lang">KO</span><span class="drafts__text" lang="ko" data-type><u>장바구니</u>에 담기</span><span class="tag drafts__tag">Draft</span></li>
+              </ol>
+              <div class="ui__foot">
+                <span class="ui__hint"><u>Underlined</u> words come from your glossary.</span>
+                <span class="ui__meta">6 of 24 shown</span>
+              </div>
+            </div>
+          </div>
+          <div class="card__copy">
+            <h3>Drafts in every language</h3>
+            <p>New strings are drafted in all your languages within minutes, in your words and your tone.</p>
+          </div>
+        </article>
+
+        <article class="card" id="card-review">
+          <div class="card__plate"><img src="img/card-review.webp" srcset="img/card-review-1x.webp 410w, img/card-review.webp 820w" sizes="(min-width: 1101px) 402px, (min-width: 761px) 50vw, 100vw" alt="" width="820" height="1120" loading="eager" decoding="async"></div>
+          <div class="card__stage" aria-hidden="true">
+            <div class="ui ui--screen" data-demo="review">
+              <div class="shop">
+                <img class="shop__img" src="img/linen.webp" alt="" width="64" height="64" decoding="async">
+                <div class="shop__lines">
+                  <span class="shop__name">Leinenhemd, Sand</span>
+                  <span class="shop__price">79,00 €</span>
+                </div>
+              </div>
+              <div class="shop__sizes"><span>S</span><span class="is-on">M</span><span>L</span><span>XL</span></div>
+              <dl class="shop__meta"><div><dt>Menge</dt><dd>1</dd></div><div><dt>Lieferung</dt><dd>2 bis 3 Tage</dd></div><div><dt>Summe</dt><dd>79,00 €</dd></div></dl>
+              <div class="shop__cta">
+                <span class="shop__save">Merken</span>
+                <span class="shop__btn" data-target>
+                  <span class="shop__face"><span class="shop__label shop__label--long is-on" data-long>Weiter zur Kasse gehen</span><span class="shop__label" data-short>Zur Kasse</span></span>
+                  <span class="shop__mark"></span>
+                </span>
+              </div>
+              <div class="note is-hidden" data-note>
+                <span class="note__face">H</span>
+                <span class="note__body"><span class="note__who" data-who>Hana, German reviewer</span><span class="note__text">“Zur Kasse” fits and reads better.</span></span>
+              </div>
+              <div class="cursor" data-cursor><svg viewBox="0 0 16 20" aria-hidden="true"><path d="M1 1l13 9-6 1.4L5.3 18z"/></svg><span>Hana</span></div>
+            </div>
+          </div>
+          <div class="card__copy">
+            <h3>Reviewed on screen</h3>
+            <p>Native reviewers see each string where it lives, then approve it in one click.</p>
+          </div>
+        </article>
+
+        <article class="card" id="card-glossary">
+          <div class="card__plate"><img src="img/card-glossary.webp" srcset="img/card-glossary-1x.webp 410w, img/card-glossary.webp 820w" sizes="(min-width: 1101px) 402px, (min-width: 761px) 50vw, 100vw" alt="" width="820" height="1120" decoding="async"></div>
+          <div class="card__stage" aria-hidden="true">
+            <div class="ui ui--glossary" data-demo="glossary">
+              <div class="ui__bar"><span class="ui__title">Glossary</span><span class="ui__meta" data-count>48 terms</span></div>
+              <dl class="terms">
+                <div><dt>workspace</dt><dd>espace de travail</dd><span class="ui__lang">FR</span></div>
+                <div><dt>cart</dt><dd>Warenkorb</dd><span class="ui__lang">DE</span></div>
+                <div class="terms__new" data-new><dt>checkout</dt><dd data-type>Kasse</dd><span class="ui__lang">DE</span></div>
+                <div><dt>sign in</dt><dd>se connecter</dd><span class="ui__lang">FR</span></div>
+                <div class="terms__lock"><dt>Glossa</dt><dd>Never translated</dd><span class="ui__lang">All</span></div>
+              </dl>
+            </div>
+          </div>
+          <div class="card__copy">
+            <h3>Your words, every time</h3>
+            <p>Product terms and tone rules apply to every draft, in every language.</p>
+          </div>
+        </article>
+
+        <article class="card" id="card-fit">
+          <div class="card__plate"><img src="img/card-fit.webp" srcset="img/card-fit-1x.webp 410w, img/card-fit.webp 820w" sizes="(min-width: 1101px) 402px, (min-width: 761px) 50vw, 100vw" alt="" width="820" height="1120" decoding="async"></div>
+          <div class="card__stage" aria-hidden="true">
+            <div class="ui ui--fit" data-demo="fit">
+              <div class="ui__bar">
+                <span class="ui__src"><span class="ui__key">cart.add</span><span class="ui__lang">DE</span></span>
+                <span class="tag fit__verdict" data-verdict>Fits</span>
+              </div>
+              <div class="fit__body">
+                <div class="bfit is-over" data-bfit>
+                  <span class="bfit__frame"></span>
+                  <span class="bfit__btn"><span class="bfit__label bfit__label--long" data-long>Jetzt in den Warenkorb legen</span><span class="bfit__label">In den Warenkorb</span></span>
+                  <span class="bfit__ghost" data-ghost><span>Jetzt in den Warenkorb legen</span></span>
+                  <span class="bfit__rule"><em>160 px</em></span>
+                  <span class="bfit__over"><em data-over>+58 px</em></span>
+                </div>
+              </div>
+              <div class="fit__alt">
+                <span class="fit__was">Jetzt in den Warenkorb legen</span>
+                <span class="fit__now">In den Warenkorb<em class="tag tag--violet">Shorter</em></span>
+              </div>
+            </div>
+          </div>
+          <div class="card__copy">
+            <h3>Checked in its button</h3>
+            <p>Glossa measures each string in its button and offers a shorter one.</p>
+          </div>
+        </article>
+
+        <article class="card" id="card-merge">
+          <div class="card__plate"><img src="img/card-merge.webp" srcset="img/card-merge-1x.webp 410w, img/card-merge.webp 820w" sizes="(min-width: 1101px) 402px, (min-width: 761px) 50vw, 100vw" alt="" width="820" height="1120" decoding="async"></div>
+          <div class="card__stage" aria-hidden="true">
+            <div class="ui ui--pr" data-demo="pr">
+              <div class="ui__bar"><span class="ui__title">Translations for #482</span><span class="tag tag--violet">Open</span></div>
+              <div class="pr__body">
+                <ul class="pr__files">
+                  <li><span>locales/de.json</span><em>+4</em></li>
+                  <li><span>locales/ja.json</span><em>+4</em></li>
+                  <li><span>22 more files</span><em>+88</em></li>
+                </ul>
+                <ul class="pr__checks">
+                  <li data-check="8"><span class="pr__st"><svg class="pr__ok"><use href="#yes"/></svg><i class="pr__run"></i></span><span>Placeholders intact</span><em>8 s</em></li>
+                  <li data-check="11"><span class="pr__st"><svg class="pr__ok"><use href="#yes"/></svg><i class="pr__run"></i></span><span>Plurals complete</span><em>11 s</em></li>
+                  <li data-check="14"><span class="pr__st"><svg class="pr__ok"><use href="#yes"/></svg><i class="pr__run"></i></span><span>Every string fits</span><em>14 s</em></li>
+                </ul>
+                <div class="pr__people"><span class="pr__faces"><i>H</i><i>Y</i><i>S</i><i>+21</i></span><span>Approved in 24 languages</span></div>
+                <div class="pr__foot"><span>96 translations<span class="pr__langs">, 24 files</span></span><span class="pr__merge" data-merge>Merge</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card__copy">
+            <h3>Back as a pull request</h3>
+            <p>Approved strings return as a pull request your CI already checks.</p>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Workflow --------------------------------------------------------------------------------------------- -->
+  <section class="sec sec--paper sec--ruled" id="workflow" aria-labelledby="workflow-title">
+    <div class="wrap sec__inner flow">
+      <div class="flow__text">
+        <h2 class="pixel flow__title" id="workflow-title">From pull request to every language</h2>
+        <ol class="steps" role="tablist" aria-label="How a release is translated">
+          <li role="presentation"><button class="step" role="tab" id="tab-1" aria-controls="flow-panel" aria-selected="true" data-step="0">
+            <span class="step__title">Glossa reads the pull request</span>
+            <span class="step__text">New and changed text is found the moment the pull request opens.</span>
+          </button></li>
+          <li role="presentation"><button class="step" role="tab" id="tab-2" aria-controls="flow-panel" aria-selected="false" tabindex="-1" data-step="1">
+            <span class="step__title">Drafted, then approved by people</span>
+            <span class="step__text">Drafts arrive in minutes. A native speaker approves each language.</span>
+          </button></li>
+          <li role="presentation"><button class="step" role="tab" id="tab-3" aria-controls="flow-panel" aria-selected="false" tabindex="-1" data-step="2">
+            <span class="step__title">Merged before you release</span>
+            <span class="step__text">Approved strings land in the same release as the code.</span>
+          </button></li>
+        </ol>
+      </div>
+
+      <div class="flow__stage" id="flow-panel" role="tabpanel" aria-labelledby="tab-1">
+        <div class="flow__plate"><img src="img/flow.webp" srcset="img/flow-1x.webp 680w, img/flow.webp 1360w" sizes="(min-width: 1101px) 660px, (min-width: 901px) 55vw, 100vw" alt="" width="1360" height="1040" decoding="async"></div>
+        <p class="flow__live" aria-live="polite" data-live>Pull request #482 adds 3 strings and changes 1.</p>
+        <div class="flow__scene" aria-hidden="true">
+
+          <div class="scene scene--diff" data-scene="0">
+            <div class="ui ui--diff">
+              <div class="diff__file">src/checkout/Cart.tsx</div>
+              <pre class="diff__code"><span class="diff__ln">41</span>  &lt;Button&gt;
+<span class="diff__ln diff__ln--add">42</span><span class="diff__add">+   {t("cart.add", <b data-hl>"Add to cart"</b>)}</span>
+<span class="diff__ln">43</span>  &lt;/Button&gt;
+<span class="diff__ln diff__ln--add">44</span><span class="diff__add">+ &lt;p&gt;{t("cart.free", <b data-hl>"Free returns"</b>)}&lt;/p&gt;</span>
+<span class="diff__ln diff__ln--add">45</span><span class="diff__add">+ &lt;p&gt;{t("cart.eta", <b data-hl>"Arrives {date}"</b>)}&lt;/p&gt;</span>
+<span class="diff__ln diff__ln--chg">46</span><span class="diff__chg">~ {t("cart.empty", <b data-hl>"Your cart is empty"</b>)}</span></pre>
+              <div class="diff__found"><span data-count>4</span> strings found</div>
+            </div>
+          </div>
+
+          <div class="scene scene--grid" data-scene="1">
+            <div class="ui ui--grid">
+              <div class="grid__head"><span>Release 4.2</span><span data-approved>21 of 24 approved</span></div>
+              <div class="grid" data-grid></div>
+              <div class="grid__legend"><span>Approved <i class="sq sq--ok"></i></span><span>Waiting for review <i class="sq sq--draft"></i></span></div>
+            </div>
+          </div>
+
+          <div class="scene scene--ship" data-scene="2">
+            <div class="ui ui--ship">
+              <div class="ship__title">Release 4.2 is ready in 24 languages</div>
+              <ol class="ship__log">
+                <li><span>10:02</span>Pull request opened</li>
+                <li><span>10:06</span>Drafts in 24 languages</li>
+                <li><span>11:31</span>Last approval, Korean</li>
+                <li><span>11:40</span>Merged into main</li>
+              </ol>
+              <div class="ship__langs" lang="mul"><span>FR</span><span>DE</span><span>ES</span><span>IT</span><span>PT</span><span>NL</span><span>PL</span><span>SV</span><span>DA</span><span>FI</span><span>NO</span><span>CS</span><span>TR</span><span>EL</span><span>RO</span><span>HU</span><span>UK</span><span>AR</span><span>HE</span><span>HI</span><span>JA</span><span>KO</span><span>ZH</span><span>TH</span></div>
+            </div>
+          </div>
+        </div>
+        <button class="flow__pause btn-icon" type="button" aria-pressed="false" data-pause>
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path class="i-pause" d="M5 3.5h2v9H5zM9 3.5h2v9H9z"/><path class="i-play" d="M5 3.2l8 4.8-8 4.8z"/></svg>
+          <span class="sr" data-pause-label>Pause the walkthrough</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Dashboard -------------------------------------------------------------------------------------------- -->
+  <section class="sec sec--paper sec--ruled board" aria-labelledby="board-title">
+    <div class="wrap sec__inner">
+      <h2 class="pixel board__title" id="board-title">Every language on one screen</h2>
+      <p class="board__text">See what is drafted, what waits for a reviewer and what ships next, language by language.</p>
+      <div class="board__frame">
+        <div class="board__fit" data-fit>
+          <div class="dash" aria-hidden="true">
+            <aside class="dash__side">
+              <div class="dash__brand"><span class="brand__tile brand__tile--sm"><svg viewBox="0 0 9 9"><use href="#mark"/></svg></span><span><b>Glossa</b><small>Northwind app</small></span></div>
+              <div class="dash__group">Project</div>
+              <ul class="dash__nav">
+                <li class="is-on"><svg class="dash__ico" viewBox="0 0 7 7"><path d="M0 0h3v3H0zM4 0h3v3H4zM0 4h3v3H0zM4 4h3v3H4z"/></svg><span>Overview</span></li><li><svg class="dash__ico" viewBox="0 0 7 7"><path d="M0 0h7v1H0zM0 3h5v1H0zM0 6h6v1H0z"/></svg><span>Strings</span></li><li><svg class="dash__ico" viewBox="0 0 7 7"><path d="M6 0h1v2H6zM5 1h1v2H5zM4 2h1v2H4zM0 3h1v2H0zM1 4h1v2H1zM3 4h1v2H3zM2 5h1v2H2z"/></svg><span>Review</span><em>37</em></li><li><svg class="dash__ico" viewBox="0 0 7 7"><path d="M0 0h6v7H0zM1 1v5h4V1zM2 2h2v1H2z"/></svg><span>Glossary</span></li><li><svg class="dash__ico" viewBox="0 0 7 7"><path d="M0 0h1v7H0zM1 0h5v1H1zM5 1h1v2H5zM1 3h5v1H1z"/></svg><span>Releases</span></li><li><svg class="dash__ico" viewBox="0 0 7 7"><path d="M0 0h7v5H0zM1 1v3h5V1zM3 5h1v1H3zM1 6h5v1H1z"/></svg><span>Screens</span></li>
+              </ul>
+              <div class="dash__group">Connected</div>
+              <ul class="dash__nav dash__nav--quiet">
+                <li>GitHub</li><li>Figma</li><li>Slack</li>
+              </ul>
+            </aside>
+            <div class="dash__main">
+              <div class="dash__top">
+                <div><b>Overview</b><small>Release 4.2 ships Thursday</small></div>
+                <div class="dash__tools"><span class="dash__search">Search strings</span><span class="dash__btn">Invite reviewer</span></div>
+              </div>
+              <div class="dash__kpis">
+                <div><small>Strings</small><b>18,402</b><em>+312 this week</em></div>
+                <div><small>Languages</small><b>24</b><em>Thai added in May</em></div>
+                <div><small>Waiting for review</small><b>37</b><em>Korean has 14</em></div>
+                <div><small>Time to approve</small><b>41 min</b><em>Median, last 30 days</em></div>
+              </div>
+              <div class="dash__row">
+                <div class="panel panel--cover">
+                  <div class="panel__head"><b>Coverage, release 4.2</b><small>3 in review</small></div>
+                  <div class="cover" data-cover></div>
+                </div>
+                <div class="panel panel--chart">
+                  <div class="panel__head"><b>Words shipped</b><small>Last 24 weeks</small></div>
+                  <div class="chart" data-chart>
+                    <div class="chart__months" data-months></div>
+                    <div class="chart__tip" data-tip><b data-tip-week>Week 44</b><span data-tip-val>6,120 words</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="dash__row dash__row--three">
+                <div class="panel">
+                  <div class="panel__head"><b>Review queue</b><small>37 strings</small></div>
+                  <ul class="queue">
+                    <li><span class="who who--a">JS</span><span>cart.add</span><em>Korean</em></li>
+                    <li><span class="who who--a">JS</span><span>cart.free</span><em>Korean</em></li>
+                    <li><span class="who who--b">NK</span><span>cart.eta</span><em>Thai</em></li>
+                    <li><span class="who who--c">DL</span><span>cart.empty</span><em>Hebrew</em></li>
+                  </ul>
+                </div>
+                <div class="panel">
+                  <div class="panel__head"><b>Glossary at work</b><small>This week</small></div>
+                  <ul class="hits">
+                    <li><span>cart</span><b>212</b></li>
+                    <li><span>workspace</span><b>148</b></li>
+                    <li><span>sign in</span><b>96</b></li>
+                    <li><span>Glossa</span><b>Kept 41 times</b></li>
+                  </ul>
+                </div>
+                <div class="panel panel--next">
+                  <div class="panel__head"><b>Next release</b><small>Thursday</small></div>
+                  <div class="next">
+                    <b>4.2</b>
+                    <span>21 of 24 languages approved</span>
+                    <div class="next__left"><span><b>HE</b>Hebrew</span><span><b>KO</b>Korean</span><span><b>TH</b>Thai</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Compare ---------------------------------------------------------------------------------------------- -->
+  <section class="sec sec--paper sec--ruled" id="compare" aria-labelledby="compare-title">
+    <div class="wrap sec__inner">
+      <div class="intro intro--cmp">
+        <h2 class="pixel intro__title" id="compare-title">Why releases wait for translation</h2>
+        <p class="intro__text">When text leaves the code to be translated, it comes back late, out of context and with words nobody chose.</p>
+      </div>
+
+      <div class="versus">
+        <div class="versus__plate" aria-hidden="true"><img src="img/compare.webp" srcset="img/compare-1x.webp 460w, img/compare.webp 920w" sizes="(min-width: 1101px) 446px, 1px" alt="" width="920" height="1280" decoding="async"></div>
+        <table class="versus__table" role="table">
+          <caption class="sr">Glossa compared with spreadsheets and agencies</caption>
+          <colgroup><col class="c1"><col class="c2"><col class="c3"></colgroup>
+          <thead role="rowgroup">
+            <tr role="row">
+              <td role="cell"></td>
+              <th role="columnheader" scope="col" class="versus__us"><span class="versus__brand"><span class="brand__tile brand__tile--xs"><svg viewBox="0 0 9 9" aria-hidden="true"><use href="#mark"/></svg></span>Glossa</span></th>
+              <th role="columnheader" scope="col" class="versus__them">Spreadsheets and agencies</th>
+            </tr>
+          </thead>
+          <tbody role="rowgroup">
+            <tr role="row" data-vs>
+              <th role="rowheader" scope="row"><span class="vs__q">Minutes or weeks</span><span class="vs__sub">How long a release waits for its languages.</span></th>
+              <td role="cell" class="versus__us">
+                <div class="inst inst--cal" aria-hidden="true">
+                  <div class="inst__head"><span>October 2026</span><span>Release 4.2</span></div>
+                  <div class="inst__body">
+                    <div class="cal__wd"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+                    <div class="cal">
+                      <span class="cal__d">5</span><span class="cal__d">6</span><span class="cal__d">7</span><span class="cal__d is-ship">8</span><span class="cal__d">9</span><span class="cal__d is-we">10</span><span class="cal__d is-we">11</span>
+                      <span class="cal__d">12</span><span class="cal__d">13</span><span class="cal__d">14</span><span class="cal__d">15</span><span class="cal__d">16</span><span class="cal__d is-we">17</span><span class="cal__d is-we">18</span>
+                      <span class="cal__d">19</span><span class="cal__d">20</span><span class="cal__d">21</span><span class="cal__d">22</span><span class="cal__d">23</span><span class="cal__d is-we">24</span><span class="cal__d is-we">25</span>
+                      <span class="cal__d">26</span><span class="cal__d">27</span><span class="cal__d">28</span><span class="cal__d">29</span><span class="cal__d">30</span><span class="cal__d is-we">31</span><span class="cal__d is-we is-next">1</span>
+                    </div>
+                  </div>
+                  <div class="inst__foot"><span class="tag">Same day</span><span>10:02 to 11:40</span></div>
+                </div>
+                <p>Every language is merged 98 minutes after the pull request opens.</p>
+              </td>
+              <td role="cell" class="versus__them">
+                <div class="inst inst--cal" aria-hidden="true">
+                  <div class="inst__head"><span>October 2026</span><span>Release 4.2</span></div>
+                  <div class="inst__body">
+                    <div class="cal__wd"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+                    <div class="cal">
+                    <span class="cal__bands"><i class="cal__band is-from" style="grid-area:1/4/2/8;--t0:220ms;--dur:315ms"></i><i class="cal__band" style="grid-area:2/1/3/8;--t0:535ms;--dur:630ms"></i><i class="cal__band" style="grid-area:3/1/4/8;--t0:1165ms;--dur:630ms"></i><i class="cal__band is-to" style="grid-area:4/1/5/5;--t0:1795ms;--dur:315ms"></i></span>
+                      <span class="cal__d">5</span><span class="cal__d">6</span><span class="cal__d">7</span><span class="cal__d is-ship">8</span><span class="cal__d">9</span><span class="cal__d is-we">10</span><span class="cal__d is-we">11</span>
+                      <span class="cal__d">12</span><span class="cal__d">13</span><span class="cal__d">14</span><span class="cal__d">15</span><span class="cal__d">16</span><span class="cal__d is-we">17</span><span class="cal__d is-we">18</span>
+                      <span class="cal__d">19</span><span class="cal__d">20</span><span class="cal__d">21</span><span class="cal__d">22</span><span class="cal__d">23</span><span class="cal__d is-we">24</span><span class="cal__d is-we">25</span>
+                      <span class="cal__d">26</span><span class="cal__d">27</span><span class="cal__d">28</span><span class="cal__d is-back">29</span><span class="cal__d">30</span><span class="cal__d is-we">31</span><span class="cal__d is-we is-next">1</span>
+                    </div>
+                  </div>
+                  <div class="inst__foot"><span class="tag tag--crimson">21 days later</span><span>8 Oct to 29 Oct</span></div>
+                </div>
+                <p>Translations come back weeks later, after the release has shipped.</p>
+              </td>
+            </tr>
+            <tr role="row" data-vs>
+              <th role="rowheader" scope="row"><span class="vs__q">Real screen or spreadsheet</span><span class="vs__sub">Where each translation is checked.</span></th>
+              <td role="cell" class="versus__us">
+                <div class="inst inst--fit" aria-hidden="true">
+                  <div class="inst__head"><span>Checkout screen</span><span class="ui__lang">DE</span></div>
+                  <div class="inst__body">
+                    <div class="ctx ctx--screen"><img src="img/linen.webp" alt="" width="64" height="64" decoding="async"><span>Leinenhemd, Sand</span><em>79,00 €</em></div>
+                    <div class="bfit" data-bfit>
+                      <span class="bfit__frame"></span>
+                      <span class="bfit__btn"><span class="bfit__label">Zur Kasse</span></span>
+                      <span class="bfit__rule"><em>136 px</em></span>
+                    </div>
+                  </div>
+                  <div class="inst__foot"><span class="tag">Fits</span><span>Approved by Hana</span></div>
+                </div>
+                <p>Reviewers approve each string on the screen where it appears.</p>
+              </td>
+              <td role="cell" class="versus__them">
+                <div class="inst inst--fit" aria-hidden="true">
+                  <div class="inst__head"><span class="is-code">strings_de.xlsx</span><span class="ui__lang">DE</span></div>
+                  <div class="inst__body">
+                    <div class="ctx ctx--sheet"><span>checkout.cta</span><span>Weiter zur Kasse gehen</span></div>
+                    <div class="bfit is-over" data-bfit>
+                      <span class="bfit__frame"></span>
+                      <span class="bfit__btn"><span class="bfit__label bfit__label--long" data-long>Weiter zur Kasse gehen</span></span>
+                      <span class="bfit__ghost" data-ghost><span>Weiter zur Kasse gehen</span></span>
+                      <span class="bfit__rule"><em>136 px</em></span>
+                      <span class="bfit__over"><em data-over>+47 px</em></span>
+                    </div>
+                  </div>
+                  <div class="inst__foot"><span class="tag tag--crimson">Clipped</span><span>Found after release</span></div>
+                </div>
+                <p>Translators see a key in a spreadsheet, and long strings break buttons.</p>
+              </td>
+            </tr>
+            <tr role="row" data-vs>
+              <th role="rowheader" scope="row"><span class="vs__q">Glossary or guesswork</span><span class="vs__sub">Who decides what your product words are.</span></th>
+              <td role="cell" class="versus__us">
+                <div class="inst inst--terms" aria-hidden="true">
+                  <div class="inst__head"><span>The cart, in German</span><span>4 places</span></div>
+                  <div class="inst__body">
+                    <ul class="tl"><li style="--i:0"><span>Header</span><b>Warenkorb</b></li><li style="--i:1"><span>Checkout</span><b>Warenkorb</b></li><li style="--i:2"><span>Emails</span><b>Warenkorb</b></li><li style="--i:3"><span>Help center</span><b>Warenkorb</b></li></ul>
+                  </div>
+                  <div class="inst__foot"><span class="tag">1 name</span><span>for the cart</span></div>
+                </div>
+                <p>Your glossary gives each term one translation, everywhere.</p>
+              </td>
+              <td role="cell" class="versus__them">
+                <div class="inst inst--terms" aria-hidden="true">
+                  <div class="inst__head"><span>The cart, in German</span><span>4 places</span></div>
+                  <div class="inst__body">
+                    <ul class="tl"><li style="--i:0"><span>Header</span><b>Warenkorb</b></li><li style="--i:1"><span>Checkout</span><b class="is-off">Einkaufswagen</b></li><li style="--i:2"><span>Emails</span><b class="is-off">Korb</b></li><li style="--i:3"><span>Help center</span><b>Warenkorb</b></li></ul>
+                  </div>
+                  <div class="inst__foot"><span class="tag tag--crimson">3 names</span><span>for the cart</span></div>
+                </div>
+                <p>Each translator picks a word, so one feature ends up with three names.</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Pricing ---------------------------------------------------------------------------------------------- -->
+  <section class="sec sec--paper sec--ruled" id="pricing" aria-labelledby="pricing-title">
+    <div class="wrap sec__inner">
+      <div class="offer">
+        <div class="offer__text">
+          <h2 class="offer__title" id="pricing-title">Start with 10,000 free words. Then pay $0.06 for each word you ship.</h2>
+          <p class="offer__sub">Native review is included in every language. No seats, no minimum, no contract.</p>
+          <div class="offer__cta">
+            <a class="btn btn--light" href="#demo">Start for free</a>
+            <a class="link link--inverse" href="#demo">Talk to us about volume<svg class="ico" aria-hidden="true"><use href="#arrow"/></svg></a>
+          </div>
+        </div>
+        <figure class="offer__figure">
+          <img src="img/hermes.webp" srcset="img/hermes-1x.webp 560w, img/hermes.webp 1120w" sizes="(min-width: 1101px) 540px, (min-width: 961px) 45vw, 100vw" alt="" width="1120" height="1200" decoding="async">
+          <figcaption class="bill">
+            <span class="sr">Example: 48,210 words shipped in October, in 24 languages, cost $2,892.60.</span>
+            <span class="bill__ui" aria-hidden="true">
+              <span class="bill__head"><b>October</b><span>Northwind app</span></span>
+              <span class="bill__rows">
+                <span><span>French</span><em>6,102 words</em></span>
+                <span><span>German</span><em>5,880 words</em></span>
+                <span><span>Japanese</span><em>4,410 words</em></span>
+                <span><span>21 others</span><em>31,818 words</em></span>
+              </span>
+              <span class="bill__total"><span>48,210 words</span><b>$2,892.60</b></span>
+            </span>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- 7. Footer ------------------------------------------------------------------------------------------------- -->
+<footer class="foot" aria-labelledby="foot-title">
+  <div class="wrap foot__inner">
+    <div class="foot__main">
+      <div class="foot__lead">
+        <a class="brand brand--lg" href="#top" aria-label="Glossa, back to top">
+          <span class="brand__tile"><svg class="brand__mark" viewBox="0 0 9 9" aria-hidden="true"><use href="#mark"/></svg></span>
+          <span class="brand__word">Glossa</span>
+        </a>
+        <p class="foot__about" id="foot-title">Every release translated in its own pull request, and approved by native speakers.</p>
+      </div>
+      <form class="demo" id="demo" novalidate>
+        <label class="demo__label" for="demo-email">Work email</label>
+        <div class="demo__row">
+          <input class="demo__input" id="demo-email" name="email" type="email" autocomplete="email" placeholder="you@company.com" required aria-describedby="demo-msg">
+          <button class="btn btn--light" type="submit" value="start">Start for free</button>
+          <button class="btn btn--dark" type="submit" value="demo">Book a demo</button>
+        </div>
+        <p class="demo__msg" id="demo-msg" aria-live="polite">We reply within one working day.</p>
+      </form>
+    </div>
+    <div class="foot__side">
+      <nav class="foot__cols" aria-label="Footer">
+        <div>
+          <h3>Product</h3>
+          <ul>
+            <li><a href="#card-drafts">Drafts</a></li>
+            <li><a href="#card-review">Review on screen</a></li>
+            <li><a href="#card-glossary">Glossary</a></li>
+            <li><a href="#card-merge">Pull requests</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3>Glossa</h3>
+          <ul>
+            <li><a href="#workflow">How it works</a></li>
+            <li><a href="#compare">Compare</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#demo">Book a demo</a></li>
+          </ul>
+        </div>
+      </nav>
+      <div class="foot__base">
+        <span>© 2026 Glossa</span>
+        <span>A fictional product by Martin Gerspach.</span>
+      </div>
+    </div>
+  </div>
+  <div class="plate plate--foot" data-screen="footer" aria-hidden="true">
+    <canvas></canvas>
+    <span class="foot__frame"></span>
+    <img class="plate__fallback" alt="" data-src="img/footer.webp" data-srcset="img/footer-1x.webp 1600w, img/footer.webp 3200w" sizes="100vw">
+    <noscript><img class="plate__fallback" src="img/footer-1x.webp" srcset="img/footer-1x.webp 1600w, img/footer.webp 3200w" sizes="100vw" alt=""></noscript>
+  </div>
+</footer>
+
+<script src="screen.js"></script>
+<script src="glossa.js"></script>
+</body>
+</html>

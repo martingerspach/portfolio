@@ -70,7 +70,7 @@ void main(){
     }
     float head = 1.0 - smoothstep(0.1, 0.3, s);
     o0 = vec4(th * mix(1.0, 1.15, head), ink * mix(1.0, 1.12, head), 0.0, 1.0);
-    o1 = vec4(dir, 1.0, 0.0);
+    o1 = vec4(dir, 1.0, fract(kind) * 2.0);   // a : un poisson d'un banc écarté s'estompe (0 ailleurs)
   }
 }`;
 
@@ -144,7 +144,7 @@ void main(){
   al *= calm;
   float tn = clamp(tone * (0.72 + 0.42 * d), 0.0, 1.0);
   vec3 c = tn < 0.5 ? mix(uC0, uC1, tn / 0.5) : mix(uC1, uC2, (tn - 0.5) / 0.5);
-  float A = al * g;
+  float A = al * g * (1.0 - 0.6 * clamp(a1.a / cov, 0.0, 1.0));
   o = vec4(c * A, A);
 }`;
 
@@ -166,7 +166,9 @@ export function rng(seed) {
   return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
 }
 
-export function createSchool(canvas) {
+// opts (section « recoupement ») : small(W) et big, nombres de poissons ; curious, part des curieux.
+// Sans opts, le banc du hero est inchangé.
+export function createSchool(canvas, opts = {}) {
   const gl = canvas.getContext('webgl2', { antialias: false, alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: params.has('shot') });
   if (!gl) return null;
 
@@ -204,6 +206,9 @@ export function createSchool(canvas) {
   const st = {
     cx: 0, cy: 0, rx: 300, ry: 200, dir: 1, t: 0,
     rects: [], avoid: [], tight: 0, tightTo: 0, listen: 0, listenTo: 0,
+    // plusieurs bancs : chaque poisson dont f.g est défini suit l'orbite st.orbits[f.g]
+    // { cx, cy, rx, ry, dir, tight, tightTo, pace } ; les autres suivent l'orbite principale
+    orbits: [],
   };
 
   function makeTex() {
@@ -282,16 +287,16 @@ export function createSchool(canvas) {
     fish.length = 0;
     const r = rng(11);
     const scale = clamp(Math.min(W, H * 1.4) / 1100, 0.5, 1.15);
-    const nS = Math.round(P('ns', W >= 1024 ? 140 : W >= 700 ? 90 : 52));
-    const nB = Math.round(P('nb', W >= 1024 ? 2 : 1));
+    const nS = Math.round(P('ns', opts.small ? opts.small(W) : W >= 1024 ? 140 : W >= 700 ? 90 : 52));
+    const nB = Math.round(opts.big ?? P('nb', W >= 1024 ? 2 : 1));
     st.scale = scale;
     // les petits : trois profondeurs, chacun sur son propre anneau
     for (let i = 0; i < nS; i++) {
       const depth = Math.pow(r(), 0.8);                  // 0 loin, 1 près
-      const L = (P('ls', 64) + depth * P('ld', 34) + r() * 10) * Math.max(scale, 0.62);
+      const L = (P('ls', 64) + depth * P('ld', 34) + r() * 10) * Math.max(scale, 0.62) * (opts.size ?? 1);
       const ang = r() * Math.PI * 2;
       // un sur sept est curieux : il tourne plus près de la question et passe sous le verre
-      const curious = r() < P('cur', 0.15);
+      const curious = r() < (opts.curious ?? P('cur', 0.15));
       const rf = curious ? 0.5 + r() * 0.16 : 0.74 + r() * 0.52;
       const rfy = rf * (curious ? 0.42 + r() * 0.2 : 0.9 + r() * 0.2);
       fish.push(makeFish({
@@ -329,11 +334,26 @@ export function createSchool(canvas) {
     st.listen += (st.listenTo - st.listen) * Math.min(1, dt * 1.5);
     const shrink = 1 - st.listen * (1 - st.tight) * P('ecoute', 0.3);
     const thin = 1 - 0.78 * st.tight;   // resserré : un anneau fin
+    for (const o of st.orbits) o.tight += (o.tightTo - o.tight) * Math.min(1, dt * 1.2);
+    // les places : dans un banc « tenu » (o.lock), chaque poisson a sa place sur l'anneau (f.slot), et les places
+    // tournent ensemble à la vitesse moyenne du banc. Le poisson vise sa place et presse ou ralentit le pas
+    // selon qu'elle est devant ou derrière lui : l'anneau se remplit en entier, régulier, en une à deux secondes.
+    st.orbits.forEach((o, gi) => {
+      o.lockNow = (o.lockNow ?? 0) + ((o.lock ?? 0) - (o.lockNow ?? 0)) * Math.min(1, dt * 1.5);
+      o.phase = o.phase ?? 0;
+      o.ox = (o.drift ? Math.sin(t * 0.31) * o.drift : 0);
+      o.oy = (o.drift ? Math.cos(t * 0.23) * o.drift * 0.6 : 0);
+      let sum = 0, m = 0;
+      for (const f of fish) if (f.g === gi && f.mode !== 'away') { sum += f.cruise; m++; }
+      if (m) o.phase += o.dir * (sum / m) * (1 - o.tight * 0.2) * (o.pace ?? 1) / ((o.rx + o.ry) / 2) * dt;
+    });
     const n = fish.length;
     for (let i = 0; i < n; i++) {
       const f = fish[i];
       if (f.mode === 'away') continue;
       if (f.delay > 0) { f.delay -= dt; }
+      if (f.dimTo !== undefined) f.dim += (f.dimTo - f.dim) * Math.min(1, dt * 0.9);
+      const O = f.g !== undefined ? st.orbits[f.g] || null : null;   // son banc, s'il en a un
       const big = f.kind === 'big';
       let gx = 0, gy = 0;
       if (f.mode === 'leave' && f.delay <= 0) {
@@ -343,15 +363,31 @@ export function createSchool(canvas) {
         if (f.x < -margin || f.x > W + margin || f.y < -margin || f.y > H + margin) { f.mode = 'away'; continue; }
       } else {
         // l'anneau : la tangente, et un rappel vers son propre rayon
-        const frf = big ? f.rf + 0.2 * st.tight : 1 + (f.rf - 1) * thin, frfy = big ? f.rfy + 0.25 * st.tight : 1 + (f.rfy / f.rf * f.rf - 1) * thin;
-        const rx = st.rx * frf * (big ? 1 : shrink), ry = st.ry * frfy * (big ? 1 : shrink);
-        const ex = (f.x - st.cx) / rx, ey = (f.y - st.cy) / ry;
+        const ob = O || st, tg = ob.tight, th = O ? 1 - 0.78 * tg : thin, sh = O ? 1 : shrink;
+        const frf = big ? f.rf + 0.2 * tg : 1 + (f.rf - 1) * th, frfy = big ? f.rfy + 0.25 * tg : 1 + (f.rfy / f.rf * f.rf - 1) * th;
+        const rx = ob.rx * frf * (big ? 1 : sh), ry = ob.ry * frfy * (big ? 1 : sh);
+        const ocx = O ? ob.cx + ob.ox : ob.cx, ocy = O ? ob.cy + ob.oy : ob.cy;
+        const ex = (f.x - ocx) / rx, ey = (f.y - ocy) / ry;
         const r = Math.hypot(ex, ey) + 1e-6;
-        let tx = -ey * rx * st.dir, ty = ex * ry * st.dir;
+        let tx = -ey * rx * ob.dir, ty = ex * ry * ob.dir;
         const tm = Math.hypot(tx, ty) || 1; tx /= tm; ty /= tm;
         let nx = ex / rx, ny = ey / ry; const nm = Math.hypot(nx, ny) || 1; nx /= nm; ny /= nm;
         const radial = clamp(1 - r, -1.4, 1.4) * (big ? 1.6 : 2.6);
         gx = tx + nx * radial; gy = ty + ny * radial;
+        f.pull = 0;
+        if (O && f.slot !== undefined && O.lockNow > 0.01) {
+          // sa place, sur son couloir de l'anneau
+          const th2 = f.slot + O.phase;
+          const px = ocx + Math.cos(th2) * rx, py = ocy + Math.sin(th2) * ry;
+          const dx = px - f.x, dy = py - f.y, d = Math.hypot(dx, dy) || 1;
+          const k = 1.5 * O.lockNow * Math.min(1, d / 80);
+          gx += dx / d * k; gy += dy / d * k;
+          // la place est-elle devant (+) ou derrière (−) lui, le long de l'anneau ?
+          let e = th2 - Math.atan2(ey, ex);
+          e = Math.atan2(Math.sin(e), Math.cos(e)) * ob.dir;
+          // loin de sa place (il traverse vers son banc), il presse l'allure
+          f.pull = (clamp(e * 1.6, -0.5, 1.3) + clamp((d - 90) / 220, 0, 1.4)) * O.lockNow;
+        }
       }
       // voisins : séparation, alignement, un peu de cohésion
       let sx = 0, sy = 0, ax = 0, ay = 0, ccx = 0, ccy = 0, cn = 0;
@@ -395,7 +431,7 @@ export function createSchool(canvas) {
       // vitesse : un banc attaqué file d'un coup, puis chacun reprend sa croisière
       f.boost = Math.max(0, f.boost - dt * 0.6);
       const leaving = f.mode === 'leave' && f.delay <= 0;
-      const target = f.cruise * (1 + (leaving ? (big ? 2.2 : 3.6) : 0) + f.boost * 1.8) * (1 - st.tight * 0.2 - st.listen * 0.12)
+      const target = f.cruise * (1 + (leaving ? (big ? 2.2 : 3.6) : 0) + f.boost * 1.8) * (O ? (1 - O.tight * 0.2) * (O.pace ?? 1) * (1 + (f.pull || 0)) : 1 - st.tight * 0.2 - st.listen * 0.12)
         * (1 + 0.12 * Math.sin(t * 0.9 + f.seed * 17));
       f.u += (target - f.u) * Math.min(1, dt * (leaving ? 3.2 : 1.2));
       f.x += Math.cos(f.a) * f.u * dt; f.y += Math.sin(f.a) * f.u * dt;
@@ -427,6 +463,7 @@ export function createSchool(canvas) {
     for (const f of fish) {
       if (f.mode === 'away') continue;
       const K = f.K, L = f.L, c = f.c, p = f.p, big = f.kind === 'big';
+      const ink = f.dim === undefined ? f.ink : f.ink * f.dim;    // un banc écarté pâlit
       for (let j = 0; j < K; j++) {
         const s = j / (K - 1), i = j * 2;
         const jn = Math.min(j, K - 2) * 2;
@@ -448,7 +485,8 @@ export function createSchool(canvas) {
         T.push([tx, ty]);
       }
       const dir2 = (j) => { const [tx, ty] = T[j]; cx2 = tx * tx - ty * ty; sx2 = 2 * tx * ty; };
-      const kindBody = big ? 0 : 3;
+      // petit poisson d'un banc écarté : la partie décimale porte son effacement (0 à 0,45)
+      const kindBody = big ? 0 : f.dim === undefined ? 3 : 3 + (1 - Math.min(1, f.dim)) * 0.45;
       if (big) {
         // pectorales qui battent doucement
         const flap = 0.5 + 0.35 * Math.sin(f.phase * 0.5 + 1.3) + Math.abs(f.turn || 0) * 4;
@@ -463,16 +501,16 @@ export function createSchool(canvas) {
           const a2 = ang * 0.62;
           const ex = (-tx * Math.cos(a2) + nx * Math.sin(a2)) * len * 0.43, ey = (-ty * Math.cos(a2) + ny * Math.sin(a2)) * len * 0.43;
           const tip = [r0[0] + dx, r0[1] + dy], back = [r1[0] + ex, r1[1] + ey];
-          push(r0[0], r0[1], 0, 0, f.ink, 1); push(r1[0], r1[1], 0, 0, f.ink, 1); push(tip[0], tip[1], 0, 0, f.ink, 1);
-          push(r1[0], r1[1], 0, 0, f.ink, 1); push(back[0], back[1], 0, 0, f.ink, 1); push(tip[0], tip[1], 0, 0, f.ink, 1);
+          push(r0[0], r0[1], 0, 0, ink, 1); push(r1[0], r1[1], 0, 0, ink, 1); push(tip[0], tip[1], 0, 0, ink, 1);
+          push(r1[0], r1[1], 0, 0, ink, 1); push(back[0], back[1], 0, 0, ink, 1); push(tip[0], tip[1], 0, 0, ink, 1);
         }
       }
       for (let j = 0; j < K - 1; j++) {
         const s0 = j / (K - 1), s1 = (j + 1) / (K - 1);
         const a = Lp[j], b = Rp[j], c2 = Lp[j + 1], d = Rp[j + 1];
         dir2(j);
-        push(a[0], a[1], -1, s0, f.ink, kindBody); push(b[0], b[1], 1, s0, f.ink, kindBody); push(c2[0], c2[1], -1, s1, f.ink, kindBody);
-        push(b[0], b[1], 1, s0, f.ink, kindBody); push(d[0], d[1], 1, s1, f.ink, kindBody); push(c2[0], c2[1], -1, s1, f.ink, kindBody);
+        push(a[0], a[1], -1, s0, ink, kindBody); push(b[0], b[1], 1, s0, ink, kindBody); push(c2[0], c2[1], -1, s1, ink, kindBody);
+        push(b[0], b[1], 1, s0, ink, kindBody); push(d[0], d[1], 1, s1, ink, kindBody); push(c2[0], c2[1], -1, s1, ink, kindBody);
       }
       if (!big) continue;
       const je = Math.round(0.08 * (K - 1));
@@ -481,8 +519,8 @@ export function createSchool(canvas) {
       for (const side of [-1, 1]) {
         const w = f.profile[je] * L * 0.62 * side;
         const ex = c[je * 2] - ety * w, ey = c[je * 2 + 1] + etx * w;
-        push(ex - er, ey - er, 0, 0, f.ink, 2); push(ex + er, ey - er, 0, 0, f.ink, 2); push(ex - er, ey + er, 0, 0, f.ink, 2);
-        push(ex + er, ey - er, 0, 0, f.ink, 2); push(ex + er, ey + er, 0, 0, f.ink, 2); push(ex - er, ey + er, 0, 0, f.ink, 2);
+        push(ex - er, ey - er, 0, 0, ink, 2); push(ex + er, ey - er, 0, 0, ink, 2); push(ex - er, ey + er, 0, 0, ink, 2);
+        push(ex + er, ey - er, 0, 0, ink, 2); push(ex + er, ey + er, 0, 0, ink, 2); push(ex - er, ey + er, 0, 0, ink, 2);
       }
     }
     return n / STRIDE;
@@ -552,6 +590,53 @@ export function createSchool(canvas) {
     orbit(cx, cy, rx, ry) { st.cx = cx; st.cy = cy; st.rx = rx; st.ry = ry; },
     tighten(v) { st.tightTo = v; },
     listen(v) { st.listenTo = v ? 1 : 0; },
+    // plusieurs bancs : les orbites (mises à jour sur place, leur resserrement est gardé), puis qui suit laquelle
+    orbits(list) {
+      list.forEach((o, i) => {
+        const cur = st.orbits[i];
+        st.orbits[i] = Object.assign(cur || { tight: o.tightTo ?? 0, tightTo: 0, dir: 1, pace: 1 }, o);
+      });
+      st.orbits.length = list.length;
+    },
+    assign(fn) { for (const f of fish) f.g = fn(f); },
+    // un banc pâlit (encre × v), en douceur ou d'un coup
+    dim(g, v, now) { for (const f of fish) if (f.g === g) { if (f.dim === undefined) f.dim = 1; f.dimTo = v; if (now) f.dim = v; } },
+    burst(v) { for (const f of fish) f.boost = Math.max(f.boost, v); },
+    settle() { for (const o of st.orbits) { o.tight = o.tightTo; o.lockNow = o.lock ?? 0; } },
+    // le partage par places : counts[i] places régulières sur l'orbite i ; chaque poisson prend la place libre
+    // la plus proche (appariement glouton). keep : chacun garde son banc (f.g) et choisit sa place dedans ;
+    // sinon son banc découle de la place prise.
+    place(counts, keep) {
+      const slots = [];
+      st.orbits.forEach((o, gi) => {
+        const m = counts[gi] || 0;
+        for (let j = 0; j < m; j++) { const a = (j / m) * Math.PI * 2 - (o.phase || 0); slots.push({ gi, a, x: o.cx + Math.cos(a + (o.phase || 0)) * o.rx, y: o.cy + Math.sin(a + (o.phase || 0)) * o.ry }); }
+      });
+      const free = fish.filter((f) => f.mode !== 'away');
+      const pairs = [];
+      free.forEach((f, i) => slots.forEach((s, j) => { if (!keep || s.gi === f.g) pairs.push([Math.hypot(f.x - s.x, f.y - s.y), i, j]); }));
+      pairs.sort((p, q) => p[0] - q[0]);
+      const usedF = new Set(), usedS = new Set();
+      for (const [, i, j] of pairs) {
+        if (usedF.has(i) || usedS.has(j)) continue;
+        usedF.add(i); usedS.add(j);
+        free[i].g = slots[j].gi; free[i].slot = slots[j].a;
+      }
+    },
+    // l'état d'un banc : part de ses poissons sur l'anneau, et le plus grand trou d'angle (radians)
+    ringStats(g) {
+      const o = st.orbits[g]; if (!o) return { inFrac: 0, maxGap: Math.PI * 2 };
+      const angs = []; let inR = 0;
+      for (const f of fish) if (f.g === g && f.mode !== 'away') {
+        const ex = (f.x - o.cx - (o.ox || 0)) / o.rx, ey = (f.y - o.cy - (o.oy || 0)) / o.ry, r = Math.hypot(ex, ey);
+        if (r > 0.7 && r < 1.35) inR++;
+        angs.push(Math.atan2(ey, ex));
+      }
+      angs.sort((a, b) => a - b);
+      let gap = angs.length ? Math.PI * 2 - (angs[angs.length - 1] - angs[0]) : Math.PI * 2;
+      for (let k = 1; k < angs.length; k++) gap = Math.max(gap, angs[k] - angs[k - 1]);
+      return { inFrac: angs.length ? inR / angs.length : 0, maxGap: gap };
+    },
     // l'expansion éclair : chacun file vers l'extérieur, les plus proches du centre un peu après
     leave() {
       const r = rng(Math.floor(st.t * 1000) + 3);

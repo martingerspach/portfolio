@@ -65,6 +65,9 @@ window.SITE = {
 /* Each project opens on its live page (site, a path inside the artifact), at the top, with no extra text.
    Reel frames and the playground come from content.js (built by outils/contenu.py). */
 window.PROJECTS = [
+  /* Order of the reel (2026-11-07, the user asked for the most coherent sequence of the ten covers): one loop of colour,
+     warm dark and coral (Topiary), green (Weft), black (Iris), night blues (Redline, Auvent), cobalt (Tiroir), whites
+     (Banc, Quart), cream (Understudy), crimson (Glossa), and back to the coral. Topiary stays first: the opening lands on it. */
   {
     id: 'topiary',
     name: 'Topiary',
@@ -80,6 +83,45 @@ window.PROJECTS = [
     film: { tab: 'Motion design', title: 'Méthode, the launch film', src: 'media/methode/methode-1600.mp4', poster: 'media/methode/poster.webp' },
   },
   {
+    id: 'weft',
+    name: 'Weft',
+    kind: 'SaaS landing page',
+    tag: 'Fictional brand, my own concept',
+    short: 'Agents that run a team’s weekly jobs, shown on a satin woven live in WebGL.',
+    year: '2026',
+    role: 'Brand, copywriting, design, code',
+    scope: ['Identity', 'Landing page', 'Interactive demos'],
+    tools: ['WebGL2 weave shader', 'Canvas 2D', 'Web Animations'],
+    site: 'landings/weft/index.html',
+    reveal: 'lift',          // its reel frame is the brand cover, not the page
+  },
+  {
+    id: 'iris',
+    name: 'Iris',
+    kind: 'SaaS landing page',
+    tag: 'Fictional brand, my own concept',
+    short: 'Tracing for AI agents: each run is played back as a film, lit by live caustics.',
+    year: '2026',
+    role: 'Brand, copywriting, design, code',
+    scope: ['Identity', 'Landing page', 'Interactive demos'],
+    tools: ['WebGL2 caustics', 'SVG liquid glass', 'Canvas 2D'],
+    site: 'landings/iris/index.html',
+    reveal: 'lift',          // its reel frame is the brand cover, not the page
+  },
+  {
+    id: 'redline',
+    name: 'Redline',
+    kind: 'SaaS landing page',
+    tag: 'Fictional brand, my own concept',
+    short: 'Agents that check every file against its brand book, at work like designers in a shared file.',
+    year: '2026',
+    role: 'Brand, copywriting, design, code',
+    scope: ['Identity', 'Landing page', 'Interactive demo'],
+    tools: ['Midjourney', 'Homography inlay', 'Fitts’s law cursors'],
+    site: 'landings/redline/index.html',
+    reveal: 'lift',          // its reel frame is the brand cover, not the page
+  },
+  {
     id: 'auvent',
     name: 'Auvent',
     kind: 'SaaS landing page',
@@ -93,19 +135,6 @@ window.PROJECTS = [
     reveal: 'lift',          // its reel frame is the brand cover, not the page
   },
   {
-    id: 'quart',
-    name: 'Quart',
-    kind: 'SaaS landing page',
-    tag: 'Fictional brand, a Topiary Original',
-    short: 'Night shifts for AI coding agents, drawn like an architect’s plan.',
-    year: '2026',
-    role: 'Brand, copywriting, design, code',
-    scope: ['Identity', 'Landing page', 'Interactive demo'],
-    tools: ['Isometric SVG', 'Spring physics', 'fontTools'],
-    site: 'topiary/originals/quart/index.html',
-    reveal: 'lift',          // its reel frame is the brand cover, not the page
-  },
-  {
     id: 'tiroir',
     name: 'Tiroir',
     kind: 'SaaS landing page',
@@ -114,7 +143,7 @@ window.PROJECTS = [
     year: '2026',
     role: 'Brand, copywriting, design, code',
     scope: ['Identity', 'Landing page', 'Interactive demo'],
-    tools: ['Midjourney', 'Canvas halftone', 'Inverse kinematics'],
+    tools: ['Midjourney', 'WebGL', 'Web Animations'],
     site: 'topiary/originals/tiroir/index.html',
     reveal: 'lift',          // its reel frame is the brand cover, not the page
   },
@@ -132,6 +161,19 @@ window.PROJECTS = [
     reveal: 'lift',          // its reel frame is the brand cover, not the page
   },
   {
+    id: 'quart',
+    name: 'Quart',
+    kind: 'SaaS landing page',
+    tag: 'Fictional brand, a Topiary Original',
+    short: 'Night shifts for AI coding agents, drawn like an architect’s plan.',
+    year: '2026',
+    role: 'Brand, copywriting, design, code',
+    scope: ['Identity', 'Landing page', 'Interactive demo'],
+    tools: ['Isometric SVG', 'Spring physics', 'fontTools'],
+    site: 'topiary/originals/quart/index.html',
+    reveal: 'lift',          // its reel frame is the brand cover, not the page
+  },
+  {
     id: 'understudy',
     name: 'Understudy',
     kind: 'SaaS landing page',
@@ -145,29 +187,16 @@ window.PROJECTS = [
     reveal: 'lift',          // its reel frame is the brand cover, not the page
   },
   {
-    id: 'redline',
-    name: 'Redline',
+    id: 'glossa',
+    name: 'Glossa',
     kind: 'SaaS landing page',
     tag: 'Fictional brand, my own concept',
-    short: 'Agents that check every file against its brand book, at work like designers in a shared file.',
-    year: '2026',
-    role: 'Brand, copywriting, design, code',
-    scope: ['Identity', 'Landing page', 'Interactive demo'],
-    tools: ['Midjourney', 'Homography inlay', 'Fitts’s law cursors'],
-    site: 'landings/redline/index.html',
-    reveal: 'lift',          // its reel frame is the brand cover, not the page
-  },
-  {
-    id: 'iris',
-    name: 'Iris',
-    kind: 'SaaS landing page',
-    tag: 'Fictional brand, my own concept',
-    short: 'Tracing for AI agents: each run is played back as a film, lit by live caustics.',
+    short: 'Localisation that ships with the code, printed in pixel type and crimson halftone.',
     year: '2026',
     role: 'Brand, copywriting, design, code',
     scope: ['Identity', 'Landing page', 'Interactive demos'],
-    tools: ['WebGL2 caustics', 'SVG liquid glass', 'Canvas 2D'],
-    site: 'landings/iris/index.html',
+    tools: ['Midjourney', 'WebGL halftone', 'Pixel font from Geist'],
+    site: 'landings/glossa/index.html',
     reveal: 'lift',          // its reel frame is the brand cover, not the page
   },
 ];

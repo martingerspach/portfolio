@@ -3,6 +3,7 @@
 // à chaque source lue, puis se resserre autour de la réponse.
 import { createSchool, P } from './banc-school.js';
 import { monter as monterVerre, peindre as peindreVerre } from './banc-verre.js';
+import { mountSplit } from './banc-split.js';
 
 const NB = ' ';
 const params = new URLSearchParams(location.search);
@@ -375,13 +376,17 @@ if (params.has('shot') && school) {
 // (au téléphone, la barre est en bas : rien à ranger)
 new IntersectionObserver((es) => { pauseBtn.classList.toggle('is-tucked', !phone.matches && !es[0].isIntersecting && es[0].boundingClientRect.top < 120); },
   { rootMargin: '-76px 0px 0px 0px', threshold: 1 }).observe(pauseBtn);
-pauseBtn.addEventListener('click', () => {
-  paused = !paused;
+// une seule pause pour toute la page : celle du hero et celle du recoupement se répondent
+const pauseFns = [];
+function setPaused(v) {
+  paused = v;
   pauseBtn.setAttribute('aria-pressed', String(paused));
   $('.pause-long', pauseBtn).textContent = paused ? 'Relancer l’animation' : 'Mettre l’animation en pause';
   $('.pause-short', pauseBtn).textContent = paused ? 'Relancer' : 'Pause';
   wake();
-});
+  pauseFns.forEach((fn) => fn(paused));
+}
+pauseBtn.addEventListener('click', () => setPaused(!paused));
 if (isReduced() || !school) pauseBtn.hidden = true;
 RMQ.addEventListener('change', () => { running = !isReduced(); pauseBtn.hidden = !running || !school; wake(); });
 
@@ -878,6 +883,11 @@ document.fonts.ready.then(() => {
     else if (footStarted) { cancelAnimationFrame(footRaf); footDone = true; footFinal(); }
   }).observe(foot);
 });
+
+/* =====================================================================
+   8. Le recoupement : quand les sources se contredisent (banc-split.js)
+   ===================================================================== */
+mountSplit({ isReduced, cssOn, phone, isPaused: () => paused, setPaused, onPause: (fn) => pauseFns.push(fn) });
 
 // le verre : monté une fois la page posée (les polices changent la taille des pièces)
 monterVerre();

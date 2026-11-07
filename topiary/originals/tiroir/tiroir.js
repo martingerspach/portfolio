@@ -20,7 +20,6 @@
     let s = (seed >>> 0) || 1;
     return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
   }
-  const hash = (x, y) => { const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return s - Math.floor(s); };
   /* Boucle d'animation plafonnée à 60 images/s (l'écran de la machine de test tourne à 144 Hz). */
   const BENCH = /[?&]bench/.test(location.search) ? (window.__tiroirFrames = []) : null;
   function loop(step) {
@@ -36,6 +35,148 @@
     };
     requestAnimationFrame(f);
   }
+
+  /* =========================================================
+     La matière : le ciel cobalt et le papier sont imprimés. Pour chacun, une tuile de 640 px CSS, périodique (aucun raccord),
+     est calculée une fois par WebGL à la densité de l'écran (au plus 2) : marbrure lente de l'encre, nuage plus fin,
+     grain de 1,3 px, fibres du papier (segments courts, orientés au hasard), et sur le cobalt quelques points où le papier
+     perce sous l'encre. Sa moyenne est recalée sur la couleur exacte du jeton (une lecture, une correction).
+     Posée sous le contenu (tiroir.css, .tx::before), elle arrive en fondu et défile avec la page :
+     aucun calcul par image, aucun décalage au défilement. Sans WebGL, les aplats restent.
+     ========================================================= */
+  const TX = 640;                                   // la tuile, en px CSS (tiroir.css : --tx-size)
+  const SURF = [
+    { v: '--tex-sky', base: [14, 76, 158], kind: 0, seed: 0.137 },
+    { v: '--tex-paper', base: [246, 244, 239], kind: 1, seed: 0.611 },
+  ];
+  const MATTER_FS = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform vec2 uRes; uniform float uPx; uniform vec3 uBase; uniform float uKind; uniform float uSeed; uniform vec3 uShift;
+const float T = ${TX.toFixed(1)};
+vec2 h22(vec2 p) {
+  vec3 q = fract(vec3(p.xyx) * vec3(.1031, .1030, .0973) + uSeed);
+  q += dot(q, q.yzx + 33.33);
+  return fract((q.xx + q.yz) * q.zy);
+}
+/* bruit de gradient périodique : n cases sur la largeur de la tuile */
+float gn(vec2 x, float n) {
+  vec2 p = x * n, i = floor(p), f = fract(p);
+  vec2 u = f * f * f * (f * (f * 6. - 15.) + 10.);
+  float a = dot(h22(mod(i, n)) * 2. - 1., f);
+  float b = dot(h22(mod(i + vec2(1., 0.), n)) * 2. - 1., f - vec2(1., 0.));
+  float c = dot(h22(mod(i + vec2(0., 1.), n)) * 2. - 1., f - vec2(0., 1.));
+  float d = dot(h22(mod(i + vec2(1., 1.), n)) * 2. - 1., f - vec2(1., 1.));
+  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+/* fibres : jusqu'à deux segments courts par case, effilés aux bouts ; distance en px CSS, bord adouci d'un demi-pixel d'écran */
+float fibers(vec2 x, float n, out float sgn) {
+  vec2 pc = x * T; float cs = T / n; vec2 cell = floor(x * n);
+  float best = 0.; sgn = 1.;
+  for (int j = -1; j <= 1; j++) for (int k = -1; k <= 1; k++) {
+    vec2 c = cell + vec2(float(j), float(k)); vec2 cw = mod(c, n);
+    for (int m = 0; m < 2; m++) {
+      vec2 r1 = h22(cw * 1.37 + float(m) * 17.1), r2 = h22(cw * 2.11 + float(m) * 5.3 + 9.7);
+      if (r2.y < .35) continue;
+      vec2 ctr = (c + r1) * cs;
+      float ang = r2.x * 6.2831853; vec2 dir = vec2(cos(ang), sin(ang));
+      float L = cs * (.35 + .65 * fract(r1.x * 7.13 + r1.y * 3.7));
+      vec2 d = pc - ctr; float t = clamp(dot(d, dir), -L * .5, L * .5);
+      float dist = length(d - dir * t), taper = 1. - pow(abs(t) / (L * .5), 3.);
+      float w = .4 + .22 * fract(r2.y * 11.), aa = .6 / uPx;
+      float v = (1. - smoothstep(w - aa, w + aa, dist)) * taper;
+      if (v > best) { best = v; sgn = fract(r1.y * 13.7) < .55 ? 1. : -1.; }
+    }
+  }
+  return best;
+}
+/* le papier qui perce sous l'encre : de rares points clairs */
+float specks(vec2 x, float n) {
+  vec2 pc = x * T; float cs = T / n; vec2 cell = floor(x * n); float v = 0.;
+  for (int j = -1; j <= 1; j++) for (int k = -1; k <= 1; k++) {
+    vec2 c = cell + vec2(float(j), float(k)); vec2 cw = mod(c, n);
+    vec2 r = h22(cw * 3.17 + 41.);
+    if (r.x < .988) continue;
+    vec2 ctr = (c + h22(cw * 1.9 + 7.)) * cs;
+    float rad = .45 + .5 * fract(r.y * 9.1), aa = .6 / uPx;
+    v = max(v, (1. - smoothstep(rad - aa, rad + aa, length(pc - ctr))) * (.5 + .5 * fract(r.y * 23.)));
+  }
+  return v;
+}
+void main() {
+  vec2 x = gl_FragCoord.xy / uRes;
+  float mottle = gn(x, 3.) * .5 + gn(x, 6.) * .3 + gn(x, 12.) * .2;      // 213, 107, 53 px
+  float cloud = gn(x, 24.) * .6 + gn(x, 48.) * .4;                        // 27 et 13 px
+  float grain = gn(x, 480.) * .65 + gn(x, 240.) * .35;                    // 1,3 et 2,7 px
+  float sg; float fib = fibers(x, 24., sg);
+  vec3 col;
+  if (uKind < .5) {
+    col = uBase * (1. + mottle * .16 + cloud * .065 + grain * .13);
+    col += vec3(.017) * fib * (sg > 0. ? 1. : .35) + vec3(.045) * specks(x, 96.);
+  } else {
+    col = uBase * (1. + mottle * .04 + cloud * .018 + grain * .045);
+    col += vec3(.02 * sg) * fib;
+  }
+  col += uShift + (h22(gl_FragCoord.xy + 31.7).x - .5) / 255.;
+  gl_FragColor = vec4(clamp(col, 0., 1.), 1.);
+}`;
+  function matter() {
+    const sc = Math.min(2, Math.max(1, window.devicePixelRatio || 1)), N = Math.round(TX * sc);
+    const cv = document.createElement('canvas'); cv.width = N; cv.height = N;
+    let gl = null;
+    try { gl = cv.getContext('webgl', { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: true }); } catch (e) { /* aplats */ }
+    if (!gl) return;
+    const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null; };
+    const vs = sh(gl.VERTEX_SHADER, 'attribute vec2 p; void main() { gl_Position = vec4(p, 0., 1.); }'), fs = sh(gl.FRAGMENT_SHADER, MATTER_FS);
+    if (!vs || !fs) return;
+    const prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+    gl.useProgram(prog);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    const U = (n) => gl.getUniformLocation(prog, n);
+    gl.uniform1f(U('uPx'), sc);
+    const S = 256, px = new Uint8Array(S * S * 4);
+    const tiles = SURF.map((s) => {
+      gl.uniform3f(U('uBase'), s.base[0] / 255, s.base[1] / 255, s.base[2] / 255);
+      gl.uniform1f(U('uKind'), s.kind); gl.uniform1f(U('uSeed'), s.seed); gl.uniform3f(U('uShift'), 0, 0, 0);
+      /* la moyenne : la même tuile échantillonnée sur 256 × 256 points (la fonction est continue, la moyenne ne dépend pas
+         de la finesse de l'échantillon), puis le décalage qui la ramène sur la couleur du jeton */
+      gl.viewport(0, 0, S, S); gl.uniform2f(U('uRes'), S, S);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.readPixels(0, 0, S, S, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      const m = [0, 0, 0];
+      for (let i = 0; i < px.length; i += 4) { m[0] += px[i]; m[1] += px[i + 1]; m[2] += px[i + 2]; }
+      const n = S * S;
+      gl.uniform3f(U('uShift'), (s.base[0] - m[0] / n) / 255, (s.base[1] - m[1] / n) / 255, (s.base[2] - m[2] / n) / 255);
+      gl.viewport(0, 0, N, N); gl.uniform2f(U('uRes'), N, N);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      const c2 = document.createElement('canvas'); c2.width = N; c2.height = N;
+      c2.getContext('2d').drawImage(cv, 0, 0);
+      return { s, c2 };
+    });
+    const lose = gl.getExtension('WEBGL_lose_context'); if (lose) lose.loseContext();
+    /* une image par tuile (blob, sinon data URL si le cadre refuse les blobs), décodée avant d'être posée */
+    const toURL = (c) => new Promise((res) => {
+      const viaData = () => { try { res(c.toDataURL('image/webp', 0.95)); } catch (e) { res(null); } };
+      c.toBlob((b) => {
+        if (!b) { viaData(); return; }
+        const u = URL.createObjectURL(b), im = new Image();
+        im.onload = () => (im.decode ? im.decode() : Promise.resolve()).then(() => res(u), () => res(u));
+        im.onerror = () => { URL.revokeObjectURL(u); viaData(); };
+        im.src = u;
+      }, 'image/png');
+    });
+    Promise.all(tiles.map(({ s, c2 }) => toURL(c2).then((u) => { if (u) document.documentElement.style.setProperty(s.v, `url("${u}")`); })))
+      .then(() => requestAnimationFrame(() => document.documentElement.classList.add('tx-on')));
+  }
+  /* juste après le premier affichage : le calcul (une vingtaine de millisecondes) tombe avant l'entrée du hero,
+     qui attend la police et la colline (tiroir.js, « L'ouverture ») ; la tuile arrive ensuite en fondu */
+  if (!/[?&]matiere=0/.test(location.search)) requestAnimationFrame(() => setTimeout(matter, 0));
 
   /* =========================================================
      En-tête : la façade. En haut de page, posé sur le ciel ; la bande cobalt se forme sur les premiers pixels
@@ -91,7 +232,7 @@
   addEventListener('resize', measureHead);
   onScroll();
 
-  /* La section en cours, soulignée au crayon dans la navigation. */
+  /* La section en cours, mise en avant dans la navigation (les autres liens s'effacent un peu, tiroir.css). */
   const navLinks = $$('.nav-link, .menu-link');
   const secs = ['demo', 'dossiers', 'tarif'].map((id) => document.getElementById(id));
   const seen = new Map();
@@ -143,26 +284,21 @@
   });
   matchMedia('(min-width: 880px)').addEventListener('change', (m) => { if (m.matches) closeMenu(false); });
 
-  /* Le trait de crayon des liens : il se trace à l'entrée de la souris ; à la sortie, il finit son tracé en partant vers la droite. */
-  $$('.trait').forEach((tr) => {
-    const host = tr.parentElement;
-    if (!host || !host.matches('a, button')) return;
-    host.addEventListener('pointerenter', (e) => {
-      if (e.pointerType !== 'mouse') return;
-      tr.classList.remove('is-out', 'is-reset'); tr.classList.add('is-on');
-    });
-    host.addEventListener('pointerleave', (e) => {
-      if (e.pointerType !== 'mouse' || !tr.classList.contains('is-on')) return;
-      tr.classList.remove('is-on');
-      if (host.getAttribute('aria-current') === 'true' || RM) return;
-      tr.classList.add('is-out');
-    });
-    tr.addEventListener('transitionend', () => {
-      if (!tr.classList.contains('is-out')) return;
-      tr.classList.add('is-reset'); tr.classList.remove('is-out');
-      requestAnimationFrame(() => requestAnimationFrame(() => tr.classList.remove('is-reset')));
-    });
-  });
+  /* Le survol des liens et des boutons : le libellé roule (tiroir.css, .roll). Deux copies du texte dans une fente ;
+     la seconde est cachée aux lecteurs d'écran et à la recherche du pied de page (aria-hidden). */
+  function roll(el) {
+    const t = el.textContent;
+    if (!t.trim() || el.querySelector('.roll')) return;
+    const r = document.createElement('span'), i = document.createElement('span'), a = document.createElement('span'), b = document.createElement('span');
+    r.className = 'roll'; i.className = 'roll-in'; b.className = 'roll-b'; b.setAttribute('aria-hidden', 'true');
+    a.textContent = t; b.textContent = t;
+    i.append(a, b); r.append(i);
+    el.textContent = ''; el.append(r);
+  }
+  /* le libellé d'un lien ou d'un bouton, sans sa copie */
+  const label = (el) => ($('.roll-in > span', el) || el).textContent.trim();
+  $$('.trait').forEach(roll);
+  $$('.btn').forEach((btn) => { const lab = $('.btn-label', btn) || btn; if (!lab.children.length) roll(lab); });
 
   /* Saisie caractère par caractère ; « from » permet de reprendre une phrase déjà commencée. */
   async function typeIn(el, text, speed, alive, from) {
@@ -180,39 +316,25 @@
     return true;
   }
 
-  /* Crayon vert : traits serrés, bords irréguliers, posés de gauche à droite. */
-  function crayon(rects, seed) {
-    const R = rng(seed);
-    const lines = rects.map((r) => {
-      const strokes = [];
-      for (let i = 0; i < 6; i++) {
-        strokes.push({ y: r.y + r.h * (0.2 + 0.64 * (i / 5)) + (R() - 0.5) * 1.2, a: r.x - 3 + R() * 5, b: r.x + r.w + 1 + R() * 5, ph: R() * 6.28, wd: 2.4 + R() * 1.6, dash: [6 + R() * 18, 0.8 + R() * 1.8] });
-      }
-      return { r, strokes };
-    });
-    return { lines, total: rects.reduce((s, r) => s + r.w, 0) };
+  /* Le surligneur : un aplat vert à bords droits sur le bas de chaque ligne (de 30 à 94 % de sa hauteur),
+     posé de gauche à droite d'une ligne à l'autre. Bords calés sur les pixels de l'écran : net, sans flou. */
+  function crayon(rects) {
+    return { lines: rects.map((r) => ({ r })), total: rects.reduce((s, r) => s + r.w, 0) };
   }
   function drawCrayon(ctx, cv, w, h, hl, p) {
     const d = DPR();
     if (cv.width !== Math.round(w * d) || cv.height !== Math.round(h * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); }
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
     if (!hl) return;
-    ctx.setTransform(d, 0, 0, d, 0, 0);
-    ctx.strokeStyle = 'rgba(134, 184, 62, .42)'; ctx.lineCap = 'round';
+    ctx.fillStyle = 'rgba(134, 184, 62, .42)';
     let budget = p * hl.total;
-    for (const ln of hl.lines) {
+    for (const { r } of hl.lines) {
       if (budget <= 0) break;
-      const upto = ln.r.x + Math.min(ln.r.w + 6, budget + 4);
-      budget -= ln.r.w;
-      for (const s of ln.strokes) {
-        const b = Math.min(s.b, upto);
-        if (b <= s.a) continue;
-        ctx.lineWidth = s.wd; ctx.setLineDash(s.dash);
-        ctx.beginPath();
-        for (let x = s.a; x <= b; x += 6) { const y = s.y + Math.sin(x * 0.045 + s.ph) * 0.6; x === s.a ? ctx.moveTo(x, y) : ctx.lineTo(x, y); }
-        ctx.lineTo(b, s.y + Math.sin(b * 0.045 + s.ph) * 0.6);
-        ctx.stroke();
-      }
+      const ww = Math.min(r.w, budget);
+      budget -= r.w;
+      const x0 = Math.round((r.x - 2) * d), x1 = Math.round((r.x + ww + (ww >= r.w ? 2 : 0)) * d);
+      const y0 = Math.round((r.y + r.h * 0.3) * d), y1 = Math.round((r.y + r.h * 0.94) * d);
+      if (x1 > x0) ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
     }
   }
   function tween(ms, fn, alive) {
@@ -232,16 +354,19 @@
     {
       a: 'Six mois avant la fin de chaque période de trois ans.',
       file: 'Bail commercial Lyon 3e.pdf', path: 'Drive, Juridique, Baux', page: 'page 3', h: 'Article 4. Durée',
+      nh: 'Article 5. Loyer', next: `Le présent bail est consenti et accepté moyennant un loyer annuel hors taxes et hors charges, payable par trimestre et d’avance.`,
       body: [`Le présent bail est consenti pour neuf années entières et consécutives. Le Preneur pourra donner congé `, `à${NB}l’expiration de chaque période triennale, en respectant un préavis de six mois`, `, par lettre recommandée avec demande d’avis de réception ou par acte de commissaire de justice.`],
     },
     {
       a: `La directrice générale, ou le directeur administratif et financier en son absence.`,
       file: 'Délégations de signature 2026.docx', path: 'SharePoint, Direction', page: 'page 2', h: 'Article 3. Engagements de dépenses',
+      nh: 'Article 4. Contrats de prestation', next: `Les contrats conclus pour plus d’un an sont signés par la directrice générale, après avis du directeur administratif et financier.`,
       body: [`Les devis et bons de commande d’un montant supérieur à 5${NB}000${NB}€${NB}HT sont `, `signés par la directrice générale ou, en son absence, par le directeur administratif et financier`, `. En deçà, le responsable du service concerné signe seul.`],
     },
     {
       a: `Oui, même hors de vos locaux, jusqu’à 15${NB}000${NB}€ par sinistre, après franchise.`,
       file: 'Multirisque professionnelle 2025.pdf', path: 'Drive, Assurances', page: 'page 12', h: 'Article 7. Biens confiés',
+      nh: 'Article 8. Exclusions', next: `Ne sont pas garantis les dommages dus à l’usure normale des biens ou à un défaut d’entretien.`,
       body: [`Sont garantis les biens appartenant à l’assuré et confiés temporairement à ses clients, `, `y${NB}compris hors des locaux assurés, dans la limite de 15${NB}000${NB}€ par sinistre`, `, après application de la franchise prévue aux conditions particulières.`],
     },
   ];
@@ -250,11 +375,8 @@
      Hero : la question est posée, la fiche sort du tiroir, la réponse s'écrit
      ========================================================= */
   const hero = $('.hero');
-  const trame = $('.trame', hero);
-  const tctx = trame.getContext('2d');
   const hillImg = $('.hill img', hero);
   const ask = $('.ask', hero);
-  const copy = $('.hero-copy', hero);
   const askA = $('.ask-a', ask), askS = $('.ask-src', ask);
   const ANSWER = askA.textContent;
   /* Premier affichage : la question est déjà posée et la réponse est en cours d'écriture. */
@@ -264,109 +386,13 @@
     const c = document.createElement('span'); c.className = 'caret'; askA.append(c);
     askS.classList.add('wait');
   }
-  const COM = { x0: 688, x1: 884, top: 30, mouthX: 816, mouthY: 108, drawerW: 128 };
-  /* la crête de la colline (premier pixel opaque), tous les 52 px de l'image ; sous la commode, interpolée */
-  const CREST = [219, 209, 199, 190, 185, 179, 174, 171, 166, 160, 156, 151, 149, 147, 148, 149, 151, 153, 157, 160, 165, 171, 176, 180, 186, 195, 204, 214, 222];   // le tiroir tiré : de 752 à 880, bord haut à 108   // la commode et la bouche du tiroir ouvert, en pixels de l'image
-  let HF = null, heroT0 = null, heroVisible = true, heroLooping = false, heroDirty = false;
+  /* la bouche du tiroir tiré (son bord haut) et sa largeur, en pixels de l'image de la colline */
+  const COM = { mouthX: 816, mouthY: 108, drawerW: 128 };
+  let HF = null;
   const PX = !RM && window.CSS && CSS.supports('animation-timeline: view()');
   const heroShift = () => (PX ? Math.min(Math.max(scrollY, 0), innerHeight) * 0.08 : 0);
   const relRect = (el, ref) => { const r = el.getBoundingClientRect(); return { l: r.left - ref.left, t: r.top - ref.top, w: r.width, h: r.height }; };
-  const lineRects = (el, ref) => { const rg = document.createRange(); rg.selectNodeContents(el); return [...rg.getClientRects()].filter((r) => r.width > 2).map((r) => ({ l: r.left - ref.left, t: r.top - ref.top, w: r.width, h: r.height })); };
 
-  /* =========================================================
-     La fiche en trame. La mise en page d'une fiche (son papier, ses lignes de texte, son filet) rendue en points
-     blancs sur rangées décalées, comme la commode de la démo : le papier est fait de points, le texte et le filet
-     sont des trous dans la trame (le bleu du ciel y tient lieu d'encre, comme sur la vraie fiche).
-     Plus les points sont gros, plus l'empreinte est proche du papier : la trace se condense jusqu'à la fiche.
-     Chaque empreinte est rendue une fois dans un calque, puis posée à chaque image (un drawImage).
-     Partagée par le hero (la trace du vol) et la démo (la trace de la fiche qui sort du tiroir).
-     ========================================================= */
-  const TAU = 6.2832;
-  function ghostLayout(w, h, lines, seed) {
-    const R = rng(seed), words = [];
-    for (const ln of lines) {
-      const hh = ln.hh || 4;
-      if (ln.kind === 'rule') { words.push({ x0: ln.x0, x1: ln.x1, y: ln.y, hh }); continue; }
-      let x = ln.x0;
-      while (x < ln.x1 - 6) {
-        const len = Math.min(ln.x1 - x, 14 + R() * 46);
-        if (len > 5) words.push({ x0: x, x1: x + len, y: ln.y, hh });
-        x += len + 7 + R() * 3;
-      }
-    }
-    return { w, h, words };
-  }
-  /* Le calque d'une empreinte : la fiche à l'échelle sc, des points au pas « pitch » (px d'écran), de rayon dens × pas / 2. */
-  function ghostSprite(L, sc, dens, pitch, dir) {
-    const dp = DPR(), w = L.w * sc, h = L.h * sc;
-    const cv = document.createElement('canvas');
-    cv.width = Math.max(1, Math.ceil(w * dp)); cv.height = Math.max(1, Math.ceil(h * dp));
-    const x = cv.getContext('2d');
-    x.setTransform(dp, 0, 0, dp, 0, 0);
-    x.fillStyle = '#fff';
-    x.beginPath();
-    const lp = pitch / sc;                          // le pas, en pixels de la fiche
-    /* dans le sens du vol, le papier s'éclaire : l'empreinte est plus pleine vers l'avant, plus claire vers l'arrière */
-    const dx = dir ? dir[0] : 0, dy = dir ? dir[1] : 0, ext = Math.abs(dx) * L.w / 2 + Math.abs(dy) * L.h / 2 || 1;
-    let row = 0;
-    for (let gy = pitch / 2; gy < h; gy += pitch, row++) {
-      const ly = gy / sc;
-      const ink = L.words.filter((wd) => Math.abs(ly - wd.y) <= wd.hh + lp * 0.18);
-      const off = row % 2 ? pitch / 2 : 0;
-      for (let gx = pitch / 2 + off; gx < w; gx += pitch) {
-        const lx = gx / sc;
-        let hole = false;
-        for (const wd of ink) if (lx >= wd.x0 - lp * 0.3 && lx <= wd.x1 + lp * 0.3) { hole = true; break; }
-        if (hole) continue;
-        const edge = clamp(Math.min(gx, w - gx, gy, h - gy) / (pitch * 0.55), 0.55, 1);   // le bord du papier s'amincit
-        const lum = dir ? lerp(0.32, 1, smooth(-0.85, 0.75, ((lx - L.w / 2) * dx + (ly - L.h / 2) * dy) / ext)) : 1;
-        const r = pitch * 0.5 * dens * edge * Math.sqrt(lum);
-        if (r < 0.35) continue;
-        x.moveTo(gx + r, gy); x.arc(gx, gy, r, 0, TAU);
-      }
-    }
-    x.fill();
-    return { cv, w, h, sc };
-  }
-  /* Pose une empreinte : centre (cx, cy), échelle, rotation (radians), opacité. La feuille cache ce qui est derrière elle. */
-  function ghostPut(ctx, g, cx, cy, sc, rot, alpha) {
-    if (alpha <= 0.01) return;
-    const k = sc / g.sc;
-    ctx.save();
-    ctx.translate(cx, cy); ctx.rotate(rot); ctx.scale(k, k);
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.globalAlpha = Math.min(1, alpha * 1.25);
-    ctx.fillRect(-g.w / 2, -g.h / 2, g.w, g.h);
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = alpha;
-    ctx.drawImage(g.cv, -g.w / 2, -g.h / 2, g.w, g.h);
-    ctx.restore();
-  }
-
-  /* =========================================================
-     Hero : la fiche sort du tiroir ouvert (le dernier, tiré) et vient se poser à sa place. En passant, elle laisse
-     trois empreintes en trame, une chronophotographie de son vol : elles restent derrière elle, de plus en plus denses
-     jusqu'à elle. La fiche passe devant la commode et sort de la fente du tiroir (masquée sous son bord).
-     ========================================================= */
-  function askLayout(ar) {
-    /* la vraie mise en page de la fiche du hero : sa question, son filet, sa réponse entière (mesurée sur une copie), sa source */
-    const ref = ask.getBoundingClientRect(), sx = ar.w / ref.width;   // en pixels de la fiche, hors transformation
-    const fix = (r) => ({ l: r.l * sx, t: r.t * sx, w: r.w * sx, h: r.h * sx });
-    const lines = [];
-    const q = $('.ask-q span', ask);
-    lineRects(q, ref).map(fix).forEach((r) => lines.push({ x0: r.l, x1: r.l + r.w, y: r.t + r.h * 0.56, hh: r.h * 0.22 }));
-    const qr = fix(relRect($('.ask-q', ask), ref));
-    lines.push({ kind: 'rule', x0: qr.l, x1: qr.l + qr.w, y: qr.t + qr.h - 1, hh: 1.2 });
-    const cl = askA.cloneNode(false); cl.textContent = ANSWER; cl.style.visibility = 'hidden'; cl.style.position = 'absolute'; cl.style.width = askA.offsetWidth + 'px';
-    cl.style.left = askA.offsetLeft + 'px'; cl.style.top = askA.offsetTop + 'px';
-    ask.append(cl);
-    lineRects(cl, ref).map(fix).forEach((r) => lines.push({ x0: r.l, x1: r.l + r.w, y: r.t + r.h * 0.6, hh: r.h * 0.2 }));
-    cl.remove();
-    const sr = fix(relRect(askS, ref));
-    const srt = (lineRects(askS, ref).map(fix))[0] || sr;
-    lines.push({ x0: sr.l, x1: srt.l + srt.w, y: sr.t + sr.h * 0.55, hh: sr.h * 0.22 });
-    return ghostLayout(ar.w, ar.h, lines, 11);
-  }
   /* Un chemin fait de courbes de Bézier cubiques à la suite, parcouru à la longueur d'arc : d de 0 à 1. */
   function pathOf(segs) {
     const pts = [], len = [0];
@@ -390,143 +416,34 @@
     at.total = T;
     return at;
   }
-  /* u (temps, 0 à 1) tel que E.vol(u) = d : pour savoir quand la fiche passe à une étape de son vol */
-  const volInv = (d) => { let a = 0, b = 1; for (let i = 0; i < 24; i++) { const m = (a + b) / 2; if (E.vol(m) < d) a = m; else b = m; } return (a + b) / 2; };
   let heroFlying = false, heroStale = false;
-  const BENCH_HF = /[?&]bench/.test(location.search);
-  const NS = 0.26, NS2 = 0.35;                     // téléphone : taille de la fiche à l'entrée et en haut du couloir libre
-  /* Interpolation monotone (Fritsch-Carlson) par des points, plate avant le premier et après le dernier */
-  function monoN(x, X, Y) {
-    const n = X.length;
-    if (x <= X[0]) return Y[0]; if (x >= X[n - 1]) return Y[n - 1];
-    const S = [], M = [0];
-    for (let i = 0; i < n - 1; i++) S.push((Y[i + 1] - Y[i]) / (X[i + 1] - X[i]));
-    for (let i = 1; i < n - 1; i++) {
-      const h0 = X[i] - X[i - 1], h1 = X[i + 1] - X[i];
-      M.push(S[i - 1] * S[i] <= 0 ? 0 : (3 * (h0 + h1)) / ((2 * h1 + h0) / S[i - 1] + (h1 + 2 * h0) / S[i]));
-    }
-    M.push(0);
-    let i = 0;
-    while (i < n - 2 && x > X[i + 1]) i++;
-    const h = X[i + 1] - X[i], t = (x - X[i]) / h, t2 = t * t, t3 = t2 * t;
-    return (2 * t3 - 3 * t2 + 1) * Y[i] + (t3 - 2 * t2 + t) * h * M[i] + (-2 * t3 + 3 * t2) * Y[i + 1] + (t3 - t2) * h * M[i + 1];
-  }
+  /* Le vol de la fiche du hero : elle sort droit de la fente du tiroir tiré, puis rejoint sa place sur une seule courbe,
+     en grandissant (elle vient vers nous) ; elle s'incline selon sa vitesse et se pose sans rebond.
+     Sous le bord du tiroir, elle est cachée. Mesuré à la place de repos de la fiche, hors glissement du hero. */
   function buildHero() {
     if (heroFlying) { heroStale = true; return; }
-    const hr = hero.getBoundingClientRect(), dp = DPR();
-    const W = hr.width, H = hr.height, wide = W >= 880;
-    trame.width = Math.round(W * dp); trame.height = Math.round(H * dp);
+    const hr = hero.getBoundingClientRect();
     const ir = relRect(hillImg, hr), k = ir.w / 1456;
-    const S = { x: ir.l + COM.mouthX * k, y: ir.t + COM.mouthY * k };   // la fente : le bord haut du tiroir tiré
+    const S = { x: ir.l + COM.mouthX * k, y: ir.t + COM.mouthY * k };
     const ar = relRect(ask, hr);
-    ar.t += heroShift();                           // mesurée hors du glissement du hero
+    ar.t += heroShift();
     const C = { x: ar.l + ar.w / 2, y: ar.t + ar.h / 2 };
-    const L = askLayout(ar);
     const s0 = Math.min(0.4, (COM.drawerW * k * 0.72) / ar.w);
     const half0 = (ar.h * s0) / 2;
     const A = [S.x, S.y + half0 + 2];              // départ : la fiche entière dans le tiroir
-    const comTop = ir.t + COM.top * k;              // le haut de la commode
-    /* la commode (tiroir tiré compris) et la crête de la colline : la trace ne passe jamais devant */
-    const comBox = { l: ir.l + 680 * k, t: ir.t + 22 * k, w: 212 * k, h: 160 * k };
-    const pb = PERSO ? PERSO.box : { x0: 846, y0: 50, x1: 990, y1: 186 };   // le chercheur, assis à droite du tiroir
-    const persoBox = { l: ir.l + pb.x0 * k, t: ir.t + pb.y0 * k, w: (pb.x1 - pb.x0) * k, h: (pb.y1 - pb.y0) * k };
-    const crestY = (x) => {
-      const ix = clamp((x - ir.l) / k / 52, 0, CREST.length - 1.001), i = Math.floor(ix);
-      return ir.t + k * lerp(CREST[i], CREST[i + 1], ix - i);
-    };
-    const crestMin = (l, r) => { let m = 1e9; for (let x = l; x <= r; x += 8) m = Math.min(m, crestY(x)); return Math.min(m, crestY(r)); };
-    /* ce que la trace ne doit pas recouvrir : le titre, le chapeau, le bouton */
-    const pad = (r, m) => ({ l: r.l - m, t: r.t - m, w: r.w + 2 * m, h: r.h + 2 * m });
-    const keep = [...lineRects($('h1', hero), hr), ...lineRects($('.lede', hero), hr), relRect($('.hero-copy .btn', hero), hr)].map((r) => pad(r, 16));
-    let segs;
-    if (wide) {
-      /* Elle monte hors du tiroir, s'écarte dans le ciel libre à gauche de sa place (juste ce qu'il faut pour qu'une
-         empreinte à mi-vol y tienne, au-dessus de la commode), puis glisse vers sa place et y entre par la gauche.
-         Quand la commode est loin à gauche de la fiche (grands écrans), l'écart est nul : elle monte, puis va à droite. */
-      const hw = 0.23 * ar.w, hh = 0.23 * ar.h;      // une empreinte à mi-vol (environ 46 % de la fiche)
-      const W2 = { x: Math.min(S.x, ar.l - 28 - hw), y: 0 };
-      const below = Math.max(-1e9, ...keep.filter((r) => r.l < W2.x + hw && r.l + r.w > W2.x - hw).map((r) => r.t + r.h));
-      const yLo = below + hh + 6, yHi = comTop - 12 - hh;
-      if (yLo <= yHi) W2.y = clamp(C.y + 0.15 * ar.h, yLo, yHi);
-      else { W2.x = S.x; W2.y = Math.min(yHi, C.y + 0.15 * ar.h); }   // pas de ciel libre à gauche : elle monte droit
-      segs = [
-        [A, [S.x, S.y - 0.4 * (S.y - W2.y)], [W2.x, W2.y + 0.45 * (S.y - W2.y)], [W2.x, W2.y]],
-        [[W2.x, W2.y], [W2.x, W2.y - 0.55 * Math.max(40, W2.y - C.y + 0.3 * ar.h)], [C.x - 0.5 * (C.x - W2.x), C.y], [C.x, C.y]],
-      ];
-    } else {
-      /* Téléphone et tablette : le chercheur est assis à droite de la commode. La fiche sort de la fente, part en
-         diagonale dans le ciel libre à gauche de la commode (au-dessus de la crête), puis remonte vers sa place.
-         Sans place à gauche, elle monte droit. */
-      /* La fiche arrive dans ce couloir à NS de sa taille, y monte droit en grandissant un peu (NS2) jusque sous la
-         fiche posée, à moitié glissée dessous, puis rejoint sa place. Le bord droit de la trace longe la commode. */
-      const hw = (NS / 2) * ar.w, hh = (NS / 2) * ar.h;
-      const room = comBox.l - 2 * hw - 12 >= 6;
-      const W2 = { x: room ? Math.max(6 + hw, comBox.l - hw - 8) : S.x, y: 0 };
-      W2.y = Math.min(S.y - 24, crestMin(W2.x - hw, W2.x + hw) - 6 - hh);
-      const hw2 = (NS2 / 2) * ar.w, hh2 = (NS2 / 2) * ar.h;
-      const W3 = { x: room ? Math.max(6 + hw2, comBox.l - hw2 - 8) : S.x, y: Math.min(ar.t + ar.h + 0.24 * hh2, comBox.t - 4 - hh2) };
-      segs = [
-        [A, [S.x, S.y - 0.6 * Math.max(30, S.y - W2.y)], [W2.x + 0.6 * (S.x - W2.x), W2.y], [W2.x, W2.y]],
-        [[W2.x, W2.y], [W2.x, W2.y - 0.4 * (W2.y - W3.y)], [W3.x, W3.y + 0.4 * (W2.y - W3.y)], [W3.x, W3.y]],
-        [[W3.x, W3.y], [W3.x, W3.y - 0.6 * (W3.y - C.y)], [C.x - 0.4 * (C.x - W3.x), C.y], [C.x, C.y]],
-      ];
-    }
-    const P = segs[0];
-    const path = pathOf(segs);
-    // fin des premiers gestes, en part du chemin
-    const d1 = segs.length > 1 ? pathOf([segs[0]]).total / path.total : 0.5;
-    const d2 = segs.length > 2 ? pathOf([segs[0], segs[1]]).total / path.total : 0.7;
+    const up = Math.max(60, 0.42 * (S.y - C.y));
+    const path = pathOf([[A, [S.x, S.y - up], [C.x - 0.32 * (C.x - S.x), C.y + 0.2 * (S.y - C.y)], [C.x, C.y]]]);
     const out = (2 * half0 + 4) / path.total;      // part du chemin parcourue dans la fente
-    const dur = clamp(1000 + path.total * 0.55, 1250, 1700);
+    const dur = clamp(1000 + path.total * 0.5, 1200, 1600);
     const xAt = (u) => path(E.vol(clamp(u, 0, 1)))[0];
     const tl = tilt(xAt, dur);
     const poseAt = (u) => {
       const d = E.vol(u), [x, y] = path(d);
-      /* petite tant qu'elle monte, elle grandit en venant vers sa place (elle s'approche de nous) */
-      /* au bureau : petite tant qu'elle monte, elle grandit en venant vers sa place. Au téléphone : à NS au bout du
-         premier geste, puis jusqu'à 1 (interpolation monotone, sans palier ni à-coup) */
-      const sc = wide ? lerp(s0, 1, Math.pow(smooth(out * 1.1, 0.97, d), 1.6)) : monoN(d, [out * 1.1, d1, d2, 0.97], [s0, NS, NS2, 1]);
-      return { d, x, y, sc, rot: 2.4 * tl(u) * smooth(out * 0.8, out * 3, d) };
+      return { d, x, y, sc: lerp(s0, 1, Math.pow(smooth(out * 1.1, 0.97, d), 1.4)), rot: 2.2 * tl(u) * smooth(out * 0.8, out * 3, d) };
     };
-    /* Les empreintes : seulement des poses qui se lisent comme une feuille (au moins 30 % de la taille de la fiche),
-       qui ne passent ni devant la commode ni sous la crête, hors du texte, et visibles au moins à moitié
-       (pas de bande fine qui dépasserait de sous la fiche). Deux ou trois, bien séparées, sinon aucune. */
-    const boxAt = (d) => { const p = poseAt(volInv(d)), gw = ar.w * p.sc, gh = ar.h * p.sc; return { d, p, l: p.x - gw / 2, t: p.y - gh / 2, w: gw, h: gh }; };
-    const inter = (a, b) => Math.max(0, Math.min(a.l + a.w, b.l + b.w) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.t + a.h, b.t + b.h) - Math.max(a.t, b.t));
-    const ok = [], why = BENCH_HF ? [] : null;
-    for (let d = 0.1; d <= 0.94; d += 0.01) {
-      const b = boxAt(d);
-      const r = b.p.sc < (wide ? 0.3 : NS - 0.02) ? 'petite' : b.l < 4 || b.l + b.w > W - 4 ? 'bord'
-        : inter(b, comBox) > 0 ? 'commode' : inter(b, persoBox) > 0 ? 'perso' : b.t + b.h > crestMin(b.l, b.l + b.w) - 4 ? 'crete'
-        : keep.some((k) => inter(b, k) > 0) ? 'texte' : inter(b, ar) > 0.5 * b.w * b.h ? 'fiche' : '';
-      if (why) why.push(`${d.toFixed(2)}:${r || 'ok'}:${Math.round(b.l)},${Math.round(b.t)},${Math.round(b.w)}`);
-      if (!r) ok.push(b);
-    }
-    if (why) window.__hfwhy = why;
-    /* séparation : la plus récente cache en partie la précédente ; il faut qu'il reste au moins la moitié de celle-ci */
-    const sep = (a, b) => Math.max(Math.abs(b.p.x - a.p.x) / a.w, Math.abs(b.p.y - a.p.y) / a.h);
-    let pick = [];
-    if (ok.length > 1) {
-      const A1 = ok[0], B1 = ok[ok.length - 1];
-      if (sep(A1, B1) >= 0.5) {
-        pick = [A1, B1];
-        if (sep(A1, B1) >= 1.3) {
-          const mid = ok.reduce((m, b) => (Math.abs(b.d - (A1.d + B1.d) / 2) < Math.abs(m.d - (A1.d + B1.d) / 2) ? b : m), A1);
-          if (sep(A1, mid) >= 0.5 && sep(mid, B1) >= 0.5) pick = [A1, mid, B1];
-        }
-      }
-    }
-    const DENS = { 2: [0.5, 0.68], 3: [0.42, 0.56, 0.72] }[pick.length] || [];
-    const ALPHA = { 2: [0.85, 1], 3: [0.76, 0.9, 1] }[pick.length] || [];
-    const pitch = wide ? 5.5 : 4.6;
-    const ghosts = pick.map((b, i) => {
-      const d = b.d, q0 = path(Math.max(0, d - 0.01)), q1 = path(Math.min(1, d + 0.01)), m = Math.hypot(q1[0] - q0[0], q1[1] - q0[1]) || 1;
-      return { i, u: volInv(d), d, sc: b.p.sc, alpha: ALPHA[i], spr: ghostSprite(L, b.p.sc, DENS[i], pitch, [(q1[0] - q0[0]) / m, (q1[1] - q0[1]) / m]) };
-    });
-    HF = { W, H, S, C, ar, path, poseAt, dur, s0, ghosts, wide };
-    if (/[?&]bench/.test(location.search)) window.__hf = { S, P, kept: ghosts.map((g) => +g.d.toFixed(2)), keep: keep.length };
+    HF = { S, C, ar, poseAt, dur };
   }
-  /* Le vol de la fiche du hero, joué par le navigateur (animation de transformation : nette à l'arrivée, sans calcul par image). */
+  /* Le vol, joué par le navigateur (animation de transformation : nette à l'arrivée, sans calcul par image). */
   function heroFly(delay) {
     const { C, ar, poseAt, dur, S } = HF;
     const N = 40, frames = [];
@@ -541,54 +458,18 @@
     }
     heroFlying = true;
     const an = ask.animate(frames, { duration: dur, delay, easing: 'linear', fill: 'backwards' });
-    const done = () => { heroFlying = false; if (heroStale) { heroStale = false; buildHero(); heroRedraw(); } };
+    const done = () => { heroFlying = false; if (heroStale) { heroStale = false; buildHero(); } };
     return an.finished.then(done, done);
   }
-  function ghostPose(g, t, scrollP) {
-    /* l'empreinte apparaît quand la fiche vient de passer ; au défilement, la trace glisse vers la fiche et s'efface un peu */
-    const a = RM ? 1 : smooth(0, 320, t - g.u * HF.dur - 40);
-    if (a <= 0) return null;
-    const u = volInv(clamp(g.d + 0.05 * scrollP, 0, 1)), p = HF.poseAt(u);
-    return { x: p.x, y: p.y - heroShift() * p.d, sc: p.sc, rot: (p.rot * Math.PI) / 180, a: g.alpha * a * (1 - 0.55 * scrollP), done: a >= 1 };
-  }
-  function drawHero(now) {
-    if (!HF) return false;
-    const dp = DPR();
-    tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.clearRect(0, 0, trame.width, trame.height);
-    if (heroT0 == null) return false;
-    tctx.setTransform(dp, 0, 0, dp, 0, 0);
-    const t = RM ? 1e9 : now - heroT0;
-    const sp = RM ? 0 : clamp(scrollY / (HF.H * 0.8), 0, 1);
-    tctx.save();
-    let active = false;
-    for (const g of HF.ghosts) {
-      const p = ghostPose(g, t, sp);
-      if (!p) { active = true; continue; }
-      if (!p.done) active = true;
-      ghostPut(tctx, g.spr, p.x, p.y, p.sc, p.rot, p.a);
-    }
-    tctx.restore();
-    return active;
-  }
-  function kickHero() {
-    if (heroLooping || !heroVisible) return;
-    heroLooping = true;
-    loop((now) => {
-      const a = drawHero(now);
-      const go = (a || heroDirty) && heroVisible;
-      heroDirty = false;
-      if (!go) heroLooping = false;
-      return go;
-    });
-  }
-  const heroRedraw = () => { heroDirty = true; kickHero(); };
+
   /* =========================================================
-     Le chercheur (perso.js) : un personnage au trait, assis dans l'herbe à droite du tiroir tiré. Il fouille, sort une
-     fiche, la lit, la remet, se gratte la tête : une boucle de 10 s. Le canevas est posé sur la photo, dans ses coordonnées ;
-     la boucle tourne seulement quand le hero est à l'écran ; un bouton la met en pause ; en mouvement réduit, une pose fixe.
+     Le chercheur (perso.js), en option : ?chercheur=1. Un personnage au trait assis à droite du tiroir tiré,
+     qui fouille et se gratte la tête (boucle de 10 s). Retiré par défaut le 2026-11-06 : le trait d'enfant sur la photo
+     tirait l'affiche vers le dessin naïf. Chargé seulement s'il est demandé (son calcul de ressorts ne coûte rien sinon).
      ========================================================= */
+  const CHERCHEUR = /[?&]chercheur=1/.test(location.search);
   const persoCv = $('.perso', hero), persoBtn = $('.perso-pause', hero), hillBox = $('.hill', hero);
-  const PERSO = window.TiroirPerso && persoCv ? window.TiroirPerso.create(persoCv, { img: hillImg }) : null;
+  let PERSO = null, heroVisible = true;
   const PV = { x0: 790, y0: 40, x1: 1004, y1: 196 };   // la zone du canevas (personnage et ombre), en pixels de l'image
   const PERSO_STILL = 6.75;                              // en mouvement réduit : il se gratte la tête devant le tiroir
   let persoT = 0, persoLast = null, persoRun = false, persoPaused = false, persoOn = false, persoReady = false;
@@ -603,8 +484,6 @@
     PERSO.setView({ ...PV, s: k * DPR() });
     PERSO.draw(RM ? PERSO_STILL : persoT);
   }
-  /* Sa boucle à lui, à la fréquence de l'écran (pas de plafond : à 60 Hz, un seuil fait sauter une image dès que le battement
-     varie ; à 120 ou 144 Hz, le geste reste au pas de l'écran). Le temps vient de l'horodatage des images. */
   function kickPerso() {
     if (!PERSO || RM || !persoOn || !persoReady || persoRun || persoPaused || !heroVisible) return;
     persoRun = true; persoLast = null;
@@ -617,13 +496,10 @@
     };
     requestAnimationFrame(f);
   }
-  if (PERSO) {
+  function initPerso() {
+    PERSO = window.TiroirPerso && persoCv ? window.TiroirPerso.create(persoCv, { img: hillImg }) : null;
+    if (!PERSO) return;
     if (/[?&]perso=/.test(location.search)) persoT = parseFloat(location.search.split(/[?&]perso=/)[1]) || 0;
-    if (/[?&]bench/.test(location.search)) window.__perso = {
-      seek: (t) => { persoPaused = true; persoT = t; PERSO.draw(t); }, pose: (t) => PERSO.pose(t),
-      cost: (n) => { const t0 = performance.now(); for (let i = 0; i < n; i++) PERSO.draw((i * 10) / n); return (performance.now() - t0) / n; },
-    };
-    /* le premier dessin attend la colline et le calcul des ressorts (fait par tranches, perso.js) */
     Promise.all([hillImg.decode ? hillImg.decode().catch(() => {}) : Promise.resolve(), window.TiroirPerso.ready])
       .then(() => { persoReady = true; placePerso(); kickPerso(); });
     if (!RM && persoBtn) {
@@ -637,8 +513,12 @@
       });
     }
   }
-  new IntersectionObserver((es) => { heroVisible = es[0].isIntersecting; if (heroVisible) { heroRedraw(); kickPerso(); } }).observe(hero);
-  if (!RM) addEventListener('scroll', () => { if (heroVisible && heroT0 != null) heroRedraw(); }, { passive: true });
+  if (CHERCHEUR) {
+    const sc = document.createElement('script');
+    sc.src = 'perso.js'; sc.onload = initPerso;
+    document.body.append(sc);
+  }
+  new IntersectionObserver((es) => { heroVisible = es[0].isIntersecting; if (heroVisible) kickPerso(); }).observe(hero);
 
   /* =========================================================
      L'ouverture : on attend la police et l'image de la colline (au plus 1,6 s), puis tout arrive ensemble.
@@ -649,11 +529,9 @@
   async function heroPlay() {
     buildHero();                                   // mesuré avant les entrées (aucune transformation en cours)
     root.classList.add('rv-open');
-    placePerso(); persoOn = true; kickPerso();
-    if (RM) { heroT0 = 0; drawHero(0); return; }
-    const fly = heroFly(FLY_AT);
-    heroT0 = performance.now() + FLY_AT; heroRedraw();
-    await fly;
+    persoOn = true; placePerso(); kickPerso();
+    if (RM) return;
+    await heroFly(FLY_AT);
     await sleep(120);
     await typeIn(askA, ANSWER, 26, null, START);
     askS.classList.remove('wait');
@@ -680,239 +558,7 @@
   ]);
   opened.then(heroPlay);
 
-  /* =========================================================
-     Démo : la scène cobalt, la commode en trame, la fiche qui sort du tiroir et se pose
-     ========================================================= */
-  const stage = $('.stage');
-  const scv = $('.stage-dots', stage);
-  const sctx = scv.getContext('2d');
-  const replyEl = $('.stage-reply', stage);
-  const fiche = $('.fiche', stage);
-  const fBody = $('.fiche-body', fiche);
-  const fInk = $('.fiche-ink', fiche);
-  const fctx = fInk.getContext('2d');
-  const live = $('.reply-live');
-  let lum = null; const LW = 1000, LH = 310, LX0 = 300, LY0 = 470;
-  const DRW = { x0: 782, x1: 884, top: 583 };
-  const COMMODE = { top: 497, ground: 760, cx: 781 };
-  let G = null, formT0 = null, scanT0 = null, dotsActive = false;
-  const im = new Image();
-  im.src = 'img/commode-lum.webp';
-  const lumReady = im.decode().then(() => {
-    const c = document.createElement('canvas'); c.width = LW; c.height = LH;
-    const x = c.getContext('2d'); x.drawImage(im, 0, 0);
-    const px = x.getImageData(0, 0, LW, LH).data;
-    lum = new Float32Array(LW * LH);
-    for (let i = 0; i < LW * LH; i++) lum[i] = px[i * 4] / 255;
-    /* flou de 5 px (l'écart d'un point) : la crête et les bords des tiroirs se tramant en points qui diminuent, pas en marches */
-    const tmp = new Float32Array(LW * LH), r = 2, n = 2 * r + 1;
-    for (let y = 0; y < LH; y++) {
-      let a = 0;
-      for (let x = -r; x <= r; x++) a += lum[y * LW + clamp(x, 0, LW - 1)];
-      for (let x = 0; x < LW; x++) { tmp[y * LW + x] = a / n; a += lum[y * LW + Math.min(LW - 1, x + r + 1)] - lum[y * LW + Math.max(0, x - r)]; }
-    }
-    for (let x = 0; x < LW; x++) {
-      let a = 0;
-      for (let y = -r; y <= r; y++) a += tmp[clamp(y, 0, LH - 1) * LW + x];
-      for (let y = 0; y < LH; y++) { lum[y * LW + x] = a / n; a += tmp[Math.min(LH - 1, y + r + 1) * LW + x] - tmp[Math.max(0, y - r) * LW + x]; }
-    }
-  }).catch(() => {});
-  function sample(sx, sy) {
-    const x = clamp(sx - LX0, 0, LW - 1.001), y = sy - LY0;
-    if (y < 0 || y >= LH - 1) return 0;
-    const ix = x | 0, iy = y | 0, fx = x - ix, fy = y - iy, i = iy * LW + ix;
-    return (lum[i] * (1 - fx) + lum[i + 1] * fx) * (1 - fy) + (lum[i + LW] * (1 - fx) + lum[i + LW + 1] * fx) * fy;
-  }
-  function fillFiche(i, el) {
-    const q = QA[i], f = el || fiche;
-    $('.fiche-name', f).textContent = q.file;
-    $('.fiche-path', f).textContent = q.path;
-    $('.fiche-page', f).textContent = q.page;
-    $('.fiche-h', f).textContent = q.h;
-    const b = $('.fiche-body', f);
-    b.textContent = ''; b.append(q.body[0]);
-    const m = document.createElement('mark'); m.textContent = q.body[1]; b.append(m); b.append(q.body[2]);
-  }
-  /* Mesure la plus haute fiche et la plus haute réponse, pour une scène qui ne bouge pas d'une question à l'autre.
-     Sur des copies hors champ : la fiche et la réponse en cours ne sont pas touchées. */
-  function measure(fw, rw) {
-    let fh = 0, rh = 0;
-    const fc = fiche.cloneNode(true), rc = replyEl.cloneNode(false);
-    fc.style.cssText = `visibility:hidden;transform:none;width:${fw}px`;
-    rc.style.cssText = `visibility:hidden;${rw ? `width:${rw}px` : ''}`;
-    stage.append(fc, rc);
-    QA.forEach((q, i) => { fillFiche(i, fc); fh = Math.max(fh, fc.offsetHeight); rc.textContent = q.a; rh = Math.max(rh, rc.offsetHeight); });
-    fc.remove(); rc.remove();
-    return { fh, rh };
-  }
-  function layoutStage() {
-    const mode = innerWidth >= 880 ? 'wide' : stage.clientWidth >= 600 ? 'mid' : 'narrow';
-    const wide = mode === 'wide';
-    const W = stage.clientWidth;
-    let fw, s, ox, oy, land, H;
-    if (wide) {
-      fw = Math.round(Math.min(500, W * 0.4));
-      fiche.style.setProperty('--fw', fw + 'px');
-      stage.style.height = '';
-      H = stage.clientHeight;
-      const pad = clamp(W * 0.034, 28, 56);
-      const m = measure(fw);
-      var rbox = { r: replyEl.offsetLeft + replyEl.offsetWidth + 28, b: replyEl.offsetTop + m.rh + 24 };
-      land = { x: W - fw - Math.max(32, W * 0.045), y: pad };
-      if (W > 1400) land.x = Math.min(land.x, Math.round(W * 0.7 - fw / 2));   // grand écran : la fiche vient vers le centre
-      /* la commode occupe la colonne de gauche, sous la réponse, posée sur le bas de la scène */
-      const top = replyEl.offsetTop + m.rh + 40;
-      s = Math.min((W * 0.29) / 206, (H - top) / (COMMODE.ground - COMMODE.top), (land.x - pad) * 0.62 / 206);
-      const cx = W > 1400 ? W * 0.33 : Math.min(W * 0.26, (land.x - 24) / 2);
-      ox = cx - COMMODE.cx * s; oy = H - COMMODE.ground * s;
-    } else if (mode === 'mid') {
-      /* tablette : la réponse en haut, la fiche à droite (une ligne de lecture normale), la commode à gauche */
-      fw = Math.round(Math.min(460, W * 0.6));
-      fiche.style.setProperty('--fw', fw + 'px');
-      const m = measure(fw, W - 44);
-      var rbox = { r: W, b: 24 + m.rh + 18 };
-      const top = 24 + m.rh + 28;
-      land = { x: W - fw - 24, y: top };
-      const colW = land.x - 24;
-      s = Math.min((colW * 0.92) / 206, 1.25);
-      H = Math.round(Math.max(top + m.fh + 40, top + 30 + (COMMODE.ground - COMMODE.top + 30) * s));
-      stage.style.height = H + 'px';
-      ox = 12 + colW / 2 - COMMODE.cx * s; oy = H - (COMMODE.ground + 18) * s;
-    } else {
-      fw = W - 32;
-      fiche.style.setProperty('--fw', fw + 'px');
-      const m = measure(fw, W - 44);
-      var rbox = { r: W, b: 24 + m.rh + 18 };
-      const top = 24 + m.rh + 22;
-      /* Au téléphone, la scène tient dans un écran : la réponse, la fiche, et la commode juste dessous
-         (assez grande pour que la trame se lise ; la fiche ne la recouvre pas). */
-      s = Math.min((W * 0.56) / 206, 1.1);
-      const comTop = top + m.fh + 10;
-      H = Math.round(comTop + 283 * s);
-      stage.style.height = H + 'px';
-      ox = W * 0.5 - COMMODE.cx * s; oy = comTop - COMMODE.top * s;
-      land = { x: 16, y: top };
-    }
-    const d = DPR();
-    scv.width = Math.round(W * d); scv.height = Math.round(H * d);
-    const fh = fiche.offsetHeight;
-    const lineY = oy + DRW.top * s, dx = ox + ((DRW.x0 + DRW.x1) / 2) * s;
-    const s0 = ((DRW.x1 - DRW.x0) * s * 0.9) / fw;
-    G = { W, H, s, ox, oy, fw, fh, lineY, dx, s0, land, rbox, mode, pitch: mode !== 'narrow' ? clamp(W / 190, 4.6, 6.6) : 4.2 };
-    shadowEl.style.width = fw + 'px'; shadowEl.style.height = fh + 'px';
-    if (pose.rest || pose.inside) applyPose();
-  }
-  /* Les points de la commode, calculés une fois par mise en page (position, taille, délai d'apparition) ;
-     à chaque image, seuls les points de la façade du tiroir (qui coulisse, que l'onde parcourt) sont recalculés. */
-  let DOTS = null;
-  const procL = (L) => Math.pow(clamp((L - 0.08) / 0.84, 0, 1), 1.9) * 0.95 + 0.05;
-  const inDrawer = (ix, iy) => ix > 740 && ix < 905 && iy > 566 && iy < 628;
-  function buildDots() {
-    const { W, H, s, ox, oy, pitch } = G;
-    const X = [], Y = [], Q = [], A = [], Z = [];
-    const x0 = pitch / 2, x1 = W;
-    const y0 = Math.max(pitch / 2, oy + LY0 * s), y1 = Math.min(H, oy + (LY0 + LH) * s);
-    let row = Math.floor((y0 - pitch / 2) / pitch);
-    for (let y = pitch / 2 + row * pitch; y < y1; y += pitch, row++) {
-      const off = row % 2 ? pitch / 2 : 0;
-      const xs = pitch / 2 + off + Math.floor((x0 - pitch / 2 - off) / pitch) * pitch;
-      for (let x = xs; x < x1; x += pitch) {
-        const ix = (x - ox) / s, iy = (y - oy) / s, z = inDrawer(ix, iy);
-        const L = sample(ix, iy);
-        if (!z && L < 0.06) continue;
-        X.push(x); Y.push(y); Z.push(z ? 1 : 0); Q.push(L < 0.06 ? 0 : Math.sqrt(procL(L)));
-        A.push(Math.hypot(x - G.dx, y - G.lineY) / 900 + hash(x, y) * 0.18);
-      }
-    }
-    DOTS = { G, n: X.length, x: Float32Array.from(X), y: Float32Array.from(Y), q: Float32Array.from(Q), at: Float32Array.from(A), z: Uint8Array.from(Z) };
-  }
-  function drawStage(now) {
-    if (!lum || !G) return false;
-    if (!DOTS || DOTS.G !== G) buildDots();
-    const d = DPR(), { s, ox, oy, pitch } = G, D = DOTS;
-    sctx.setTransform(1, 0, 0, 1, 0, 0); sctx.clearRect(0, 0, scv.width, scv.height);
-    sctx.setTransform(d, 0, 0, d, 0, 0);
-    sctx.fillStyle = '#fff';
-    const el = formT0 == null ? -1 : RM ? 1e9 : (now - formT0) / 1000;
-    const sc = scanT0 ? clamp((now - scanT0) / 900, 0, 1) : 2;
-    const fl = ox + DRW.x0 * s, fr = ox + DRW.x1 * s, ft = G.lineY, fb = G.lineY + 34 * s;
-    const k = pitch * 0.48;                          // les points pleins se touchent presque, sans se fondre
-    let active = sc <= 1;
-    sctx.beginPath();
-    for (let i = 0; i < D.n; i++) {
-      const u = (el - D.at[i]) / 0.45;
-      if (u < 1) active = true;
-      if (u <= 0) continue;
-      const x = D.x[i], y = D.y[i];
-      let q = D.q[i];
-      if (D.z[i]) {
-        const ix = (x - ox) / s, iy = (y - oy) / s;
-        let L;
-        if (drawerO > 0.002) {
-          const sx = ix - drawerO * DRAWER.dx, sy = iy - drawerO * DRAWER.dy;
-          const inSrc = sx > 748 && sx < 892 && sy > 572 && sy < 621;
-          const inOrig = ix > 748 && ix < 892 && iy > 572 && iy < 621;
-          L = inSrc ? sample(sx, sy) : inOrig ? 0.1 : sample(ix, iy);
-        } else L = sample(ix, iy);
-        if (L < 0.06) continue;
-        q = Math.sqrt(procL(L));
-        if (sc <= 1 && x > fl && x < fr && y > ft - 4 && y < fb) {
-          const wave = Math.exp(-Math.pow((x - fl) / (fr - fl) - sc * 1.3 + 0.15, 2) / 0.012);
-          q = Math.sqrt(Math.min(1, q * q * (1 - 0.55 * wave)));
-        }
-      }
-      const r = k * q * (u < 1 ? easeOut(u) : 1);
-      sctx.moveTo(x + r, y); sctx.arc(x, y, r, 0, 6.283);
-    }
-    sctx.fill();
-    if (drawTrail(now)) active = true;
-    return active;
-  }
-  let stageVisible = false;
-  let dirty = false;
-  /* La trace : trois fantômes en trame laissés par la fiche pendant son vol, qui s'effacent (la grammaire du hero). */
-  let trail = [], ficheLay = null, ficheSpr = null;
-  const TRAIL_MS = 1100;
-  function ficheLayout() {
-    const w = G.fw, h = G.fh, lines = [];
-    lines.push({ x0: 52, x1: w * 0.62, y: 26, hh: 4 }, { x0: 52, x1: w * 0.4, y: 44, hh: 3.5 }, { kind: 'rule', x0: 22, x1: w - 22, y: 64, hh: 1.2 }, { x0: 22, x1: w * 0.45, y: 86, hh: 4 });
-    for (let y = 114; y < h - 22; y += 28) lines.push({ x0: 22, x1: y + 28 >= h - 22 ? w * 0.5 : w - 24, y, hh: 4 });
-    return ghostLayout(w, h, lines, 29);
-  }
-  function drawTrail(now) {
-    if (!trail.length || RM) return false;
-    let alive = false;
-    sctx.fillStyle = '#fff';
-    for (const g of trail) {
-      const age = now - g.t;
-      if (age >= TRAIL_MS) continue;
-      alive = true;
-      const a = 0.62 * (1 - easeOut(age / TRAIL_MS)) * smooth(0, 120, age);
-      ghostPut(sctx, ficheSpr, g.x, g.y, g.sc, g.rot, a);
-    }
-    if (!alive) trail = [];
-    return alive;
-  }
-  function kickStage() {
-    if (dotsActive) return; dotsActive = true;
-    loop((now) => {
-      const a = drawStage(now);
-      const go = (a || dirty) && stageVisible;
-      dirty = false;
-      if (!go) dotsActive = false;
-      return go;
-    });
-  }
-  function markDirty() { dirty = true; kickStage(); }
-
-  /* =========================================================
-     La fiche : une ligne de temps continue, en trois gestes.
-     « Rangement » : la fiche se soulève, revient au-dessus du tiroir en rapetissant, plonge dans la fente ; le tiroir s'ouvre pour la recevoir.
-     « Recherche » : une onde parcourt la façade du tiroir.
-     « Coulisse » : la fiche sort droit de la fente puis part sur une courbe, sans arrêt entre les deux (chemin paramétré
-     à la longueur d'arc), s'incline selon sa vitesse, prend de l'ombre en l'air, se pose sans rebond ; le tiroir se referme.
-     Le texte est rendu à pleine taille pendant tout le trajet (calque créé à l'échelle 1), pour ne jamais passer de flou à net.
-     ========================================================= */
+  /* Courbes de mouvement partagées */
   function cubicBezier(x1, y1, x2, y2) {
     return (x) => {
       if (x <= 0) return 0;
@@ -931,45 +577,8 @@
   }
   const E = {
     vol: cubicBezier(0.45, 0, 0.2, 1),        // sortie et vol : départ souple, arrivée posée
-    retour: cubicBezier(0.45, 0, 0.6, 0.9),   // retour : la fiche accélère puis entre dans la fente sans s'arrêter
-    plonge: cubicBezier(0.55, 0, 0.85, 0.55), // la fiche tombe dans la fente
-    ouvre: cubicBezier(0.2, 0.7, 0.2, 1),
-    ferme: cubicBezier(0.55, 0, 0.3, 1),
   };
   const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
-  /* Courbe de Bézier cubique parcourue à vitesse réglée par la longueur d'arc : d de 0 à 1. */
-  function curve(p0, p1, p2, p3) {
-    const N = 64, pts = [], len = [0];
-    for (let i = 0; i <= N; i++) {
-      const t = i / N, m = 1 - t;
-      pts.push([
-        m * m * m * p0[0] + 3 * m * m * t * p1[0] + 3 * m * t * t * p2[0] + t * t * t * p3[0],
-        m * m * m * p0[1] + 3 * m * m * t * p1[1] + 3 * m * t * t * p2[1] + t * t * t * p3[1],
-      ]);
-      if (i) len.push(len[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
-    }
-    const T = len[N] || 1;
-    const at = (d) => {
-      const target = clamp(d, 0, 1) * T;
-      let i = 1;
-      while (i < N && len[i] < target) i++;
-      const f = (target - len[i - 1]) / ((len[i] - len[i - 1]) || 1);
-      return [lerp(pts[i - 1][0], pts[i][0], f), lerp(pts[i - 1][1], pts[i][1], f)];
-    };
-    at.total = T;
-    return at;
-  }
-
-  const shadowEl = $('.fiche-shadow', stage);
-  /* La pose courante de la fiche, par son centre (la fiche grandit et tourne autour de son centre) ;
-     « rest » : posée, en pixels entiers, sans calque. */
-  const pose = { x: 0, y: 0, sc: 1, rot: 0, clip: 0, lift: 0, vis: false, rest: false, inside: true };
-  let drawerO = 0;               // ouverture supplémentaire du tiroir (0 : comme la photo, 1 : tiré de 10 px d'image)
-  const DRAWER = { dx: 10, dy: 3 };
-  /* La fente : le centre horizontal du tiroir et la ligne d'où sort la fiche. */
-  const slotAt = (o) => ({ x: G.dx + o * DRAWER.dx * G.s, y: G.lineY + o * DRAWER.dy * G.s });
-  const slot = () => slotAt(drawerO);
-  const landC = () => ({ x: G.land.x + G.fw / 2, y: G.land.y + G.fh / 2 });
   /* Vitesse horizontale le long d'un trajet minuté, rapportée à son maximum : l'inclinaison suit une cloche, sans plafond ni à-coup. */
   function tilt(xAt, dur) {
     const v = (p) => (xAt(p + 0.004) - xAt(p - 0.004)) / (0.008 * dur);
@@ -977,129 +586,173 @@
     for (let i = 0; i <= 60; i++) vmax = Math.max(vmax, Math.abs(v(i / 60)));
     return (p) => v(p) / vmax;
   }
-  const POSE_LOG = /[?&]bench/.test(location.search) ? (window.__pose = []) : null;
-  function applyPose() {
-    if (!G) return;
-    fiche.style.visibility = pose.vis ? 'visible' : 'hidden';
-    if (POSE_LOG) { const L = landC(); POSE_LOG.push([performance.now(), pose.rest ? L.x : pose.x, pose.rest ? L.y : pose.y, pose.rest ? 1 : pose.sc, pose.rest ? 0 : pose.rot, pose.vis ? 1 : 0]); }
-    if (pose.rest) {
-      fiche.style.transform = `translate(${Math.round(G.land.x)}px, ${Math.round(G.land.y)}px)`;
-      fiche.style.clipPath = 'none';
-      fiche.style.willChange = 'auto';
-      shadowEl.style.opacity = '0';
-      return;
+
+  /* =========================================================
+     Démo : la réponse à gauche ; à droite, le tiroir. Ses fiches dépassent de la façade, la page lue en sort.
+     À chaque question : la page redescend dans le tiroir, Tiroir feuillette les fiches de l'avant vers le fond,
+     l'étiquette prend le nom du dossier, la bonne page monte, le passage se surligne au crayon, la réponse s'écrit.
+     Tout en transformations composées (la page) et en un petit canevas (le haut des fiches).
+     ========================================================= */
+  const stage = $('.stage');
+  const replyEl = $('.stage-reply', stage), srcEl = $('.stage-src', stage), srcT = $('.stage-src-t', stage);
+  const desk = $('.desk', stage), slotEl = $('.desk-slot', desk);
+  const fiche = $('.fiche', desk), fBody = $('.fiche-body', fiche), fInk = $('.fiche-ink', fiche), fctx = fInk.getContext('2d');
+  const cvBack = $('.desk-cards--back', desk), cvFront = $('.desk-cards--front', desk);
+  const plaque = $('.drawer-plaque', desk);
+  const live = $('.reply-live');
+  const folderOf = (q) => q.path.split(', ').pop();
+  function fillFiche(i, el) {
+    const q = QA[i], f = el || fiche;
+    $('.fiche-name', f).textContent = q.file;
+    $('.fiche-path', f).textContent = q.path;
+    $('.fiche-page', f).textContent = q.page;
+    $('.fiche-h', f).textContent = q.h;
+    const b = $('.fiche-body', f);
+    b.textContent = ''; b.append(q.body[0]);
+    const m = document.createElement('mark'); m.textContent = q.body[1]; b.append(m); b.append(q.body[2]);
+    $('.fiche-h--next', f).textContent = q.nh;
+    $('.fiche-next', f).textContent = q.next;
+  }
+  /* La hauteur utile d'une page (l'article cité et le titre du suivant) et de la réponse, pour les trois questions :
+     la scène ne bouge pas d'une question à l'autre. Sur des copies hors champ. */
+  function measure() {
+    let fh = 0, rh = 0;
+    const fc = fiche.cloneNode(true), rc = replyEl.cloneNode(false);
+    fc.style.cssText = 'visibility:hidden;transform:none;animation:none';
+    rc.style.cssText = `visibility:hidden;position:absolute;left:0;top:0;width:${replyEl.clientWidth}px;min-height:0`;
+    slotEl.append(fc); replyEl.parentElement.append(rc);
+    QA.forEach((q, i) => {
+      fillFiche(i, fc);
+      const nh = $('.fiche-h--next', fc);
+      fh = Math.max(fh, nh.offsetTop + nh.offsetHeight + 6);    // jusqu'au titre de l'article suivant : son texte est sous les fiches de devant
+      rc.textContent = q.a; rh = Math.max(rh, rc.offsetHeight);
+    });
+    fc.remove(); rc.remove();
+    return { fh, rh };
+  }
+  let hideY = 600, pageUp = true;
+  const COVER = 12;                                 // ce que les deux fiches de devant cachent du bas de la page
+  function layoutStage() {
+    const m = measure();
+    replyEl.style.minHeight = m.rh + 'px';
+    stage.style.setProperty('--page-h', Math.ceil(m.fh) + 'px');
+    hideY = slotEl.clientHeight - fiche.offsetTop + 2;
+    if (!pageUp && !fiche.getAnimations().length) fiche.style.transform = `translateY(${hideY}px)`;
+    drawDeskCards(performance.now());
+  }
+
+  /* Le haut des fiches dans le tiroir : sept derrière la page, deux devant. Vues de face et un peu d'en haut :
+     celles du fond dépassent plus haut, plus sombres ; chacune a son onglet (à gauche, au milieu, à droite). */
+  const BACK = 7, FRONT = 2;
+  const CARDS = [];
+  {
+    const R = rng(23), tones = ['#ffffff', '#f2f0ea', '#e2eaf6'];
+    for (let j = 0; j < BACK + FRONT; j++) CARDS.push({ tone: tones[(j * 2) % 3], tab: [0.07, 0.43, 0.76][(j * 2 + 1) % 3] + (R() - 0.5) * 0.05, tw: 0.13 + R() * 0.04 });
+  }
+  let riffleT0 = null;
+  function canvasFor(cv) {
+    const w = cv.clientWidth, h = cv.clientHeight, d = DPR();
+    if (!w || !h) return null;
+    if (cv.width !== Math.round(w * d) || cv.height !== Math.round(h * d)) { cv.width = Math.round(w * d); cv.height = Math.round(h * d); }
+    const x = cv.getContext('2d');
+    x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cv.width, cv.height); x.setTransform(d, 0, 0, d, 0, 0);
+    return { x, w, h };
+  }
+  function tabPath(x, l, t, w, h, r) {
+    x.beginPath(); x.moveTo(l, t + h); x.lineTo(l, t + r); x.quadraticCurveTo(l, t, l + r, t);
+    x.lineTo(l + w - r, t); x.quadraticCurveTo(l + w, t, l + w, t + r); x.lineTo(l + w, t + h); x.closePath();
+  }
+  function drawDeskCards(now) {
+    const B = canvasFor(cvBack), F = canvasFor(cvFront);
+    if (!B || !F) return false;
+    const W = B.w, H = B.h, I = Math.max(0, (W - slotEl.clientWidth) / 2), cw = W - 2 * I;
+    /* le tiroir vu d'un peu au-dessus : l'intérieur sombre, le chant du fond, les chants des côtés qui fuient vers lui */
+    {
+      const x = B.x, yb = 3, st = Math.min(7, I * 0.3), dx = Math.min(I * 0.45, 14);
+      x.fillStyle = '#062654';
+      x.beginPath(); x.moveTo(st, H); x.lineTo(dx + st * 0.7, yb); x.lineTo(W - dx - st * 0.7, yb); x.lineTo(W - st, H); x.closePath(); x.fill();
+      x.fillStyle = '#d9d4c8';                      // le chant du fond, dans l'ombre
+      x.fillRect(dx, yb, W - 2 * dx, 3);
+      x.fillStyle = '#ebe8e0';                      // les chants des côtés, éclairés
+      x.beginPath(); x.moveTo(0, H); x.lineTo(dx, yb); x.lineTo(dx + st * 0.7, yb); x.lineTo(st, H); x.closePath(); x.fill();
+      x.beginPath(); x.moveTo(W, H); x.lineTo(W - dx, yb); x.lineTo(W - dx - st * 0.7, yb); x.lineTo(W - st, H); x.closePath(); x.fill();
     }
-    const tx = pose.x - G.fw / 2, ty = pose.y - G.fh / 2;
-    fiche.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) rotate(${pose.rot.toFixed(3)}deg) scale(${pose.sc.toFixed(4)})`;
-    fiche.style.clipPath = pose.clip > 0.5 ? `inset(0 0 ${pose.clip.toFixed(1)}px 0)` : 'none';
-    const L = pose.vis ? pose.lift : 0;
-    shadowEl.style.opacity = (0.42 * L).toFixed(3);
-    shadowEl.style.transform = `translate(${(tx + 4 * L * pose.sc).toFixed(2)}px, ${(ty + (10 + 34 * L) * pose.sc).toFixed(2)}px) rotate(${pose.rot.toFixed(3)}deg) scale(${(pose.sc * (0.97 - 0.04 * L)).toFixed(4)})`;
-  }
-  /* Rogne le bas de la fiche sous la ligne de la fente (en pixels de la fiche, avant l'échelle). */
-  const clipAt = (cy, sc, line) => Math.max(0, (cy + (G.fh * sc) / 2 - line) / sc);
-
-  let drawerTok = 0;
-  function drawerTo(target, ms, ease) {
-    const my = ++drawerTok, from = drawerO;
-    if (RM) { drawerO = target; markDirty(); return Promise.resolve(); }
-    return tween(ms, (p) => { drawerO = lerp(from, target, ease(p)); markDirty(); }, () => my === drawerTok);
-  }
-
-  /* Rangement : de la pose courante jusqu'au fond du tiroir. */
-  async function rangement(alive) {
-    if (!pose.vis || pose.inside) { pose.vis = false; pose.inside = true; applyPose(); return true; }
-    const L0 = landC();
-    const c = pose.rest ? { x: L0.x, y: L0.y, sc: 1, rot: 0, lift: 0 } : { ...pose };
-    pose.rest = false; pose.clip = 0;
-    fiche.style.willChange = 'transform';
-    drawerTo(1, 520, E.ouvre);
-    const s = slotAt(1), half = (G.fh * G.s0) / 2;
-    const yOut = s.y - half - 8, yIn = s.y + half + 2;
-    if (Math.abs(c.sc - G.s0) < 0.01 && c.y > yOut - 4 && Math.abs(c.x - s.x) < 20) {
-      const ok = await tween(160, (p) => {
-        const y = lerp(c.y, yIn, E.plonge(p));
-        pose.x = lerp(c.x, s.x, p); pose.y = y; pose.sc = G.s0; pose.rot = 0; pose.lift = 0; pose.clip = clipAt(y, G.s0, s.y); applyPose();
-      }, alive);
-      if (!ok) return false;
-      pose.vis = false; pose.inside = true; applyPose();
-      return true;
+    const N = CARDS.length;
+    let active = false;
+    for (let j = 0; j < N; j++) {                   // du fond vers l'avant
+      const c = CARDS[j], front = j >= BACK, x = front ? F.x : B.x;
+      let y = front ? H - (j === N - 1 ? 5 : COVER) : 10 + (j / (BACK - 1)) * (H - 10 - COVER - 6);
+      if (riffleT0 != null) {
+        const t = (now - riffleT0 - (N - 1 - j) * 42) / 300;   // Tiroir feuillette de l'avant vers le fond
+        if (t < 1) active = true;
+        if (t > 0 && t < 1) y -= 7 * (t < 0.35 ? easeOut(t / 0.35) : 1 - easeIO((t - 0.35) / 0.65));
+      }
+      const tl = I + c.tab * cw, tw = c.tw * cw;
+      x.fillStyle = c.tone;
+      x.fillRect(I, y, cw, H - y + 1);
+      tabPath(x, tl, y - 6.5, tw, 7, 2.5); x.fill();
+      const shade = front ? 0 : 0.06 + 0.24 * (1 - j / (BACK - 1));
+      if (shade) {
+        x.fillStyle = `rgba(6, 38, 84, ${shade.toFixed(3)})`;
+        x.fillRect(I, y, cw, H - y + 1);
+        tabPath(x, tl, y - 6.5, tw, 7, 2.5); x.fill();
+      }
+      x.fillStyle = 'rgba(13, 44, 87, .22)';         // le chant de la fiche
+      x.fillRect(I, y, tl - I, 1); x.fillRect(tl + tw, y, I + cw - tl - tw, 1);
     }
-    /* un seul trajet : lever, revenir au-dessus du tiroir, descendre droit dans la fente */
-    const path = curve([c.x, c.y], [c.x, c.y - 40], [s.x, yOut - 70], [s.x, yIn]);
-    const dur = clamp(420 + path.total * 0.5, 560, 900);
-    const xAt = (t) => path(E.retour(clamp(t, 0, 1)))[0];
-    const tl = tilt(xAt, dur);
-    const into = (2 * half + 10) / path.total;   // fin du trajet passée dans la fente
-    const ok = await tween(dur, (p) => {
-      const d = E.retour(p);
-      const [x, y] = path(d);
-      pose.x = x; pose.y = y;
-      pose.sc = lerp(c.sc, G.s0, smooth(0, 1 - into * 1.6, d));
-      pose.rot = lerp(c.rot, 0, smooth(0, 0.8, d)) + 2 * tl(p);
-      pose.lift = Math.max(c.lift * (1 - d), 0.7 * Math.sin(Math.PI * smooth(0, 1 - into * 1.2, d)));
-      pose.clip = clipAt(y, pose.sc, s.y);
-      applyPose();
-    }, alive);
-    if (!ok) return false;
-    pose.vis = false; pose.inside = true; applyPose();
-    return true;
+    if (!active && riffleT0 != null && now - riffleT0 > 2000) riffleT0 = null;
+    return active;
   }
-
-  /* Coulisse : la fiche sort de la fente et vient se poser. Au bureau, elle arrive de la gauche ; au téléphone, d'en dessous. */
-  async function coulisse(alive) {
-    const s = slot(), L = landC(), half = (G.fh * G.s0) / 2;
-    const yIn = s.y + half + 2, yOut = s.y - half;
-    const wide = G.mode !== 'narrow';
-    const rise = Math.max(70, 0.32 * Math.abs(L.y - yOut));
-    const path = curve(
-      [s.x, yIn],
-      [s.x, yOut - rise],
-      wide ? [L.x + 0.32 * (s.x - L.x), L.y + 0.06 * (yOut - L.y)] : [L.x, L.y + 0.3 * (yOut - L.y)],
-      [L.x, L.y],
-    );
-    const dur = clamp(1000 + path.total * 0.55, 1250, 1750);
-    const xAt = (t) => path(E.vol(clamp(t, 0, 1)))[0];
-    const tl = tilt(xAt, dur);
-    const out = (2 * half + 4) / path.total;     // part du chemin parcourue dans la fente
-    pose.vis = true; pose.inside = false; pose.rest = false;
-    fiche.style.willChange = 'transform';
-    let closing = false;
-    const marks = [0.28, 0.52, 0.76];
-    ficheLay = ficheLayout(); ficheSpr = ghostSprite(ficheLay, 1, 0.72, 5); trail = [];
-    const ok = await tween(dur, (p) => {
-      const d = E.vol(p);
-      const [x, y] = path(d);
-      pose.x = x; pose.y = y;
-      pose.sc = lerp(G.s0, 1, smooth(out * 1.15, 0.94, d));
-      pose.rot = 2.2 * tl(p) * smooth(out * 0.8, out * 3, d);
-      pose.lift = Math.pow(Math.sin(Math.PI * smooth(out * 0.8, 1, d)), 0.85);
-      pose.clip = d < out * 1.2 ? clipAt(y, pose.sc, s.y) : 0;
-      applyPose();
-      while (marks.length && d >= marks[0]) { marks.shift(); trail.push({ x, y, sc: pose.sc, rot: pose.rot * Math.PI / 180, t: performance.now() }); markDirty(); }
-      if (!closing && d > out * 1.6) { closing = true; drawerTo(0, 900, E.ferme); }
-    }, alive);
-    if (!ok) return false;
-    pose.rest = true; pose.lift = 0; applyPose();
-    return true;
+  /* La page monte du tiroir ou y redescend (transformation seulement ; la fente la coupe). */
+  function pageTo(up, ms) {
+    const cur = getComputedStyle(fiche).transform;   // la pose en cours, même au milieu d'un geste : on repart d'elle
+    const y0 = cur && cur !== 'none' ? new DOMMatrixReadOnly(cur).m42 : 0;
+    fiche.getAnimations().forEach((a) => a.cancel());
+    const down = `translateY(${hideY}px)`;
+    pageUp = up;
+    if (RM || !ms) { fiche.style.transform = up ? '' : down; return Promise.resolve(true); }
+    fiche.style.transform = '';
+    /* en montant, la page se redresse d'un rien (pivot au bas de la page, dans le tiroir) */
+    const a = fiche.animate(
+      up ? [{ transform: `translateY(${y0.toFixed(2)}px) rotate(-.6deg)` }, { transform: 'none' }]
+         : [{ transform: `translateY(${y0.toFixed(2)}px)` }, { transform: down }],
+      { duration: ms, easing: up ? 'cubic-bezier(.16, .84, .24, 1)' : 'cubic-bezier(.5, 0, .75, .25)', fill: 'forwards' });
+    return a.finished.then(() => { fiche.style.transform = up ? '' : down; a.cancel(); return true; }, () => false);
+  }
+  /* L'étiquette prend le nom du dossier où la page a été trouvée : elle s'éteint, change, se rallume. */
+  let plaqueTok = 0;
+  async function swapPlaque(text) {
+    if (plaque.textContent === text) return;
+    const my = ++plaqueTok;
+    plaque.getAnimations().forEach((a) => a.cancel());
+    if (RM) { plaque.textContent = text; return; }
+    const out = plaque.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'ease-in', fill: 'forwards' });
+    await out.finished.catch(() => {});
+    if (my !== plaqueTok) return;
+    plaque.textContent = text;
+    out.cancel();
+    plaque.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 280, easing: 'ease-out' });
   }
 
   let hl = null, hlP = 0;
   function buildHL() {
     const mark = $('mark', fiche);
     if (!mark) return null;
-    const prev = fiche.style.transform; fiche.style.transform = 'none';
     const cr = fiche.getBoundingClientRect();
     const rects = [...mark.getClientRects()].filter((r) => r.width > 2).map((r) => ({ x: r.left - cr.left, y: r.top - cr.top, w: r.width, h: r.height }));
-    fiche.style.transform = prev;
     return crayon(rects, 17);
   }
   const drawHL = (p) => { hlP = p; drawCrayon(fctx, fInk, fiche.offsetWidth, fiche.offsetHeight, hl, p); };
   /* Le texte de la fiche change de taille (police qui arrive, largeur) : on remesure le crayon. */
-  new ResizeObserver(() => { if (hl) { hl = buildHL(); drawHL(hlP); } }).observe(fBody);
+  new ResizeObserver(() => { if (hl && pageUp && !fiche.getAnimations().length) { hl = buildHL(); drawHL(hlP); } }).observe(fBody);
 
   const qs = $$('.q');
   let tok = 0;
+  function show(i) {
+    const q = QA[i];
+    fillFiche(i); replyEl.textContent = q.a; srcT.textContent = `${q.file}, ${q.page}`; plaque.textContent = folderOf(q);
+    live.textContent = `${q.a} Source${NB}: ${q.file}, ${q.page}.`;
+  }
   async function askDemo(i) {
     const my = ++tok, alive = () => my === tok;
     qs.forEach((b, j) => b.setAttribute('aria-pressed', String(j === i)));
@@ -1107,47 +760,44 @@
     const q = QA[i];
     live.textContent = `${q.a} Source${NB}: ${q.file}, ${q.page}.`;
     if (RM) {
-      fillFiche(i); replyEl.textContent = q.a; layoutStage();
-      pose.vis = true; pose.inside = false; pose.rest = true; applyPose(); formT0 = 0; markDirty();
+      show(i); layoutStage(); pageTo(true, 0);
       requestAnimationFrame(() => { hl = buildHL(); drawHL(1); stage.removeAttribute('aria-busy'); });
       return;
     }
-    replyEl.style.transition = 'opacity .3s ease'; replyEl.style.opacity = '.3';
-    if (!(await rangement(alive))) return;
+    stage.classList.add('is-searching');
+    if (!(await pageTo(false, 460)) || !alive()) return;
     fillFiche(i); hl = null; drawHL(0);
-    G.fh = fiche.offsetHeight; shadowEl.style.height = G.fh + 'px';
-    replyEl.style.opacity = '1';
-    const typing = typeIn(replyEl, q.a, 30, alive);
-    scanT0 = performance.now(); markDirty();
-    if (drawerO < 0.99) drawerTo(1, 240, E.ouvre);
-    await sleep(110);
+    swapPlaque(folderOf(q));
+    riffleT0 = performance.now(); loop((now) => drawDeskCards(now));
+    await sleep(400);
     if (!alive()) return;
-    if (!(await coulisse(alive))) return;
-    await sleep(140);
+    srcEl.classList.add('wait'); srcT.textContent = `${q.file}, ${q.page}`;
+    stage.classList.remove('is-searching');
+    const typing = typeIn(replyEl, q.a, 28, alive);
+    if (!(await pageTo(true, 980)) || !alive()) return;
+    await sleep(90);
     if (!alive()) return;
     hl = buildHL();
     await tween(300 + hl.total * 2, (p) => drawHL(p), alive);
+    if (!alive()) return;
+    srcEl.classList.remove('wait');
     if (typing) await typing;
     if (alive()) stage.removeAttribute('aria-busy');
   }
   qs.forEach((b, i) => b.addEventListener('click', () => {
     /* Au téléphone, la scène est sous les questions : la réponse s'écrirait hors de l'écran. On amène la scène
        (la réponse en haut de l'écran) quand sa réponse est sous la moitié de l'écran (passe mobile du 2026-11-05). */
-    if (innerWidth < 880 && stage.clientWidth < 600) {
+    if (innerWidth < 880) {
       const top = replyEl.getBoundingClientRect().top;
       if (top > innerHeight * 0.5) scrollTo({ top: scrollY + stage.getBoundingClientRect().top - 16, behavior: RM ? 'auto' : 'smooth' });
     }
     askDemo(i);
   }));
-  Promise.all([fontsReady, lumReady]).then(() => {
-    /* Au repos, la scène montre déjà une réponse : la fiche est posée et lisible. La sortie du tiroir se joue à chaque question choisie. */
-    fillFiche(0); replyEl.textContent = QA[0].a; layoutStage();
-    pose.vis = true; pose.inside = false; pose.rest = true; applyPose();
-    live.textContent = `${QA[0].a} Source${NB}: ${QA[0].file}, ${QA[0].page}.`;
-    hl = buildHL(); drawHL(RM ? 1 : 0); drawStage(performance.now());
-    new IntersectionObserver((es) => { stageVisible = es[0].isIntersecting; if (stageVisible && formT0 != null) kickStage(); }).observe(stage);
+  fontsReady.then(() => {
+    /* Au repos, la scène montre déjà une réponse : la page est sortie et lisible. Le crayon passe à l'arrivée de la scène. */
+    show(0); layoutStage();
+    hl = buildHL(); drawHL(RM ? 1 : 0);
     onView(stage, 0.25, async () => {
-      formT0 = performance.now(); kickStage();
       if (RM) return;
       const my = tok;
       await sleep(500);
@@ -1157,8 +807,10 @@
     });
     let lastW = stage.clientWidth;
     new ResizeObserver(() => {
-      if (stage.clientWidth === lastW && innerWidth >= 880) { layoutStage(); drawStage(performance.now()); return; }
-      lastW = stage.clientWidth; layoutStage(); drawStage(performance.now()); if (hl) { hl = buildHL(); drawHL(hlP); }
+      const w = stage.clientWidth;
+      layoutStage();
+      if (w !== lastW && hl && pageUp && !fiche.getAnimations().length) { hl = buildHL(); drawHL(hlP); }
+      lastW = w;
     }).observe(stage);
   });
 
@@ -1230,7 +882,7 @@
     const o = { duration: ms, easing: ease, fill: 'forwards' };
     c._face.animate([{ transform: out ? A : Bs }, { transform: out ? Bs : A }], o);
     c._fiches.animate([{ transform: out ? A : B }, { transform: out ? B : A }], o);
-    return c._ombre.animate([{ transform: out ? A : B, opacity: out ? 0 : 0.9 }, { transform: out ? B : A, opacity: out ? 0.9 : 0 }], o).finished;
+    return c._ombre.animate([{ transform: out ? A : B, opacity: out ? 0 : 0.5 }, { transform: out ? B : A, opacity: out ? 0.5 : 0 }], o).finished;
   }
   function riffle(c) {
     /* Tiroir feuillette : chaque fiche se soulève un peu, de l'avant vers le fond */
@@ -1286,7 +938,7 @@
   addEventListener('resize', () => {
     cancelAnimationFrame(rz);
     rz = requestAnimationFrame(() => {
-      fitHill(); buildHero(); heroRedraw(); placePerso();
+      fitHill(); buildHero(); placePerso();
       if (giftHL) { giftHL = buildGift(); drawCrayon(gctx, gcv, gcv.offsetWidth, gcv.offsetHeight, giftHL, 1); }
     });
   });
@@ -1340,7 +992,7 @@
     e.preventDefault();
     clearTimeout(noteT);
     note.classList.remove('is-on');
-    note.textContent = `${a.textContent.trim()}${NB}: cette page n’existe pas. Tiroir est une marque de démonstration du studio Topiary.`;
+    note.textContent = `${label(a)}${NB}: cette page n’existe pas. Tiroir est une marque de démonstration du studio Topiary.`;
     requestAnimationFrame(() => requestAnimationFrame(() => {
       note.classList.add('is-on');
       /* au téléphone, la note sort sous la dernière colonne, souvent sous le bord de l'écran : on la montre entière
@@ -1431,7 +1083,7 @@
   }
   fForm.addEventListener('focusin', () => fForm.classList.add('is-used'), { once: true });
   fForm.addEventListener('submit', (e) => { e.preventDefault(); answer(fIn.value); if (!fIn.value.trim()) fIn.focus(); });
-  $$('.faq-ex', fEx).forEach((b) => b.addEventListener('click', () => { fIn.value = b.textContent.trim(); fIn.focus({ preventScroll: true }); answer(fIn.value); }));
+  $$('.faq-ex', fEx).forEach((b) => b.addEventListener('click', () => { fIn.value = label(b); fIn.focus({ preventScroll: true }); answer(fIn.value); }));
   fIn.addEventListener('input', () => {
     if (fIn.value.trim()) return;
     faqTok++; fLive.textContent = ''; fA.textContent = ''; fCite.classList.add('is-off'); showExamples(`Exemples${NB}:`);

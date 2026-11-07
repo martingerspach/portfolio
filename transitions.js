@@ -502,6 +502,14 @@
     // the mist, and the prism of the glass edge kept rare, as on the page: blue and amber (at a quarter, then a seventh
     // of the squares, with green, it read as confetti). Name 13.6 and 9.9:1 on the plate tones; darks 1.37:1 apart
     iris: { text: '#F2F2EE', c: [['#25252B', .50, 1], ['#3B3B43', .30, 1], ['#B6B6BA', .12, 0], ['#7B96FF', .045, 0], ['#EEAA4E', .035, 0]] },
+    // the crimson deepened to 1.48:1 from the landing's own (#ce0f3d, or the squares would cut its title), the brand's
+    // violet-800 (1.32:1 from the dark page), the pink of the half-tones and the violet of the tags, kept rare (at 8 %
+    // it read as confetti). Name 8.0 and 13.7:1 on the plate tones; darks 1.82:1 apart
+    glossa: { text: '#FFFAFB', c: [['#9E0B2E', .54, 1], ['#3A1A5C', .28, 1], ['#E8829A', .14, 0], ['#5B2BB0', .04, 0]] },
+    // the satin's deep green lifted to 1.30:1 from the landing's ground (#0d100f, or the squares would cut its title),
+    // two lighter greens of the silk, the sage thread, and the apricot kept rare, as on the page (the eyelet, the
+    // approvals). Name 12.8, 9.9 and 7.5:1 on the plate tones; darks 1.48:1 apart
+    weft: { text: '#EEF0EA', c: [['#1E2B23', .40, 1], ['#2C3E33', .26, 1], ['#3A5142', .14, 1], ['#A9C6A6', .14, 0], ['#ECBF9A', .06, 0]] },
   };
   const PX = {
     across: 22,      // squares across the longer side of the screen (the reference has 14)

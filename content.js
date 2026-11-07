@@ -40,6 +40,16 @@ window.CONTENT = {
    "frames": [
     "media/coil/iris-couverture.webp"
    ]
+  },
+  "glossa": {
+   "frames": [
+    "media/coil/glossa-couverture.webp"
+   ]
+  },
+  "weft": {
+   "frames": [
+    "media/coil/weft-couverture.webp"
+   ]
   }
  },
  "play": [
@@ -110,7 +120,7 @@ window.CONTENT = {
    "h": 750,
    "kind": "site",
    "title": "Tiroir, hero",
-   "note": "The answer card types its reply over the halftone field.",
+   "note": "The answer card leaves the open drawer and types its reply, on a printed cobalt sky.",
    "project": "tiroir",
    "hd": "media/tiroir/hero-loop-hd.mp4"
   },
@@ -220,6 +230,18 @@ window.CONTENT = {
    "sw": 640
   },
   {
+   "id": "weft-hero",
+   "src": "media/play/weft-hero.webp",
+   "small": "media/play/weft-hero-s.webp",
+   "w": 2880,
+   "h": 1800,
+   "kind": "site",
+   "title": "Weft, hero",
+   "note": "A satin woven live in WebGL2 under the product. The cards press into the silk, and a request slides out from under the run card when an agent needs a person.",
+   "project": "weft",
+   "sw": 640
+  },
+  {
    "id": "auvent-hero-loop",
    "src": "media/auvent/hero-loop-poster.webp",
    "small": "media/auvent/hero-loop-poster.webp",
@@ -244,6 +266,18 @@ window.CONTENT = {
    "note": "A hero background for Topiary, drawn live in code like an Aubusson tapestry: foliage in the foreground, a formal garden alley behind.",
    "project": null,
    "sw": 720
+  },
+  {
+   "id": "glossa-hero",
+   "src": "media/play/glossa-hero.webp",
+   "small": "media/play/glossa-hero-s.webp",
+   "w": 2880,
+   "h": 1800,
+   "kind": "site",
+   "title": "Glossa, hero",
+   "note": "A pixel font redrawn from Geist, over an engraving screened live in WebGL that develops like a print when the page opens.",
+   "project": "glossa",
+   "sw": 640
   },
   {
    "id": "redline-hero-loop",
@@ -303,17 +337,6 @@ window.CONTENT = {
    "once": true
   },
   {
-   "id": "anim-acquit-hero-end",
-   "src": "media/play/anim-acquit-hero-end.webp",
-   "small": "media/play/anim-acquit-hero-end.webp",
-   "w": 1440,
-   "h": 900,
-   "kind": "site",
-   "title": "Acquit, landing page",
-   "note": "An agent that chases unpaid invoices, politely and at the right moment. A concept landing page for a fictional AI product, one of twelve designed in parallel at Topiary.",
-   "project": null
-  },
-  {
    "id": "objet-tiroir",
    "src": "media/play/objet-tiroir.webp",
    "small": "media/play/objet-tiroir-s.webp",
@@ -363,6 +386,18 @@ window.CONTENT = {
    "sw": 640
   },
   {
+   "id": "glossa-dashboard",
+   "src": "media/play/glossa-dashboard.webp",
+   "small": "media/play/glossa-dashboard-s.webp",
+   "w": 2880,
+   "h": 1800,
+   "kind": "site",
+   "title": "Glossa, dashboard",
+   "note": "The product on one screen: coverage of 24 languages, words shipped each week and the review queue, in crimson and white.",
+   "project": "glossa",
+   "sw": 640
+  },
+  {
    "id": "quart-hero-loop",
    "src": "media/quart/hero-loop-poster.webp",
    "small": "media/quart/hero-loop-poster.webp",
@@ -386,6 +421,18 @@ window.CONTENT = {
    "title": "Understudy, hero",
    "note": "An office before anyone is in. On the old screen, the routine types itself in the photograph’s own ink.",
    "project": "understudy",
+   "sw": 640
+  },
+  {
+   "id": "weft-produit",
+   "src": "media/play/weft-produit.webp",
+   "small": "media/play/weft-produit-s.webp",
+   "w": 2880,
+   "h": 1800,
+   "kind": "site",
+   "title": "Weft, product",
+   "note": "One panel cut by hairlines. Pick a team and its four cells replay one weekly job, from the plan to the approval, the saved skill and the report.",
+   "project": "weft",
    "sw": 640
   },
   {
@@ -426,6 +473,30 @@ window.CONTENT = {
    "note": "The mark beside its own bridge, seen up close in the same two-ink halftone. An invented brand: symbol, wordmark and a scene rendered entirely in code.",
    "project": null,
    "sw": 512
+  },
+  {
+   "id": "glossa-pricing",
+   "src": "media/play/glossa-pricing.webp",
+   "small": "media/play/glossa-pricing-s.webp",
+   "w": 2880,
+   "h": 1800,
+   "kind": "site",
+   "title": "Glossa, pricing",
+   "note": "One price per word shipped, with October’s bill laid over Hermes, god of messengers and interpreters, in halftone.",
+   "project": "glossa",
+   "sw": 640
+  },
+  {
+   "id": "understudy-pied",
+   "src": "media/play/understudy-pied.webp",
+   "small": "media/play/understudy-pied-s.webp",
+   "w": 2880,
+   "h": 1616,
+   "kind": "site",
+   "title": "Understudy, footer",
+   "note": "The box office later that morning: the sun through the office blinds crosses the ticket, and the credits read like a cast list.",
+   "project": "understudy",
+   "sw": 640
   },
   {
    "id": "anim-banc-pied",

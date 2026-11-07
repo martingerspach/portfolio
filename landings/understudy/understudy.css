@@ -266,10 +266,13 @@ main { display: block; padding-top: var(--mast); }
 .caret { position: relative; }
 .caret::after { content: ""; position: absolute; left: 1px; top: -.02em; width: .55em; height: 1.08em; background: currentColor; }
 .rest { color: transparent; }
-.monitor { --bezel: clamp(8px, 1.4vw, 16px); --tube: clamp(8px, 1.5vw, 16px) / clamp(7px, 1.3vw, 14px); position: relative; width: 100%; padding: var(--bezel); background: #1D1A15; border-radius: 4px; box-shadow: inset 0 1px 0 rgb(255 255 255 / .05), 0 0 0 1px #050403; }
+/* the monitor is the house's own screen: no box of its own. Its bezel is the black masking that house.js paints around
+   the glass with the rest of the theatre (same camera), so the frame belongs to the scene; the corners are a projected
+   image's, barely softened */
+.monitor { --bezel: clamp(8px, 1.4vw, 16px); --tube: 2px; position: relative; width: 100%; padding: var(--bezel); background: transparent; }
 .monitor canvas { width: 100%; height: auto; border-radius: var(--tube); background: var(--screen); }
 .monitor::after { content: ""; position: absolute; inset: var(--bezel); border-radius: var(--tube); pointer-events: none;
-  box-shadow: inset 0 0 0 1px rgb(0 0 0 / .6); }
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / .45); }
 /* (no vignette gradient here: the old one never reached its first stop, painted nothing, and its first raster cost a
    35-50 ms frame on the GPU when the act came into view) */
 /* The hand on the glass: a plain arrow and its tag, the way a shared cursor carries its name. Square corners, paper and ink. */
@@ -466,6 +469,18 @@ main { display: block; padding-top: var(--mast); }
   }
 }
 
+/* ---------- Backgrounds. The paper lies in the shade of the office; light.js draws the morning sun through the blinds
+   over it (paper, sheets, box office), page-anchored canvases that scroll with the page. house.js draws Act II's empty
+   house, lit by the screen alone. Without WebGL2, light.js sets .light-off and the paper keeps its own colour. ---------- */
+html:not(.light-off) body, html:not(.light-off) .mast { background: #DAD6CE; }
+.pers, .house { position: absolute; pointer-events: none; display: block; }
+.pers-paper { left: 0; top: 0; width: 100%; z-index: -1; }
+.pers-box, .house { inset: 0; width: 100%; height: 100%; z-index: -1; }
+.act--2, .morning, .page { isolation: isolate; }
+/* the sun on the sheets: multiplied over the sheet, its ink included */
+.pers-mul { inset: 0; width: 100%; height: 100%; z-index: 6; mix-blend-mode: multiply; }
+.ticket-body { position: relative; }
+
 /* Windows high contrast: box shadows are dropped, so the controls get real borders */
 @media (forced-colors: active) {
   .btn, .cue-key, .prog-x { border: 1px solid ButtonText; }
@@ -473,5 +488,7 @@ main { display: block; padding-top: var(--mast); }
   .btn::before, .cue-key::before { display: none; }
   .prog-in, .prog-list, .ticket-body, .ticket-stub, .page { border: 1px solid CanvasText; }
   .postit { forced-color-adjust: none; }
+  .pers, .house { display: none; }
+  body, .mast { background: Canvas; }
   .slip, .stage, .act--2, .morning, .monitor { outline: 1px solid CanvasText; }
 }

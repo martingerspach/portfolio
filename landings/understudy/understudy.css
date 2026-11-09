@@ -303,7 +303,10 @@ main { display: block; padding-top: var(--mast); }
    layout: the eleven rows from the balcony, house.js); 100% here is the act's containing block */
 .split .act--2 { --mon: calc((100svh - 142px) / .645 + 32px);
   padding-bottom: calc(.23 * min(var(--mon), 100% - 2 * var(--frame) - 2 * var(--gutter) - 356px, 1000px)); }
-.split .perf { width: min(1380px, 100%); grid-template-columns: min(var(--mon), calc(100% - 356px), 1000px) 320px;
+/* the screen stands on the act's axis, under its title, as soon as the room beside it allows (a padding as wide as the
+   journal's column on the left, never at the screen's expense); on narrower windows the pair is centred as before */
+.split .perf { width: 100%; padding-left: clamp(0px, 100% - 356px - min(var(--mon), 1000px), 356px);
+  grid-template-columns: min(var(--mon), calc(100% - 356px), 1000px) 320px;
   grid-template-rows: 1fr auto auto auto 1fr; column-gap: 36px; justify-content: center; align-items: start; }
 .split .monitor { grid-column: 1; grid-row: 1 / -1; }
 .split .surtitle { grid-column: 2; grid-row: 2; margin: 0; padding-inline: 0; border-bottom: 0; place-items: start; text-align: left; font-size: 17px; }

@@ -200,11 +200,17 @@ void main() { gl_Position = vec4(P[gl_VertexID], 0., 1.); }`;
     const M = pageBox(E.box), T = pageBox(E.ticket), CR = pageBox(E.credits), DL = pageBox(E.credits.querySelector('dl') || E.credits);
     PJ.length = 0;
     if (!narrow) {
+      // the window stands just past the right edge of the page: the sharp side of its light falls at the same place on
+      // the title and on Act I, close to that edge whatever the width
+      const NEAR = .954 * W;
       // 0. first light around the title: softer, lower, passing behind the cover picture
-      quad([[.10 * W, BL.y + .25 * BL.h], [.86 * W, BL.y - .55 * BL.h], [.86 * W, BL.y + .95 * BL.h], [.10 * W, BL.y + 3.4 * BL.h]],
+      quad([[.10 * W, BL.y + .25 * BL.h], [NEAR, BL.y - .55 * BL.h], [NEAR, BL.y + .95 * BL.h], [.10 * W, BL.y + 3.4 * BL.h]],
         [9, 30, .72, .5], [6, .5, .72, .3]);
-      // 1. the sun across Act I: the window's whole projection, sharp on the right, soft and wide on the left
-      quad([[S.x - .62 * S.w, SL.y + .12 * A1.h], [S.r + .40 * S.w, SL.y - 1.1 * SL.h], [S.r + .40 * S.w, S.y + .30 * S.h], [S.x - .62 * S.w, S.y + .98 * S.h]],
+      // 1. the sun across Act I: the window's whole projection, sharp on the right, soft and wide on the left. Placed on
+      // the script's sheet up to 1440 px; on wider windows it keeps the share of the page it has there instead of
+      // staying the sheet's size (a band of shade then opened on the right)
+      const x0 = Math.min(S.x - .62 * S.w, -.065 * W), x1 = Math.max(S.r + .40 * S.w, NEAR);
+      quad([[x0, SL.y + .12 * A1.h], [x1, SL.y - 1.1 * SL.h], [x1, S.y + .30 * S.h], [x0, S.y + .98 * S.h]],
         [7, 28, 1, .9], [10, .54, .70, .15]);
       // 2. late morning, the sun higher: the slats cross the ticket's right half, then run down the black beside the credits
       quad([[T.x + .30 * T.w, T.y - .05 * T.h], [M.r + .02 * M.w, T.y - .60 * T.h], [M.r + .02 * M.w, M.b + .04 * M.h], [DL.r + 70, M.b + .02 * M.h]],

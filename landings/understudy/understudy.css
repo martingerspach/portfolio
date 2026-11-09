@@ -302,18 +302,19 @@ main { display: block; padding-top: var(--mast); }
 /* under the screen, the house keeps a band in proportion to the monitor's width (the same seat as the one-column
    layout: the eleven rows from the balcony, house.js); 100% here is the act's containing block */
 .split .act--2 { --mon: calc((100svh - 142px) / .645 + 32px);
-  padding-bottom: calc(.23 * min(var(--mon), 100% - 2 * var(--frame) - 2 * var(--gutter) - 356px, 1000px)); }
-/* the screen stands on the act's axis, under its title, as soon as the room beside it allows (a padding as wide as the
-   journal's column on the left, never at the screen's expense); on narrower windows the pair is centred as before */
-.split .perf { width: 100%; padding-left: clamp(0px, 100% - 356px - min(var(--mon), 1000px), 356px);
-  grid-template-columns: min(var(--mon), calc(100% - 356px), 1000px) 320px;
-  grid-template-rows: 1fr auto auto auto 1fr; column-gap: 36px; justify-content: center; align-items: start; }
-.split .monitor { grid-column: 1; grid-row: 1 / -1; }
-.split .surtitle { grid-column: 2; grid-row: 2; margin: 0; padding-inline: 0; border-bottom: 0; place-items: start; text-align: left; font-size: 17px; }
+  padding-bottom: calc(.23 * min(var(--mon), 100% - 2 * var(--frame) - 2 * var(--gutter) - 552px, 1000px)); }
+/* the screen always stands on the act's axis, under its title: two equal columns flank it, the right one holds the
+   surtitle, the journal and the key (320 px at most), the left one leaves the house in view. Each keeps at least
+   240 px beside its 36 px gap before the screen gives way; where the screen would end up smaller than in one column,
+   the head script and understudy.js choose the one column instead */
+.split .perf { width: 100%; grid-template-columns: minmax(0, 1fr) min(var(--mon), 100% - 552px, 1000px) minmax(0, 1fr);
+  grid-template-rows: 1fr auto auto auto 1fr; column-gap: 36px; align-items: start; }
+.split .monitor { grid-column: 2; grid-row: 1 / -1; align-self: center; }
+.split .surtitle { grid-column: 3; grid-row: 2; justify-self: start; max-width: 320px; margin: 0; padding-inline: 0; border-bottom: 0; place-items: start; text-align: left; font-size: 17px; }
 .split .desk { display: contents; }
-.split .desk .journal { grid-column: 2; grid-row: 3; margin-top: 4px; padding-top: 18px; border-top: 1px solid color-mix(in oklab, var(--house-text) 22%, transparent);
+.split .desk .journal { grid-column: 3; grid-row: 3; justify-self: start; max-width: 320px; margin-top: 4px; padding-top: 18px; border-top: 1px solid color-mix(in oklab, var(--house-text) 22%, transparent);
   font-size: 18px; text-align: left; text-wrap: pretty; }
-.split .desk .cue-key { grid-column: 2; grid-row: 4; justify-self: start; margin-top: 26px; }
+.split .desk .cue-key { grid-column: 3; grid-row: 4; justify-self: start; margin-top: 26px; }
 .journal time { color: var(--house-2); margin-right: .5em; }
 
 /* ---------- 4. Box office: the morning after, the ticket, the credits. One screen at every size. ---------- */

@@ -84,8 +84,12 @@
     perfBox.style.scrollMarginTop = Math.max(0, y - pad) + 'px';
   }
   addEventListener('resize', () => {
-    const w = innerWidth, s = Math.min(1040, (innerHeight - 372) * 1.52);
-    document.documentElement.classList.toggle('split', w >= 900 && s < Math.min(0.55 * w, 1000));
+    const w = innerWidth, h = innerHeight, s = Math.min(1040, (h - 372) * 1.52);
+    // the act's width inside its frame and gutters (understudy.css): the split screen, centred between two columns of
+    // 276 px, must come out larger than the one-column screen
+    const c = w - 2 * Math.min(Math.max(0.014 * w, 10), 20) - 2 * Math.min(Math.max(0.04 * w, 16), 56);
+    document.documentElement.classList.toggle('split', w >= 900 && s < Math.min(0.55 * w, 1000)
+      && Math.min((h - 142) / 0.645 + 32, 1000, c - 552) > Math.min(c, Math.max(480, s)));
     centreStage();
   });
   if (perfBox) new ResizeObserver(centreStage).observe(perfBox);
@@ -1057,6 +1061,9 @@
       if (RM.matches) poseEnd(); else { draw(0, 0, true); drawSur(0); }
       let rz = 0;
       new ResizeObserver(() => { cancelAnimationFrame(rz); rz = requestAnimationFrame(() => { layout(); reserve(); draw(t, 0, true); kick(2); }); }).observe(term);
+      // in the split layout the journal's column can narrow while the screen keeps its size: measure the lines again
+      let colW = 0;
+      if (journal) new ResizeObserver(() => { const w = journal.clientWidth; if (w !== colW) { colW = w; reserve(); } }).observe(journal);
       watch(term, (v) => { visible = v; if (v) kick(2); });
       watch(term, (v) => { if (v && !started && !RM.matches) play(); }, 0.9);
       RM.addEventListener('change', () => { if (RM.matches) { if (!started || !playing) poseEnd(); } });

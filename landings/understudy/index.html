@@ -12,7 +12,7 @@
 <link rel="preload" href="fonts/courier-prime-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/courier-prime-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" as="image" href="img/cover-2400.webp" imagesrcset="img/cover-1200.webp 1200w, img/cover-2400.webp 2400w" imagesizes="(max-width: 760px) 250vw, 100vw">
-<script>(function (d) { d.classList.add('js', 'preload'); var w = innerWidth, s = Math.min(1040, (innerHeight - 372) * 1.52); if (w >= 900 && s < Math.min(.55 * w, 1000)) d.classList.add('split'); })(document.documentElement)</script>
+<script>(function (d) { d.classList.add('js', 'preload'); var w = innerWidth, h = innerHeight, s = Math.min(1040, (h - 372) * 1.52), c = w - 2 * Math.min(Math.max(.014 * w, 10), 20) - 2 * Math.min(Math.max(.04 * w, 16), 56); if (w >= 900 && s < Math.min(.55 * w, 1000) && Math.min((h - 142) / .645 + 32, 1000, c - 552) > Math.min(c, Math.max(480, s))) d.classList.add('split'); })(document.documentElement)</script>
 <link rel="stylesheet" href="understudy.css">
 <script>(function (d) { var h = d.documentElement; if (!d.fonts || !d.fonts.load) return; h.classList.add('fonts-wait'); var done = function () { h.classList.remove('fonts-wait'); }; Promise.all(['400 16px "Caslon Display"', '400 16px "Caslon Text"', '400 16px "Courier Prime"', '700 16px "Courier Prime"'].map(function (f) { return d.fonts.load(f); })).then(done, done); setTimeout(done, 3000); })(document)</script>
 <script src="understudy.js" defer></script>

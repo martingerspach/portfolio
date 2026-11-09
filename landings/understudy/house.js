@@ -60,9 +60,10 @@
   const STAGE = { W: 16, bot: 1.4, Z: -2, stageY: 0.9, P: HOUSE.P, top: 13.2, Zp: HOUSE.Zp, railZ: 2.0, railY: 0.95, pitY: -0.9,
     mask: [7, 6, 5], riser: [13, 12, 9], expo: 1, reveal: 0.32, floor: 0.16, nosing: 0.75, cap: 0.45 };
   // the eye: 30 m from the screen (27 m on a phone); per layout, which row (r) lands how far above the foot of the
-  // panel (foot, px), and the bounds of the eye's height above the first row's floor (lo, hi, m)
-  const CAM = { Z: 28, phoneZ: 25, wide: { r: 10, foot: 22, lo: 5.5, hi: 11 }, phone: { r: 10, foot: 8, lo: 5.5, hi: 13 },
-    split: { r: 1, foot: 24, lo: 3.5, hi: 9 } };
+  // panel (foot, px), and the bounds of the eye's height above the first row's floor (lo, hi, m). The split layout
+  // (screen on the left, journal on its right) keeps a band under the screen in proportion to it (understudy.css), so
+  // it takes the wide seat
+  const CAM = { Z: 28, phoneZ: 25, wide: { r: 10, foot: 22, lo: 5.5, hi: 11 }, phone: { r: 10, foot: 8, lo: 5.5, hi: 13 } };
   function buildHouse(o) {
     const rows = [];
     let cpar = -1;   // the centre block's parity, set by the first row
@@ -331,20 +332,6 @@
       }
     }
 
-    // the front of the balcony we sit behind (split layout, where the band under the screen is narrow): a dark rail
-    // closing the frame just under the first two rows, an arc around the same centre as the rows; its cap a faint line
-    const pb = v.parapet;
-    if (pb) {
-      const pts = [];
-      for (let j = 0; j <= 48; j++) { const th = -0.24 + 0.48 * j / 48, q = proj(pb.R * Math.sin(th), pb.Y, pb.R * Math.cos(th) - HOUSE.C); if (q[2] > 0.5) pts.push(q); }
-      const shape = (g) => { g.beginPath(); pts.forEach((p, j) => (j ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]))); g.lineTo(pts[pts.length - 1][0], H + 60); g.lineTo(pts[0][0], H + 60); g.closePath(); };
-      gD.fillStyle = rgba(pb.col); shape(gD); gD.fill();
-      gL.globalCompositeOperation = 'destination-out'; gL.fillStyle = '#000'; shape(gL); gL.fill(); gL.globalCompositeOperation = 'source-over';
-      const ca = clamp(lightAt(0, pb.Y, pb.R - HOUSE.C).I * pb.cap);
-      gL.strokeStyle = rgba(L.col, ca); gL.lineWidth = 1;
-      gL.beginPath(); pts.forEach((p, j) => (j ? gL.lineTo(p[0], p[1] + 0.5) : gL.moveTo(p[0], p[1] + 0.5))); gL.stroke();
-    }
-
     // the foot of the panel sinks into its black (it meets the box office there)
     const y0 = H - v.footFade;
     const fd = gD.createLinearGradient(0, y0, 0, H);
@@ -413,22 +400,18 @@
     drawn = key;
     const phone = W < 640, split = document.documentElement.classList.contains('split');
     // the screen in metres, shaped like the glass; the eye at the back of the balcony, looking level. Its height is the
-    // seat we take in this layout: the last row lands at the foot of the panel (in the split layout, where only a narrow
-    // band shows under the screen, the second row does, just above the front of our balcony). Linear in the height, so
-    // solved directly.
+    // seat we take in this layout: the last row lands at the foot of the panel. Linear in the height, so solved directly.
     const S = Object.assign({}, STAGE, { H: STAGE.W * gl.h / gl.w });
     // on the axis of the house: the view is a mirror about the screen's centre
     const cam = { X: 0, Z: phone ? CAM.phoneZ : CAM.Z };
     const Ds = cam.Z - S.Z, f = gl.w * Ds / S.W;
     const band = H - (gl.y + gl.h);
-    const fit = split ? CAM.split : phone ? CAM.phone : CAM.wide;
+    const fit = phone ? CAM.phone : CAM.wide;
     const Zr = HOUSE.R0 + fit.r * HOUSE.pitch, Yr = fit.r * HOUSE.rake + 0.98, Dr = cam.Z - Zr;
     cam.Y = clamp(((band - fit.foot) / f + Yr / Dr - S.bot / Ds) / (1 / Dr - 1 / Ds), fit.lo, fit.hi);
     cam.f = f;
     cam.cx = gl.x + gl.w / 2 + f * (cam.X - 0) / Ds;
     cam.cy = gl.y - f * (cam.Y - (S.bot + S.H)) / Ds;
-    // split layout: the front of our balcony, 3 m ahead of the eye, its top 3 px under the second row
-    const parapet = split ? { R: cam.Z - 3 + HOUSE.C, Y: cam.Y - (gl.y + gl.h + band - fit.foot + 3 - cam.cy) * 3 / f, col: [9, 8, 7], cap: 0.3 } : null;
     // the light canvas starts where the reveals fade out above the screen; both canvases at full density (up to 2)
     const lTop = Math.max(0, Math.floor(Math.min(gl.y - f * (STAGE.top - S.bot - S.H) / Ds, cam.cy - 40, gl.y) - 2));
     const kL = dpr, kD = dpr;
@@ -445,7 +428,7 @@
       light: { P: [0, S.bot + S.H * 0.5, S.Z], col: [212, 222, 196], power: phone ? 3.1 : 2.2, d0: 11 }, gain: phone ? 2.3 : 1.5,
       sil: [7, 7, 6], hazeCol: [22, 24, 20], floor: [10, 9, 8],
       walls: phone ? null : { z0: S.Zp, z1: cam.Z - 1, bay: 3.1, top: 14, col: [36, 38, 33], gain: 0.12, edge: 0.14 },
-      footFade: phone ? 28 : split ? 10 : 24, calm, parapet,
+      footFade: phone ? 28 : 24, calm,
     });
   }
 

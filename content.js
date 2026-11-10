@@ -68,6 +68,18 @@ window.CONTENT = {
    "hd": "media/banc/hero-loop-hd.mp4"
   },
   {
+   "id": "mj-01-chevalerie-ascii",
+   "src": "media/play/mj-01-chevalerie-ascii.webp",
+   "small": "media/play/mj-01-chevalerie-ascii-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "Knights in ASCII",
+   "note": "A charging knight from a fourteenth-century chronicle, set entirely in typed characters on vellum, with a gold-leaf initial. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
+   "project": null,
+   "sw": 720
+  },
+  {
    "id": "topiary-v1-parterre",
    "src": "media/topiary-v1/parterre-poster.webp",
    "small": "media/topiary-v1/parterre-poster.webp",
@@ -111,6 +123,18 @@ window.CONTENT = {
    "project": null
   },
   {
+   "id": "mj-02-vallee-fauve",
+   "src": "media/play/mj-02-vallee-fauve.webp",
+   "small": "media/play/mj-02-vallee-fauve-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "Fauve valley, white dishes",
+   "note": "An alpine valley painted the Fauvist way, vermilion larches and cobalt shadows, around a field of white ceramic radio telescopes. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
+   "project": null,
+   "sw": 720
+  },
+  {
    "id": "tiroir-hero-loop",
    "src": "media/tiroir/hero-loop-poster.webp",
    "small": "media/tiroir/hero-loop-poster.webp",
@@ -135,6 +159,31 @@ window.CONTENT = {
    "note": "The laptop and the coral chair by an indoor pool. Midjourney, then retouched: the laptop shows the real landing page.",
    "project": "banc",
    "sw": 640
+  },
+  {
+   "id": "mj-08-verre-thermique",
+   "src": "media/play/mj-08-verre-thermique.webp",
+   "small": "media/play/mj-08-verre-thermique-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "Glass flowers, thermal",
+   "note": "Nineteenth-century glass botanical models seen through a thermal camera’s false colours. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
+   "project": null,
+   "sw": 720
+  },
+  {
+   "id": "play-glossa-film",
+   "src": "media/play/glossa-film-poster.webp",
+   "small": "media/play/glossa-film-poster.webp",
+   "video": "media/play/glossa-film.mp4",
+   "loop": false,
+   "w": 1920,
+   "h": 1080,
+   "kind": "motion",
+   "title": "Glossa, the launch film",
+   "note": "Thirty seconds without a cut: a button overflows in German, Glossa measures it and shortens it, and a person approves. Every frame computed in code and cut to the music; open it for the sound.",
+   "project": "glossa"
   },
   {
    "id": "iris-hero-loop",
@@ -164,6 +213,18 @@ window.CONTENT = {
    "title": "Topiary, hero",
    "note": "The hedge-cut wordmark, rendered in WebGL2.",
    "project": "topiary"
+  },
+  {
+   "id": "mj-09-grille-suisse-foret",
+   "src": "media/play/mj-09-grille-suisse-foret.webp",
+   "small": "media/play/mj-09-grille-suisse-foret-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "Swiss grid, rainforest",
+   "note": "A Müller-Brockmann grid cuts a rainforest photograph into circles and strips, overprinted in signal red and black. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
+   "project": null,
+   "sw": 720
   },
   {
    "id": "anim-relais-pied",
@@ -206,6 +267,18 @@ window.CONTENT = {
    "sw": 640
   },
   {
+   "id": "mj-10-ikebana-brutaliste",
+   "src": "media/play/mj-10-ikebana-brutaliste.webp",
+   "small": "media/play/mj-10-ikebana-brutaliste-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "Brutalist ikebana",
+   "note": "A fifteen-metre ikebana in a raw concrete atrium: black pine, red amaryllis and plum blossom over still black water. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
+   "project": null,
+   "sw": 720
+  },
+  {
    "id": "photo-C07-casque-terre-battue",
    "src": "media/play/photo-C07-casque-terre-battue.webp",
    "small": "media/play/photo-C07-casque-terre-battue-s.webp",
@@ -228,6 +301,18 @@ window.CONTENT = {
    "note": "Prepress software. The mark is three halftone dots, two of them bridged the way dots join on press; the scene prints that mark in two spot inks, screened in a shader. An invented brand: symbol, wordmark and a scene rendered entirely in code.",
    "project": null,
    "sw": 640
+  },
+  {
+   "id": "mj-11-cyanotype-vitesse",
+   "src": "media/play/mj-11-cyanotype-vitesse.webp",
+   "small": "media/play/mj-11-cyanotype-vitesse-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "Cyanotype at speed",
+   "note": "A 1960s endurance race car at full speed, printed as a cyanotype with brushed emulsion edges. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
+   "project": null,
+   "sw": 720
   },
   {
    "id": "weft-hero",
@@ -264,6 +349,18 @@ window.CONTENT = {
    "kind": "site",
    "title": "Hero study, tapestry",
    "note": "A hero background for Topiary, drawn live in code like an Aubusson tapestry: foliage in the foreground, a formal garden alley behind.",
+   "project": null,
+   "sw": 720
+  },
+  {
+   "id": "mj-14-vitrail-rave",
+   "src": "media/play/mj-14-vitrail-rave.webp",
+   "small": "media/play/mj-14-vitrail-rave-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "Rave in stained glass",
+   "note": "A Gothic window in the Chartres manner showing a 1990s warehouse rave: raised arms, a DJ at the altar, lasers in ruby glass. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
    "project": null,
    "sw": 720
   },
@@ -309,6 +406,18 @@ window.CONTENT = {
    "project": "tiroir"
   },
   {
+   "id": "mj-15-meissen-techwear",
+   "src": "media/play/mj-15-meissen-techwear.webp",
+   "small": "media/play/mj-15-meissen-techwear-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "Meissen in techwear",
+   "note": "An eighteenth-century Meissen porcelain courtier wearing a black ripstop shell with orange taped seams. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
+   "project": null,
+   "sw": 720
+  },
+  {
    "id": "topiary-labyrinthe-tirage",
    "src": "media/topiary/labyrinthe-tirage-poster.webp",
    "small": "media/topiary/labyrinthe-tirage-poster.webp",
@@ -335,6 +444,18 @@ window.CONTENT = {
    "project": null,
    "end": "media/play/jcd-signature-end.webp",
    "once": true
+  },
+  {
+   "id": "mj-17-friedrich-lidar",
+   "src": "media/play/mj-17-friedrich-lidar.webp",
+   "small": "media/play/mj-17-friedrich-lidar-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "Friedrich in LiDAR",
+   "note": "The wanderer above the sea of fog, with the landscape scanned as a point cloud and only the figure painted in oil. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
+   "project": null,
+   "sw": 720
   },
   {
    "id": "objet-tiroir",
@@ -374,6 +495,18 @@ window.CONTENT = {
    "project": null
   },
   {
+   "id": "mj-19-constructivisme-potager",
+   "src": "media/play/mj-19-constructivisme-potager.webp",
+   "small": "media/play/mj-19-constructivisme-potager-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "Cabbage propaganda",
+   "note": "A constructivist poster for a vegetable garden: a grandmother raises a giant cabbage while carrots fan out like searchlights. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
+   "project": null,
+   "sw": 720
+  },
+  {
    "id": "heed-hero",
    "src": "media/play/heed-hero.webp",
    "small": "media/play/heed-hero-s.webp",
@@ -396,6 +529,18 @@ window.CONTENT = {
    "note": "The product on one screen: coverage of 24 languages, words shipped each week and the review queue, in crimson and white.",
    "project": "glossa",
    "sw": 640
+  },
+  {
+   "id": "mj-20-la-tour-ecran",
+   "src": "media/play/mj-20-la-tour-ecran.webp",
+   "small": "media/play/mj-20-la-tour-ecran-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "La Tour by screenlight",
+   "note": "A Georges de La Tour night scene where the only light comes from a phone. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
+   "project": null,
+   "sw": 720
   },
   {
    "id": "quart-hero-loop",
@@ -436,6 +581,18 @@ window.CONTENT = {
    "sw": 640
   },
   {
+   "id": "mj-21-shan-shui-silicium",
+   "src": "media/play/mj-21-shan-shui-silicium.webp",
+   "small": "media/play/mj-21-shan-shui-silicium-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "Silicon shan shui",
+   "note": "A Song dynasty ink landscape whose mountains are stacks of microchips, with a scholar crossing the bridge below. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
+   "project": null,
+   "sw": 720
+  },
+  {
    "id": "d-02",
    "src": "media/topiary/d-02.webp",
    "small": "media/topiary/d-02-s.webp",
@@ -461,6 +618,18 @@ window.CONTENT = {
    "title": "JCD Groupe, footer",
    "note": "The group’s seven areas, its companies and both agencies, in one footer. Web design for JCD Groupe.",
    "project": null
+  },
+  {
+   "id": "mj-22-lune-tricotee",
+   "src": "media/play/mj-22-lune-tricotee.webp",
+   "small": "media/play/mj-22-lune-tricotee-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "Knitted moon",
+   "note": "An Apollo lunar module and its astronaut hand-knitted in chunky wool, on a felt moon. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
+   "project": null,
+   "sw": 720
   },
   {
    "id": "brayer-symbol",
@@ -497,6 +666,18 @@ window.CONTENT = {
    "note": "The box office later that morning: the sun through the office blinds crosses the ticket, and the credits read like a cast list.",
    "project": "understudy",
    "sw": 640
+  },
+  {
+   "id": "mj-25-nympheas-radar",
+   "src": "media/play/mj-25-nympheas-radar.webp",
+   "small": "media/play/mj-25-nympheas-radar-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "Radar water lilies",
+   "note": "Water lilies painted in the colour scale of a weather radar map. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
+   "project": null,
+   "sw": 720
   },
   {
    "id": "anim-banc-pied",
@@ -542,6 +723,18 @@ window.CONTENT = {
    "title": "Auvent, footer",
    "note": "The chrome wordmark at the foot of the page.",
    "project": "auvent"
+  },
+  {
+   "id": "mj-29-broderie-rayons-x",
+   "src": "media/play/mj-29-broderie-rayons-x.webp",
+   "small": "media/play/mj-29-broderie-rayons-x-s.webp",
+   "w": 2560,
+   "h": 1440,
+   "kind": "image",
+   "title": "X-ray goldwork",
+   "note": "Goldwork embroidery on black velvet of an X-ray: the bones of a hand holding a phone, its circuit in gold wire. A style crossing explored for future landing pages: Midjourney V8.1, then upscaled to 4K.",
+   "project": null,
+   "sw": 720
   },
   {
    "id": "anim-topiary-pied",

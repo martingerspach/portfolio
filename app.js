@@ -120,7 +120,8 @@
     $$('#clock, [data-clock]').forEach((e) => { e.textContent = t; });
   }
   tick();
-  setInterval(tick, 10000);
+  // on the minute itself, not up to ten seconds after it
+  (function next() { setTimeout(() => { tick(); next(); }, 60000 - (Date.now() % 60000) + 40); })();
 
   /* ---------- Navigation chrome ---------- */
   const navLine = $('#navLine');
@@ -151,13 +152,35 @@
 
   const menu = $('#menu'), menuBtn = $('#menuBtn');
   function setMenu(open) {
+    if (open === menu.classList.contains('is-open')) return;
     menu.classList.toggle('is-open', open);
     menu.setAttribute('aria-hidden', String(!open));
     menuBtn.setAttribute('aria-expanded', String(open));
     menuBtn.textContent = open ? 'Close' : 'Menu';
     document.body.classList.toggle('is-locked', open);
+    main.inert = open;               // the page under the menu is out of reach of Tab and of screen readers
   }
   menuBtn.addEventListener('click', () => setMenu(!menu.classList.contains('is-open')));
+  // Escape closes the menu and gives the focus back to its button; Tab turns within the button and the menu
+  document.addEventListener('keydown', (e) => {
+    if (!menu.classList.contains('is-open')) return;
+    if (e.key === 'Escape') { e.preventDefault(); setMenu(false); menuBtn.focus(); return; }
+    if (e.key !== 'Tab') return;
+    const f = [menuBtn, ...$$('a, button', menu)];
+    const k = f.indexOf(document.activeElement);
+    if (k < 0 || (e.shiftKey ? k === 0 : k === f.length - 1)) { e.preventDefault(); f[e.shiftKey ? f.length - 1 : 0].focus(); }
+  });
+  // the window leaves the phone layout (a rotation, a resize): the menu's button is gone, so the menu closes
+  matchMedia('(max-width: 760px)').addEventListener('change', (e) => { if (!e.matches) setMenu(false); });
+
+  /* The header's ground: once a page has scrolled, what passes under the header dissolves into the page's colour
+     (portfolio.css, .chrome::before). Work is left out there: its strip fades by itself. */
+  let scrolled = false;
+  function markScroll() {
+    const s = window.scrollY > 4;
+    if (s !== scrolled) { scrolled = s; html.classList.toggle('is-scrolled', s); }
+  }
+  addEventListener('scroll', markScroll, { passive: true });
 
   /* ---------- Router ---------- */
   const PAGES = {
@@ -176,6 +199,7 @@
     return { name: 'work', token: 'work' };
   }
   const isRoute = (token) => routeOf(token).token === token;
+  const TITLE = document.title;      // the home's title, as the page (or its hosted copy) wrote it
   let current = null;
   let viewer = null;                 // the open project view: { p, ready, setTab }
   let teardown = null;
@@ -197,6 +221,8 @@
     html.classList.toggle('on-work', r.name === 'work');
     html.classList.toggle('on-project', r.name === 'project');
     html.classList.toggle('on-play', r.name === 'playground');
+    // each page has its own title: the tab, the history and a screen reader say where we are
+    document.title = r.name === 'work' ? TITLE : `${r.name === 'project' ? r.p.name : PAGES[r.name].label} · ${SITE.name}`;
     if (opts.via !== 'tr') main.classList.remove('tr-done', 'tr-own');   // a page mounted without a page change plays its own entrance
     if (r.name !== 'work') { window.scrollTo(0, 0); }
     if (r.name === 'work') teardown = renderWork(opts);
@@ -204,6 +230,7 @@
     else if (r.name === 'playground') teardown = renderPlayground(opts);
     else if (r.name === 'about') teardown = renderAbout(opts);
     else if (r.name === 'contact') teardown = renderContact(opts);
+    markScroll();
     if (opts.focus !== false) main.focus({ preventScroll: true });
   }
 
@@ -226,12 +253,13 @@
     busy = false;
   });
 
-  let pendingPop = false;
+  let pendingPop = false, pendingNav = null;
   async function navigate(token, opts = {}) {
     const r = routeOf(token);
-    // the browser's back and forward during a page change are played once it ends (the address already moved)
-    if (busy) { if (opts.pop) pendingPop = true; return; }
     setMenu(false);
+    // during a page change, the browser's back and forward are played once it ends (the address already moved), and
+    // so is the last link pressed: a visitor who changes their mind mid-change is not ignored
+    if (busy) { if (opts.pop) pendingPop = true; else pendingNav = { token, opts }; return; }
     if (r.name === 'project' && PHONE_PAGES.matches) { openAsPage(r); return; }
     // Topiary's two tabs (its site, its film) are one project: switch in place
     if (viewer && r.name === 'project' && r.p === viewer.p) {
@@ -271,9 +299,12 @@
     }
   }
   function afterChange() {
-    if (!pendingPop) return;
-    pendingPop = false;
-    if (routeOf(location.hash).token !== (current && current.token)) navigate(location.hash, { pop: true });
+    const next = pendingNav;
+    pendingNav = null;
+    if (pendingPop) {
+      pendingPop = false;
+      if (routeOf(location.hash).token !== (current && current.token)) navigate(location.hash, { pop: true });
+    } else if (next && routeOf(next.token).token !== (current && current.token)) navigate(next.token, next.opts);
   }
 
   document.addEventListener('click', (e) => {
@@ -428,7 +459,11 @@
     let notches = 0, aim = null;
     function onWheel(e) {
       if (frozen || e.ctrlKey) return;
-      const notch = e.deltaMode === 1 || (Math.abs(e.deltaY) >= 50 && Number.isInteger(e.deltaY));
+      // (at a browser zoom other than 100 % a notch is no longer a whole number of pixels, 90.9 at 110 %: the older
+      // wheelDelta field still counts whole notches, 120 each, whatever the zoom)
+      const dy = Math.abs(e.deltaY), ticks = Math.abs(e.wheelDeltaY || 0) / 120;
+      const notch = e.deltaMode === 1 || (dy >= 50 && Number.isInteger(e.deltaY))
+        || (dy >= 25 && !Number.isInteger(e.deltaY) && ticks >= 1 && Number.isInteger(ticks));
       if (notch && e.deltaY) { notches += Math.sign(e.deltaY); aim = W.rest + notches; }
       else { notches = 0; aim = null; }
     }
@@ -506,10 +541,19 @@
 
     function onKey(e) {
       if (busy || frozen || e.altKey || e.ctrlKey || e.metaKey) return;
+      if (e.defaultPrevented || menu.classList.contains('is-open')) return;   // the opening or the menu took the key
       if (e.target.closest && e.target.closest('input, textarea, select')) return;
       const k = e.key;
       if (k === 'ArrowDown' || k === 'ArrowRight' || k === 'PageDown') { e.preventDefault(); stepTo(W.rest + 1); }
       else if (k === 'ArrowUp' || k === 'ArrowLeft' || k === 'PageUp') { e.preventDefault(); stepTo(W.rest - 1); }
+      else if (k === 'Enter' || k === ' ') {
+        // away from any control (a link or a button keeps its own Enter and Space): Space turns the reel by one
+        // project, as the arrows do (the page's own Space would run through four of them), Enter opens the one in the gate
+        if (e.target.closest && e.target.closest('a, button, [role="tab"], summary')) return;
+        e.preventDefault();
+        if (k === ' ') stepTo(W.rest + (e.shiftKey ? -1 : 1));
+        else open(wrapP(Math.round(W.target)));
+      }
     }
 
     /* Every text of the page is a function of the reel's position as drawn this frame (e, in projects), on
@@ -1039,6 +1083,7 @@
     if (x.hd && !film && !saveData && to.w * (devicePixelRatio || 1) > x.w * 1.2) sharpen(box, media, x.hd);
     document.body.appendChild(lb);
     document.body.classList.add('is-locked');
+    html.classList.add('is-zoomed');                      // the scrollbar's gutter takes the veil's tone (portfolio.css)
     tile.style.visibility = 'hidden';                     // the piece itself leaves the grid
     const dur = REDUCE ? 0 : 680;
     if (dur) {
@@ -1088,6 +1133,7 @@
     if (!lb) return;
     const el = lb, btn = lbReturn;
     lb = null;
+    html.classList.remove('is-zoomed');
     document.removeEventListener('keydown', zoomKeys);
     removeEventListener('resize', el._resize);
     const tile = btn && btn.isConnected ? btn.querySelector('img, video') : null;

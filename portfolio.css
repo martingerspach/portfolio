@@ -13,6 +13,7 @@
   --panel: #181917;       /* page-change panel */
   --on-panel: #F4F2EF;
   --scrim: rgba(20, 21, 19, .94);
+  --scrim-flat: color-mix(in srgb, rgb(20 21 19) 94%, var(--bg));   /* the scrim, laid flat on the page's colour */
   --count-a: #FF8E7E;
   --count-b: #F7C8BF;
   --tile: #E4E2DD;
@@ -36,7 +37,7 @@
   :root:not([data-theme="light"]) {
     --bg: #121311; --surface: #1B1C1A; --ink: #EFEDE8; --ink-2: #A2A19C; --ink-3: #74736E;
     --line: #2C2D2A; --accent: #FF7360; --on-accent: #141414; --panel: #F4F2EF; --on-panel: #1F201E;
-    --scrim: rgba(10, 11, 10, .95); --count-a: #FF7360; --count-b: #5A2E27; --tile: #1E1F1C;
+    --scrim: rgba(10, 11, 10, .95); --scrim-flat: color-mix(in srgb, rgb(10 11 10) 95%, var(--bg)); --count-a: #FF7360; --count-b: #5A2E27; --tile: #1E1F1C;
     --tool-bg: #1C1D1B; --tool-line: #2E2F2C; --wire: #3A3B38; --c-webgl: #E5534B;
     color-scheme: dark;
   }
@@ -44,7 +45,7 @@
 :root[data-theme="dark"] {
   --bg: #121311; --surface: #1B1C1A; --ink: #EFEDE8; --ink-2: #A2A19C; --ink-3: #74736E;
   --line: #2C2D2A; --accent: #FF7360; --on-accent: #141414; --panel: #F4F2EF; --on-panel: #1F201E;
-  --scrim: rgba(10, 11, 10, .95); --count-a: #FF7360; --count-b: #5A2E27; --tile: #1E1F1C;
+  --scrim: rgba(10, 11, 10, .95); --scrim-flat: color-mix(in srgb, rgb(10 11 10) 95%, var(--bg)); --count-a: #FF7360; --count-b: #5A2E27; --tile: #1E1F1C;
   --tool-bg: #1C1D1B; --tool-line: #2E2F2C; --wire: #3A3B38; --c-webgl: #E5534B;
   color-scheme: dark;
 }
@@ -116,6 +117,19 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   pointer-events: none;
 }
 .chrome > * { pointer-events: auto; }
+/* The header's ground. On Work the strip dissolves into the page before it reaches the header (reel.js, its top
+   fade); the pages that scroll do the same: once a page has moved (html.is-scrolled, app.js), what passes under the
+   header fades into the page's colour instead of running behind the name and the links. The colour is the page's own
+   (it follows the theme on the same curve) and its shape is a mask: solid behind the header, then a long eased fade.
+   Nothing shows while a page is at its top. */
+.chrome::before {
+  content: ""; position: absolute; z-index: -1; inset: 0 0 auto; height: calc(var(--top) + 48px);
+  background-color: var(--bg); pointer-events: none;
+  --veil: linear-gradient(to bottom, #000 0, #000 56%, rgb(0 0 0 / .93) 62%, rgb(0 0 0 / .78) 68%, rgb(0 0 0 / .58) 75%, rgb(0 0 0 / .36) 82%, rgb(0 0 0 / .17) 89%, rgb(0 0 0 / .05) 95%, transparent 100%);
+  -webkit-mask-image: var(--veil); mask-image: var(--veil);
+  opacity: 0; transition: opacity .35s var(--ease-soft), background-color .5s var(--ease-soft);
+}
+html.is-scrolled:not(.on-work):not(.on-project) .chrome::before { opacity: 1; }
 .brand { justify-self: start; display: inline-flex; align-items: baseline; gap: 12px; white-space: nowrap; }
 .brand b { font-weight: 600; font-size: 18px; letter-spacing: -0.02em; }
 .brand span { font-size: var(--t-small); color: var(--ink-2); }
@@ -156,6 +170,15 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 .menu nav a { font-size: 44px; font-weight: 600; letter-spacing: -0.04em; line-height: 1.12; color: var(--ink-3); }
 .menu nav a[aria-current="page"] { color: var(--ink); }
 .menu__foot { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.menu .clock { display: inline; }   /* the header's clock gives way under 1100 px; the menu keeps its own */
+/* its lines come up one after the other as it opens (the site's own rise), and are back in place, unseen, once closed */
+.menu nav a, .menu__foot { opacity: 0; transform: translateY(14px); transition: opacity .2s linear, transform 0s .35s; }
+.menu.is-open nav a, .menu.is-open .menu__foot {
+  opacity: 1; transform: none;
+  transition: opacity .5s var(--ease-soft) calc(40ms + var(--i, 0) * 45ms), transform .8s var(--ease) calc(40ms + var(--i, 0) * 45ms);
+}
+.menu nav a:nth-child(2) { --i: 1; } .menu nav a:nth-child(3) { --i: 2; } .menu nav a:nth-child(4) { --i: 3; }
+.menu__foot { --i: 4; }
 
 /* ---------- The reel (work) ---------- */
 #reel {
@@ -389,8 +412,10 @@ html.on-project .chrome { opacity: 0; visibility: hidden; transition: opacity .3
 .zoom__close:hover { background: rgba(244, 242, 239, .1); }
 .zoom__close .ico { width: 20px; height: 20px; }
 .zoom :focus-visible { outline-color: #F4F2EF; }
-/* no shift of the grid when the page locks under the zoom */
-html.on-play { scrollbar-gutter: stable; }
+/* no shift of the grid when the page locks under the zoom; the veil cannot reach the gutter kept for the scrollbar,
+   which would stay a light band beside it: the gutter takes the veil's tone, on the veil's own clock */
+html.on-play { scrollbar-gutter: stable; transition: background-color .5s linear; }
+html.on-play.is-zoomed { background-color: var(--scrim-flat); }
 
 /* ---------- About: about.css (the wiring). The page before 2026-11-03 is in archive/about-v1/. ---------- */
 /* Shared with Contact: the giant fitted line, links, e-mail and copy. */
@@ -433,4 +458,6 @@ html.on-play { scrollbar-gutter: stable; }
   .rise { animation: none; opacity: 1; transform: none; }
   .w-hint i::after { animation: none; top: 30%; }
   .w-item, .w-meta, .btn, .lnk, .nav__line, .call::before, .call span, .pv-tabs button::after { transition: none; }
+  .menu nav a, .menu__foot, .menu.is-open nav a, .menu.is-open .menu__foot { transition: none; transform: none; }
+  .chrome::before, html.on-play { transition: none; }
 }

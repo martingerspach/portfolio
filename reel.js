@@ -172,6 +172,35 @@
       const gl = canvas.getContext('webgl2', { antialias: true, alpha: true, premultipliedAlpha: true, powerPreference: 'high-performance' });
       if (!gl) throw new Error('no webgl2');
       this.gl = gl;
+      this.setup();
+      this.ready = new Float32Array(32);
+      this.queue = [];
+      this.loaded = 0;
+      this.mips = false;
+      this.dirty = true;
+      this.theme = { bg: [0.957, 0.949, 0.937], ink: [0.12, 0.125, 0.118], tile: [0.9, 0.89, 0.875], dark: 0 };
+      this.morph = { frame: -1e6, k: 0, rect: [0, 0, 1, 1], others: 1, crop: [0, 0, 1, 1] };
+      this.blur = 0;            // motion blur length, in frames
+      this.zoom = 1;            // the camera pulls back a little while the reel runs fast
+      this.gateDevice = 600;
+      this.L = null;
+      /* The browser may take the context back (a phone left in the background, a graphics driver restarting):
+         without this the canvas stays empty for good. The loss is accepted, and when the context returns the
+         program, the mesh and the covers are made again; the page's loop then draws as before. */
+      this.lost = false;
+      canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); this.lost = true; });
+      canvas.addEventListener('webglcontextrestored', () => {
+        this.lost = false;
+        this.setup();
+        this.tex = null;
+        if (this.L) this.allocTextures(this.gateDevice);
+        this.dirty = true;
+      });
+    }
+
+    /* Everything that lives in the context: the program, its uniforms, the mesh. */
+    setup() {
+      const gl = this.gl;
       const pr = gl.createProgram();
       gl.attachShader(pr, compile(gl, gl.VERTEX_SHADER, VS));
       gl.attachShader(pr, compile(gl, gl.FRAGMENT_SHADER, FS));
@@ -186,17 +215,6 @@
         this.u[name] = gl.getUniformLocation(pr, info.name);
       }
       this.buildMesh();
-      this.ready = new Float32Array(32);
-      this.queue = [];
-      this.loaded = 0;
-      this.mips = false;
-      this.dirty = true;
-      this.theme = { bg: [0.957, 0.949, 0.937], ink: [0.12, 0.125, 0.118], tile: [0.9, 0.89, 0.875], dark: 0 };
-      this.morph = { frame: -1e6, k: 0, rect: [0, 0, 1, 1], others: 1, crop: [0, 0, 1, 1] };
-      this.blur = 0;            // motion blur length, in frames
-      this.zoom = 1;            // the camera pulls back a little while the reel runs fast
-      this.gateDevice = 600;
-      this.L = null;
     }
 
     buildMesh() {
@@ -236,7 +254,7 @@
       const gl = this.gl;
       const want = gateDevicePx * 1.08;
       const TW = want > 1100 ? 1600 : want > 900 ? 1280 : want > 700 ? 1024 : want > 520 ? 800 : 640;
-      if (this.tex && this.TW >= TW) return;
+      if (this.lost || (this.tex && this.TW >= TW)) return;
       const TH = TW * 3 / 4;
       if (this.tex) gl.deleteTexture(this.tex);
       this.TW = TW; this.TH = TH;
@@ -281,7 +299,7 @@
     }
 
     upload() {
-      if (!this.queue.length) return false;
+      if (!this.queue.length || this.lost) return false;
       const gl = this.gl;
       const { i, bmp } = this.queue.shift();     // one frame per animation frame keeps uploads off the critical path
       gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);
@@ -379,7 +397,7 @@
 
     render(pos) {
       const gl = this.gl;
-      if (!this.L) return;
+      if (!this.L || this.lost) return;
       this.upload();
       const { vw, vh, cx, cy, R, K, LEN, W, fade } = this.L;
       gl.viewport(0, 0, this.canvas.width, this.canvas.height);

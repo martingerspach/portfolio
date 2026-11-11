@@ -224,7 +224,7 @@ html.work-touch.on-work #reel, html.work-touch.on-work .stage { touch-action: no
 .w-more { position: absolute; left: 0; right: 0; top: 100%; }
 .w-title {
   display: block;
-  font-weight: calc(460 + var(--f) * 140);
+  font-weight: var(--w, calc(460 + var(--f) * 140));   /* --w: the same weight by steps of ten (app.js, updateList) */
   font-size: calc(26px + var(--f) * 26px);
   line-height: 1; letter-spacing: -0.045em;
   color: color-mix(in oklab, var(--ink) calc(var(--f) * 100%), var(--ink-3));

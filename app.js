@@ -213,7 +213,14 @@
   }
 
   function mount(r, opts = {}) {
-    if (teardown) { teardown(); teardown = null; }
+    if (teardown) {
+      const td = teardown;
+      teardown = null;
+      // Contact's sheet is drawn in WebGL and its teardown gives the context back: during a page change the page
+      // is still on screen, leaving, so it is torn down when the change ends (its light went out at the click)
+      const tr = window.TR && window.TR.running;
+      if (opts.via === 'tr' && tr && current && current.name === 'contact') tr.cleanups.push(td); else td();
+    }
     closeLightbox(true);
     current = r;
     viewer = null;
@@ -588,7 +595,13 @@
           it.style.pointerEvents = +o < 0.2 ? 'none' : '';   // still focusable: focus winds it into view
           c.o = o;
         }
-        if (c.f !== f) { it.style.setProperty('--f', f); c.f = f; }
+        if (c.f !== f) {
+          it.style.setProperty('--f', f); c.f = f;
+          // the weight goes by steps of ten (of 140, unseen): a variable font is built anew for every weight it
+          // is asked, and a weight that changed every frame cost a layout of 20 to 40 ms on a slow machine
+          const w = 460 + Math.round(+f * 14) * 10;
+          if (c.w !== w) { it.style.setProperty('--w', w); c.w = w; }
+        }
         if (c.g !== g) { it.style.setProperty('--g', g); c.g = g; }
       }
       // the meta column: values cross under fixed labels, on the same window as the list's details

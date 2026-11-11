@@ -75,6 +75,16 @@
         s.add(prop);
       },
       layer(el) { document.body.appendChild(el); ctx.layers.push(el); return el; },
+      // a move handed to the compositor (opacity and transform only): it starts with the click and runs on, whole,
+      // while the main thread is busy mounting the next page
+      T0: performance.now(),
+      anims: [],
+      early(el, frames, opts) {
+        if (!el || typeof el.animate !== 'function') return null;
+        const a = el.animate(frames, Object.assign({ fill: 'both', easing: 'linear' }, opts));
+        ctx.anims.push(a);
+        return a;
+      },
     });
     TR.running = ctx;
     main.classList.remove('tr-done');
@@ -88,10 +98,27 @@
       ctx.riseEls = null;
       if (v.mounted) v.mounted(ctx);
     };
+    // Mounting a page blocks the main thread (30 ms on a fast machine, 200 ms on a slow or busy one). A change that
+    // gives its exit to the compositor (v.hold) mounts after it has started: one frame to hand it over, longer
+    // while something still has to be drawn by script (the reel rolling on, v.pre). The click is answered at once
+    // and the exit never loses a frame to the mounting.
+    const held = () => new Promise((res) => {
+      const until = ctx.T0 + (typeof v.hold === 'function' ? v.hold(ctx) : v.hold);
+      const step = (now) => {
+        try { if (v.pre) v.pre(now - ctx.T0, ctx); } catch (e) { console.warn('Page change:', e); }
+        if (now >= until) setTimeout(res, 0); else requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
     try {
       if (v.begin) v.begin(ctx);
-      if (ctx.swap <= 0) doMount();
-      v.frame(0, ctx);
+      if (ctx.swap <= 0) {
+        if (v.hold !== undefined) await held();
+        doMount();
+      }
+      // the clock takes up where the exit is (v.lead at most: what comes in always starts from its own beginning)
+      const leadMax = v.lead || 0;
+      v.frame(clamp(performance.now() - ctx.T0, 0, leadMax), ctx);
       // the first pose (the page as it was) is drawn twice before the clock starts: new layers are rastered
       // while nothing moves, instead of stalling the first frames of the motion
       await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res)));
@@ -100,7 +127,7 @@
           let t0 = -1;
           const step = (now) => {
             try {
-              if (t0 < 0) t0 = now;
+              if (t0 < 0) t0 = now - clamp(now - ctx.T0, 0, leadMax);
               const t = now - t0;
               if (!mounted && t >= ctx.swap) doMount();
               v.frame(Math.min(t, ctx.D), ctx);
@@ -121,6 +148,7 @@
     ctx.cleanups.forEach((fn) => { try { fn(); } catch (e) { console.warn('Page change:', e); } });
     touched.forEach((s, el) => s.forEach((p) => { if (p !== 'transition') el.style.removeProperty(p); }));
     ctx.layers.forEach((l) => l.remove());
+    ctx.anims.forEach((a) => { try { a.cancel(); } catch (e) { /* its element is gone */ } });
     main.classList.remove('tr-own');
     main.classList.add('tr-done');
     TR.running = null;
@@ -258,15 +286,14 @@
   }
   function reelLeaveFrame(ctx, t, a = 0, b = 420) {
     const rc = ctx.leave;
-    if (!rc) return;
+    if (!rc || rc.gone) return;
+    if (t > b + 30) { rc.gone = true; return; }      // it has faded out: nothing more to draw
     // the strip rolls on 0.6 of a project, its blur carrying the exit, and keeps its tone until 70 ms
-    const k = seg(t, a, b);
     const posAt = (tt) => rc.pos0 + 0.6 * E.inn(seg(tt, a, b));
     reelMotion(rc, posAt, t);
     rc.R.zoom = 1;
-    ctx.set(rc.cv, 'opacity', (1 - E.inn(seg(t, a + 70, b))).toFixed(3));
+    if (!ctx.exitEarly) ctx.set(rc.cv, 'opacity', (1 - E.inn(seg(t, a + 70, b))).toFixed(3));
     rc.R.render(posAt(t));
-    void k;
   }
   // the old page goes: a still copy that fades and lifts; the reel, if it was the work page
   function leave(ctx, { z = 4, hide = null } = {}) {
@@ -277,9 +304,22 @@
   // one exit for every page: 160 ms, then the new page starts; never both at once (no double exposure)
   const OUT = 160;
   function leaveFrame(ctx, t, a = 0, b = OUT) {
-    fadeOut(ctx, ctx.g, t, a, b, -8);
+    if (!ctx.exitEarly) fadeOut(ctx, ctx.g, t, a, b, -8);
     reelLeaveFrame(ctx, t, a, b);
   }
+  // The same exit, given to the compositor from the click (fadeOut's own curves and times): the page we leave, and
+  // the reel's canvas when we leave Work, go whole whatever the main thread is doing. The strip's roll stays drawn
+  // by script, for as long as script frames come (pre, then frame).
+  const CSS_INN = 'cubic-bezier(.5, 0, .75, 0)', CSS_EXIT = 'cubic-bezier(.33, 0, .67, 1)', CSS_OUT = 'cubic-bezier(.16, 1, .3, 1)';
+  function exitNow(ctx, { dy = -8, a = 0, b = OUT } = {}) {
+    ctx.exitEarly = true;
+    const fade = { delay: a + 70, duration: b - a - 70, easing: CSS_INN };
+    ctx.early(ctx.g, [{ opacity: 1 }, { opacity: 0 }], fade);
+    ctx.early(ctx.g, [{ transform: 'translateY(0px)' }, { transform: `translateY(${dy}px)` }], { delay: a, duration: b - a, easing: CSS_EXIT });
+    if (ctx.leave) ctx.early(ctx.leave.cv, [{ opacity: 1 }, { opacity: 0 }], fade);
+  }
+  // a spring sampled into keyframes, for a move the compositor plays (it has no springs of its own)
+  const sprKeys = (T, a, fn, n = 28) => Array.from({ length: n + 1 }, (_, i) => fn(spr((T * i) / n, T, a)));
 
   /* The motion of the chosen transitions: one critically damped spring, the reel's own physics.
      a (attack) is the starting speed as a share of the fastest start that never overshoots:
@@ -303,8 +343,11 @@
      ====================================================================================== */
   define('work', {
     dur: OUT - 40 + 720,
+    hold: 0,
+    lead: OUT - 40,
     begin(ctx) {
       ctx.g = ghost(ctx, { opaque: true, z: 4 });
+      exitNow(ctx, { dy: -10 });
     },
     mounted(ctx) {
       const app = ctx.app;
@@ -318,7 +361,6 @@
       ctx.posAt = (t) => ctx.pos1 - (1 - ctx.x(t));
     },
     frame(t, ctx) {
-      fadeOut(ctx, ctx.g, t, 0, OUT, -10);
       const rc = ctx.rc;
       if (rc) {
         const pos = ctx.posAt(t);
@@ -353,9 +395,15 @@
 
   define('playground', {
     dur: OUT - 40 + 2 * 60 + 700,
-    begin(ctx) { leave(ctx); },
+    // leaving Work, the strip rolls on by script for the 70 ms it keeps its tone; then the page is mounted while it fades
+    hold: (ctx) => (ctx.leave ? 70 : 0),
+    lead: OUT - 40,
+    begin(ctx) { leave(ctx); exitNow(ctx); },
+    pre(t, ctx) { reelLeaveFrame(ctx, t, 0, OUT); },
     mounted(ctx) {
-      ctx.cols = columns(ctx);
+      // only the pieces of the first screen move: those under it never show while the wall rises, and moving all
+      // fifty-odd of them cost three times the work per frame
+      ctx.cols = columns(ctx).filter((x) => x.r.y < ctx.vh);
       ctx.cols.forEach((x) => {
         if (!x.media) return;
         ctx.set(x.media, 'transition', 'none');
@@ -396,7 +444,10 @@
       const fromWork = ctx.from && ctx.from.name === 'work';
       ctx.back = ctx.layer(Object.assign(document.createElement('div'), { className: 'tr-backdrop tr-backdrop--full tr-backdrop--sheet' }));
       ctx.g = ghost(ctx, { opaque: !fromWork, z: 2 });
-      ctx.veil = ctx.g.appendChild(Object.assign(document.createElement('div'), { className: 'tr-veil' }));
+      // the shade that falls on the page we leave: on the page itself, or, over Work (whose page is only its texts,
+      // the ground showing through), on the whole screen, so no lighter band shows round the page as it steps back
+      ctx.veil = Object.assign(document.createElement('div'), { className: 'tr-veil' });
+      if (fromWork) { ctx.veil.style.cssText = 'position:fixed;z-index:2'; ctx.layer(ctx.veil); } else ctx.g.appendChild(ctx.veil);
       if (fromWork) {
         const rc = reelOn(ctx);
         if (rc) { ctx.leave = rc; rc.pos0 = ctx.app.W.eased * ctx.app.F + ctx.app.GATE; rc.R.render(rc.pos0); ctx.set(rc.cv, 'z-index', '1'); }
@@ -404,23 +455,34 @@
       ctx.edge = ctx.layer(Object.assign(document.createElement('div'), { className: 'tr-sheet-edge' }));
       ctx.set(ctx.main, 'background', 'var(--bg)');
       ctx.set(ctx.main, 'min-height', '100vh');
+      ctx.set(ctx.main, 'transform', `translateY(${ctx.vh}px)`);   // the sheet waits under the screen until its page is mounted
+      // the page we leave steps back from the click, on the compositor (the sheet's own spring, sampled): it answers
+      // at once, and the sheet comes over it as soon as its page is there
+      const back = (x) => `translateY(${(-0.025 * ctx.vh * x).toFixed(2)}px) scale(${(1 - 0.045 * x).toFixed(4)})`;
+      const keys = sprKeys(700, 0.3, (x) => ({ transform: back(x) }));
+      ctx.early(ctx.g, keys, { duration: 700 });
+      if (ctx.leave) ctx.early(ctx.leave.cv, keys, { duration: 700 });
+      ctx.early(ctx.veil, sprKeys(700, 0.3, (x) => ({ opacity: 0.1 * x })), { duration: 700 });
+      // the ground behind comes into its shade on the same move (at once, it was a jump of tone over Work), and the
+      // sheet's shadow shows only once the sheet does
+      ctx.early(ctx.back, sprKeys(700, 0.3, (x) => ({ opacity: x })), { duration: 700 });
+      ctx.edge.style.opacity = '0';
     },
+    hold: 0,
     mounted(ctx) { ctx.sec = $('.about', ctx.main); },
     frame(t, ctx) {
       // a sheet presented on a spring with a little push: it answers at once, without a jolt, and lands crisply
       const x = spr(t, 700, 0.3);
       const y = ctx.vh * (1 - x);
-      const recede = `translateY(${(-0.025 * ctx.vh * x).toFixed(2)}px) scale(${(1 - 0.045 * x).toFixed(4)})`;
-      ctx.g.style.transform = recede;
       ctx.g.style.borderRadius = `${(16 * x).toFixed(2)}px`;
-      if (ctx.leave) { ctx.set(ctx.leave.cv, 'transform', recede); ctx.leave.R.render(ctx.leave.pos0); }
-      ctx.veil.style.opacity = (0.1 * x).toFixed(3);
+      // the reel under the sheet is a still picture: drawn again only when one of its covers has just arrived
+      if (ctx.leave && ctx.leave.R.dirty) ctx.leave.R.render(ctx.leave.pos0);
       ctx.set(ctx.main, 'transform', `translateY(${y.toFixed(2)}px)`);
       const r = (22 * (1 - smooth(0.55, 1, x))).toFixed(2);
       ctx.set(ctx.main, 'clip-path', `inset(0 round ${r}px ${r}px 0 0)`);
       // its shadow travels with its top edge and fades as it lands
       ctx.edge.style.transform = `translateY(${(y - 72).toFixed(2)}px)`;
-      ctx.edge.style.opacity = (1 - smooth(0.6, 1, x)).toFixed(3);
+      ctx.edge.style.opacity = (smooth(0, 0.06, x) * (1 - smooth(0.6, 1, x))).toFixed(3);
       // the page's content follows the sheet a beat behind: it has weight
       if (ctx.sec) ctx.set(ctx.sec, 'transform', `translateY(${(30 * (1 - spr(t, 740, 0.2))).toFixed(2)}px)`);
     },
@@ -449,14 +511,17 @@
       ctx.shade.style.background = `linear-gradient(to bottom, ${c[0]}, ${c[1]})`;
       ctx.openK = CP && CP.openK ? CP.openK : null;
       ctx.rest = $$('.pe-ink, .pe-cap, .pe-lead, .pe-write, .pe-facts, .pe-links', ctx.main);
+      // the page we leave melts on the compositor, on the curves it had (the shade's tone is the new page's own, known
+      // only now: the melt starts with the shade, and loses no frame to the page's first, heavy ones)
+      ctx.exitEarly = true;
+      const lag = 14;   // the clock starts two frames from now
+      ctx.early(ctx.g, [{ opacity: 1 }, { opacity: 0 }], { delay: lag + 80, duration: 240, easing: CSS_INN });
+      ctx.early(ctx.g, [{ transform: 'scale(1)' }, { transform: 'scale(.99)' }], { delay: lag, duration: 320, easing: CSS_OUT });
+      if (ctx.leave) ctx.early(ctx.leave.cv, [{ opacity: 1 }, { opacity: 0 }], { delay: lag + 150, duration: 170, easing: CSS_INN });
     },
     frame(t, ctx) {
       // the room dims at once, without a jolt; the page we leave stays a beat, then melts into the sheet in the shade
       const dim = E.out(seg(t, 0, 320));
-      if (ctx.g) {
-        ctx.g.style.opacity = (1 - E.inn(seg(t, 80, 320))).toFixed(3);
-        ctx.g.style.transform = `scale(${(1 - 0.01 * E.out(seg(t, 0, 320))).toFixed(4)})`;
-      }
       if (ctx.leave) reelLeaveFrame(ctx, t, 80, 320);
       // the shade lifts as the shutters open (the page's own light); by the end it is gone whatever the light did
       const k = ctx.openK ? ctx.openK() : seg(t, 300, 1200);

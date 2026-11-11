@@ -216,6 +216,17 @@
     });
     return best;
   }
+  /* The order depends on the data alone: worked out once, while the page is idle after loading, so that opening
+     About never pays for its 720 trials in the click. */
+  let ARRANGED = null;
+  function arranged() {
+    if (!ARRANGED) ARRANGED = arrange(SITE.experience.map((j) => j.at), SITE.skills.map(([s]) => s), SITE.jobSkills || {}, SITE.skillTools || {});
+    return ARRANGED;
+  }
+  const idle = (fn) => ('requestIdleCallback' in window ? requestIdleCallback(fn, { timeout: 3000 }) : setTimeout(fn, 1200));
+  idle(() => { try { if (window.SITE && window.TOOLS) arranged(); } catch (e) { /* worked out when the page opens */ } });
+  // the height of the longest sentence, per width of the reading and state of the fonts (mount.reserve)
+  const RESERVED = new Map();
   const low = (s) => (/^[A-Z]{2}/.test(s) ? s : s.charAt(0).toLowerCase() + s.slice(1));
   // "a, b and c"; with a serial comma when an item already holds "and" ("web and apps, and AI agents");
   // two items of which one holds "and" repeat the preposition ("for visual identity and for web and apps")
@@ -230,7 +241,7 @@
     const JS = SITE.jobSkills || {}, ST = SITE.skillTools || {};
     const jobs = SITE.experience;
     const desc = Object.fromEntries(SITE.skills);
-    const ar = arrange(jobs.map((j) => j.at), SITE.skills.map(([s]) => s), JS, ST);
+    const ar = arranged();
     const hint = () => (HOVER.matches ? 'Point at a job, a skill or a tool to follow its wires.' : 'Tap a job, a skill or a tool to follow its wires.');
 
     main.innerHTML = `
@@ -288,11 +299,15 @@
     let W = 1;
 
     /* ---------- geometry: wires spread along each node's edge in the order of where they go ---------- */
-    function layout() {
+    let lastW = -1, lastH = -1, lastV = null;
+    function layout(force) {
       const v = PHONE.matches;
       loom.classList.toggle('is-v', v);
       const L = loom.getBoundingClientRect();
       if (!L.width) return;
+      // the observer's first call repeats the mount's own layout: same box, same picture, nothing to do
+      if (!force && v === lastV && Math.abs(L.width - lastW) < 0.5 && Math.abs(L.height - lastH) < 0.5) return;
+      lastV = v; lastW = L.width; lastH = L.height;
       W = L.width;
       svg.setAttribute('viewBox', `0 0 ${L.width} ${L.height}`);
       svg.setAttribute('width', L.width);
@@ -381,16 +396,24 @@
     const read = $('.cb__read', main);
     let said = hint();
     // the reading keeps the height of its longest sentence at this width, so hovering never moves the graph
+    // (measured once per width, in a probe laid out on its own: out of the flow, at the reading's width, so that
+    // each of its thirty-odd sentences lays out a few words and not the whole page)
     function reserve() {
-      const keys = Object.keys(node).filter((k, i, a) => a.indexOf(k) === i);
-      const probe = document.createElement('span');
-      probe.setAttribute('aria-hidden', 'true');
-      probe.style.cssText = 'visibility:hidden;pointer-events:none';
-      read.append(probe);
-      let h = 0;
-      [hint(), ...keys.map((k) => sentence(reach(k)))].forEach((t) => { probe.textContent = t; h = Math.max(h, probe.getBoundingClientRect().height); });
-      probe.remove();
-      read.style.minHeight = Math.ceil(h) + 'px';
+      const w = Math.round(read.clientWidth);
+      if (!w) return;
+      const key = w + '|' + HOVER.matches + '|' + (document.fonts ? document.fonts.status : '');
+      if (!RESERVED.has(key)) {
+        const keys = Object.keys(node).filter((k, i, a) => a.indexOf(k) === i);
+        const probe = document.createElement('span');
+        probe.setAttribute('aria-hidden', 'true');
+        probe.style.cssText = `position:absolute;left:0;top:0;width:${w}px;visibility:hidden;pointer-events:none;contain:layout style`;
+        read.append(probe);
+        let h = 0;
+        [hint(), ...keys.map((k) => sentence(reach(k)))].forEach((t) => { probe.textContent = t; h = Math.max(h, probe.getBoundingClientRect().height); });
+        probe.remove();
+        RESERVED.set(key, Math.ceil(h));
+      }
+      read.style.minHeight = RESERVED.get(key) + 'px';
     }
     function say(t, isHint) {
       if (t === said) return;
@@ -489,7 +512,7 @@
       buses.forEach((b) => b.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: t0 + (b.dataset.k.startsWith('job:') ? 160 : b.dataset.k.startsWith('skill:') ? 520 : 1000), fill: 'backwards' }));
     }
     let onReveal = null, waitObs = null, revealTimer = 0;
-    layout();
+    layout(true);
     if (!RM.matches) {
       if (main.classList.contains('tr-own')) {
         loom.classList.add('is-pre');
@@ -503,15 +526,16 @@
       } else entrance(true);
     }
 
-    const ro = new ResizeObserver(() => layout());
+    const ro = new ResizeObserver(() => layout(false));
     ro.observe(loom);
-    if (document.fonts) document.fonts.ready.then(() => { if (loom.isConnected) layout(); });
-    PHONE.addEventListener('change', layout);
+    if (document.fonts) document.fonts.ready.then(() => { if (loom.isConnected) layout(true); });
+    const onPhone = () => layout(true);
+    PHONE.addEventListener('change', onPhone);
     return () => {
       ro.disconnect();
       unbind();
       document.removeEventListener('keydown', onKey);
-      PHONE.removeEventListener('change', layout);
+      PHONE.removeEventListener('change', onPhone);
       if (onReveal) document.removeEventListener('mg:reveal', onReveal);
       clearTimeout(revealTimer);
       if (waitObs) waitObs.disconnect();
